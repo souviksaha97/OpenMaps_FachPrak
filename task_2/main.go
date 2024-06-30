@@ -60,6 +60,10 @@ type QueueItem struct {
 }
 type PriorityQueue []*QueueItem
 
+type Ocean struct {
+	graphIDs []int
+}
+
 // Point represents a geographical point with latitude and longitude
 type Point struct {
 	Lat float64 `json:"lat"`
@@ -236,8 +240,8 @@ func graphGenerator() {
 	//random points
 	slog.Info("starttime 1 mio: " + time.Since(start).String())
 	for s := 0; s < randomPointCount; s++ {
-		var randLong float64
-		var randLat float64
+		randLong := rand.Float64()*360.0 - 180.0
+		randLat := float64((math.Asin(rand.Float64()*2.0-1.0) * 180.0 / math.Pi))
 		for {
 			randLong = rand.Float64()*360.0 - 180.0
 			randLat = float64((math.Asin(rand.Float64()*2.0-1.0) * 180.0 / math.Pi))
@@ -246,39 +250,61 @@ func graphGenerator() {
 			if len(edges)%2 == 0 {
 				break
 			}
+			if randLong == 0.0 || randLat == 0.0 {
+				break
+			}
 		}
-		a, b := findRowAndColumnInGrid(rows, colums, float64(randLat), randLong)
-		graphNodes[s] = [2]float64{randLat, randLong}
-		grid[a][b] = append(grid[a][b], s)
+		if randLat >= 89.0 {
+			grid[0][0] = append(grid[0][0], s)
+		} else if randLat <= -89.0 {
+			grid[0][0] = append(grid[0][0], s)
+		} else {
 
+			a, b := findRowAndColumnInGrid(rows, colums, float64(randLat), randLong)
+
+			grid[a][b] = append(grid[a][b], s)
+		}
+		graphNodes[s] = [2]float64{randLat, randLong}
 	}
+	fmt.Println("00 grid length", len(grid[0][0]))
 	slog.Info("endtime 1 mio: " + time.Since(start).String())
 	//fmt.Println(graphNodes)
 	//fmt.Println(grid)
 	for k := range graphNodes {
-		if k%1000 == 0 {
-			fmt.Println("another 1k done")
+		if k%10000 == 0 {
+			fmt.Println("10k")
 		}
 		//fmt.Println(k)
 		u := graphNodes[k]
 		edge := graphEdges[k]
 		a, b := findRowAndColumnInGrid(rows, colums, u[0], u[1])
-		points := getAllNeighbourCellss(grid, a, b, 20)
+		points := getAllNeighbourCellss(grid, a, b, u[0], 2)
 		if edge[0] == -1 {
 
-			findTopLeft(k, graphNodes, &graphEdges, &distancesEdges, points)
+			if !findTopLeft(k, graphNodes, &graphEdges, &distancesEdges, grid[a][b]) {
+				findTopLeft(k, graphNodes, &graphEdges, &distancesEdges, points)
+			}
 		}
 		if edge[1] == -1 {
+			if !findTopRight(k, graphNodes, &graphEdges, &distancesEdges, grid[a][b]) {
+				findTopRight(k, graphNodes, &graphEdges, &distancesEdges, points)
 
-			findTopRight(k, graphNodes, &graphEdges, &distancesEdges, points)
+			}
+
 		}
 		if edge[2] == -1 {
+			if !findBottomLeft(k, graphNodes, &graphEdges, &distancesEdges, grid[a][b]) {
+				findBottomLeft(k, graphNodes, &graphEdges, &distancesEdges, points)
 
-			findBottomLeft(k, graphNodes, &graphEdges, &distancesEdges, points)
+			}
+
 		}
 		if edge[3] == -1 {
+			if !findBottomRight(k, graphNodes, &graphEdges, &distancesEdges, grid[a][b]) {
+				findBottomRight(k, graphNodes, &graphEdges, &distancesEdges, points)
 
-			findBottomRight(k, graphNodes, &graphEdges, &distancesEdges, points)
+			}
+
 		}
 	}
 	fmt.Println("finished neighbours")
@@ -407,6 +433,7 @@ func main() {
 
 func Algo(Start Point, End Point) []Point {
 	//read graphNodes graphEdges distancesEdges grid from json files
+	var start = time.Now()
 	graphNodesJSON, err := os.ReadFile("graphNodes.json")
 	if err != nil {
 		fmt.Println("Error reading graphNodes from file:", err)
@@ -468,10 +495,12 @@ func Algo(Start Point, End Point) []Point {
 			distpointEnd = distpointENdNew
 		}
 	}
-	fmt.Println("Indexes :", nearestpointStartIndex, nearpointEndIndex)
-	fmt.Println("dijkstra go")
+	fmt.Println("dijkstra go", nearestpointStartIndex, graphNodes[nearestpointStartIndex], nearpointEndIndex, graphNodes[nearpointEndIndex])
+	slog.Info("dykstra start: " + time.Since(start).String())
+
 	dist, path := Dijkstra(graphNodes[:], graphEdges[:], distancesEdges[:], nearestpointStartIndex, nearpointEndIndex)
 	fmt.Println(dist, path)
+	slog.Info("dykstra end: " + time.Since(start).String())
 	returndykstrapath := [][2]float64{}
 	for k := range path {
 		returndykstrapath = append(returndykstrapath, graphNodes[path[k]])
@@ -1277,6 +1306,9 @@ func testWhichPolyCrosses180(ways_map map[osm.NodeID][]osm.NodeID, nodes_map map
 
 }
 func findRowAndColumnInGrid(rows int, colums int, lat float64, long float64) (int, int) {
+	if lat <= -89.0 || lat >= 89.0 {
+		return 0, 0
+	}
 	newLat := int((lat + 90.0) / (180.0 / float64(rows)))
 	if newLat == rows {
 		newLat = rows - 1
@@ -1331,12 +1363,12 @@ func haversine(lat1, lon1, lat2, lon2 float64) float64 { //chatgpt
 	// Distance in kilometers
 	distance := R * c
 	//fmt.Println(distance)
-	return distance
+	return math.Abs(distance)
 }
-func findTopLeft(u int, graphpoints [pointcount][2]float64, graphEdges *[pointcount][4]int, distancesEdges *[pointcount][4]int, pointIndexes []int) {
+func findTopLeft(u int, graphpoints [pointcount][2]float64, graphEdges *[pointcount][4]int, distancesEdges *[pointcount][4]int, pointIndexes []int) bool {
 	comparePoint := graphpoints[u]
 
-	closestDist := 300.0
+	closestDist := 3000.0
 	smallestIndex := -1
 	searchpointLat := comparePoint[0]
 	searchPointLon := comparePoint[1]
@@ -1360,14 +1392,17 @@ func findTopLeft(u int, graphpoints [pointcount][2]float64, graphEdges *[pointco
 		(*graphEdges)[pointIndexes[smallestIndex]][3] = u
 		(*distancesEdges)[u][0] = int(closestDist)
 		(*distancesEdges)[pointIndexes[smallestIndex]][3] = int(closestDist)
+		return true
 	} else {
+		return false
 		(*graphEdges)[u][0] = -2 //no neighbour found
 	}
+	return false
 }
-func findTopRight(u int, graphpoints [pointcount][2]float64, graphEdges *[pointcount][4]int, distancesEdges *[pointcount][4]int, pointIndexes []int) {
+func findTopRight(u int, graphpoints [pointcount][2]float64, graphEdges *[pointcount][4]int, distancesEdges *[pointcount][4]int, pointIndexes []int) bool {
 	comparePoint := graphpoints[u]
 
-	closestDist := 300.0
+	closestDist := 3000.0
 	smallestIndex := -1
 	searchpointLat := comparePoint[0]
 	searchPointLon := comparePoint[1]
@@ -1386,19 +1421,23 @@ func findTopRight(u int, graphpoints [pointcount][2]float64, graphEdges *[pointc
 		}
 	}
 	if smallestIndex > -1 {
-
 		(*graphEdges)[u][1] = pointIndexes[smallestIndex]
 		(*graphEdges)[pointIndexes[smallestIndex]][2] = u
 		(*distancesEdges)[u][1] = int(closestDist)
 		(*distancesEdges)[pointIndexes[smallestIndex]][2] = int(closestDist)
+		return true
+
 	} else {
+		return false
 		(*graphEdges)[u][1] = -2 //no neighbour found
 	}
+	return false
+
 }
-func findBottomLeft(u int, graphpoints [pointcount][2]float64, graphEdges *[pointcount][4]int, distancesEdges *[pointcount][4]int, pointIndexes []int) {
+func findBottomLeft(u int, graphpoints [pointcount][2]float64, graphEdges *[pointcount][4]int, distancesEdges *[pointcount][4]int, pointIndexes []int) bool {
 	comparePoint := graphpoints[u]
 
-	closestDist := 300.0
+	closestDist := 3000.0
 	smallestIndex := -1
 	searchpointLat := comparePoint[0]
 	searchPointLon := comparePoint[1]
@@ -1417,19 +1456,23 @@ func findBottomLeft(u int, graphpoints [pointcount][2]float64, graphEdges *[poin
 		}
 	}
 	if smallestIndex > -1 {
-
 		(*graphEdges)[u][2] = pointIndexes[smallestIndex]
 		(*graphEdges)[pointIndexes[smallestIndex]][1] = u
 		(*distancesEdges)[u][2] = int(closestDist)
 		(*distancesEdges)[pointIndexes[smallestIndex]][1] = int(closestDist)
+		return true
+
 	} else {
+		return false
 		(*graphEdges)[u][2] = -2 //no neighbour found
 	}
+	return false
+
 }
-func findBottomRight(u int, graphpoints [pointcount][2]float64, graphEdges *[pointcount][4]int, distancesEdges *[pointcount][4]int, pointIndexes []int) {
+func findBottomRight(u int, graphpoints [pointcount][2]float64, graphEdges *[pointcount][4]int, distancesEdges *[pointcount][4]int, pointIndexes []int) bool {
 	comparePoint := graphpoints[u]
 
-	closestDist := 300.0
+	closestDist := 3000.0
 	smallestIndex := -1
 	searchpointLat := comparePoint[0]
 	searchPointLon := comparePoint[1]
@@ -1453,13 +1496,18 @@ func findBottomRight(u int, graphpoints [pointcount][2]float64, graphEdges *[poi
 		(*graphEdges)[pointIndexes[smallestIndex]][0] = u
 		(*distancesEdges)[u][3] = int(closestDist)
 		(*distancesEdges)[pointIndexes[smallestIndex]][0] = int(closestDist)
+		return true
 	} else {
+		return false
 		(*graphEdges)[u][3] = -2 //no neighbour found
 	}
+	return false
+
 }
 func Dijkstra(nodes [][2]float64, edges [][4]int, edgeweights [][4]int, src, dst int) (int, []int) {
 	dist := make(map[int]int)
 	prev := make(map[int]int)
+	found := false
 	for node := range nodes {
 		dist[node] = math.MaxInt64
 	}
@@ -1475,12 +1523,22 @@ func Dijkstra(nodes [][2]float64, edges [][4]int, edgeweights [][4]int, src, dst
 
 		if currentNode == dst {
 			fmt.Println("reached from", currentNode)
+			found = true
 			break
 		}
+		//fmt.Println("cuurentnode", currentNode)
 
 		for k := range edges[currentNode] {
 			neighbor := edges[currentNode][k]
+			if neighbor < 0 {
+				break
+			}
 			newDist := dist[currentNode] + edgeweights[currentNode][k]
+			if edgeweights[currentNode][k] > 10000 {
+				fmt.Println("not allowed")
+				break
+			}
+			//fmt.Println(neighbor)
 			//fmt.Println("dist", newDist, dist[neighbor])
 			if newDist < 0 {
 				fmt.Println("neine")
@@ -1492,16 +1550,21 @@ func Dijkstra(nodes [][2]float64, edges [][4]int, edgeweights [][4]int, src, dst
 			}
 		}
 	}
-	//fmt.Println(dist)
-	path := []int{}
-	for at := dst; at != src; at = prev[at] {
-		path = append([]int{at}, path...)
-	}
-	path = append([]int{src}, path...)
+	fmt.Println("finisheddykstra , calculating path")
 
+	path := []int{}
+	if found {
+		for at := dst; at != src; at = prev[at] {
+			path = append([]int{at}, path...)
+		}
+		path = append([]int{src}, path...)
+	} else {
+		path = append([]int{dst}, path...)
+		path = append([]int{src}, path...)
+		return -1, path
+	}
 	return dist[dst], path
 }
-
 func ReadCoordinates(filename string) ([][]float64, error) {
 	// Define the structure to hold the data
 	var coordinates [][]float64
@@ -1527,17 +1590,37 @@ func ReadCoordinates(filename string) ([][]float64, error) {
 
 	return coordinates, nil
 }
-func getAllNeighbourCellss(grid [][][]int, x, y, radius int) []int {
+func getAllNeighbourCellss(grid [][][]int, x int, y int, latitude float64, radius int) []int {
 	var neighbors []int
-	startlat, startlon := findLatLongInGrid(len(grid), len(grid[0]), x, y)
-	neighbors = append(neighbors, grid[x][y]...)
+
+	/*startlat, startlon := findLatLongInGrid(len(grid), len(grid[0]), x, y)
+	k := 0
+	l := 0
+	if x+1 < len(grid) {
+		k = x + 1
+	} else {
+		k = x - 1
+	}
+	if y+1 < len(grid[0]) {
+		l = y + 1
+	} else {
+		l = y - 1
+	}*/
+	//cellendlat, cellendlong := findLatLongInGrid(len(grid), len(grid[0]), k, l)
+	//cellwidth := haversine(startlat, startlon, cellendlat, cellendlong)
+	//fmt.Println("cellwidth", cellwidth)
+	if latitude >= 89.0 {
+		neighbors = append(neighbors, grid[0][0]...)
+
+	} else if latitude <= -89.0 {
+		neighbors = append(neighbors, grid[0][0]...)
+
+	}
+	counter := 0
 	for dx := -radius; dx <= radius; dx++ {
 		for dy := -radius; dy <= radius; dy++ {
 			if dx != 0 || dy != 0 {
-				lat, lon := findLatLongInGrid(len(grid), len(grid[0]), dx, dy)
-				if haversine(startlat, startlon, lat, lon) > 600.0 {
-					break
-				}
+
 				aplus := dx + x
 				bplus := dy + y
 				if aplus >= len(grid) {
@@ -1553,9 +1636,11 @@ func getAllNeighbourCellss(grid [][][]int, x, y, radius int) []int {
 					break
 				}
 				//add points to return
+				counter++
 				neighbors = append(neighbors, grid[aplus][bplus]...)
 			}
 		}
 	}
+	//fmt.Println("nachbarlänge", counter)
 	return neighbors
 }

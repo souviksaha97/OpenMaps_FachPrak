@@ -24,3 +24,5 @@ osm_data/*
 
 *.geojson
 *.osm.pbf
+*.gob
+*.json
