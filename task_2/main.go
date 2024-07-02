@@ -370,7 +370,7 @@ func server() {
 		// Call the Algo function
 		shortestPath := Algo(start, end)
 
-		fmt.Println("Shortest Path:", shortestPath)
+		// fmt.Println("Shortest Path:", shortestPath)
 
 		c.JSON(http.StatusOK, gin.H{"message": "Points received successfully", "shortest_path": shortestPath})
 	})
@@ -474,7 +474,7 @@ func Algo(Start Point, End Point) []Point {
 		fmt.Println("Error unmarshalling grid:", err)
 	}
 
-	fmt.Println(distancesEdges)
+	// fmt.Println(distancesEdges)
 
 	nearestnodeStart := [2]float64{Start.Lat, Start.Lng}
 	distpointStart := 100000000.0
@@ -499,7 +499,7 @@ func Algo(Start Point, End Point) []Point {
 	slog.Info("dykstra start: " + time.Since(start).String())
 
 	dist, path := Dijkstra(graphNodes[:], graphEdges[:], distancesEdges[:], nearestpointStartIndex, nearpointEndIndex)
-	fmt.Println(dist, path)
+	fmt.Println(dist)
 	slog.Info("dykstra end: " + time.Since(start).String())
 	returndykstrapath := [][2]float64{}
 	for k := range path {
@@ -527,7 +527,7 @@ func Algo(Start Point, End Point) []Point {
 	fmt.Println("highest", highest, "count greater 0", counter)
 
 	//randompoints end
-	fmt.Println(returndykstrapath)
+	// fmt.Println(returndykstrapath)
 
 	// Convert returndykstrapath to []Point
 	shortestPath := make([]Point, len(returndykstrapath))
