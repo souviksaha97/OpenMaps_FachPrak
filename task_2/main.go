@@ -339,7 +339,8 @@ func graphGenerator() {
 
 }
 
-func server() {
+func server(graphNodes [][2]float64, graphEdges [][4]int, distancesEdges [][4]int, grid [][][]int) {
+
 	router := gin.Default()
 
 	// Set up CORS middleware
@@ -368,7 +369,7 @@ func server() {
 		fmt.Printf("Received end point: %+v\n", end)
 
 		// Call the Algo function
-		shortestPath := Algo(start, end)
+		shortestPath := Algo(start, end, graphNodes, graphEdges, distancesEdges, grid)
 
 		// fmt.Println("Shortest Path:", shortestPath)
 
@@ -380,60 +381,7 @@ func server() {
 
 func main() {
 	fmt.Println(os.Args)
-	if len(os.Args) == 2 {
-		fmt.Println("1 argument")
-		if os.Args[1] == "server" {
-			fmt.Println("Server")
-			server()
-		} else if os.Args[1] == "graph" {
-			fmt.Println("Graph Generator")
-			graphGenerator()
-		}
-	} else if len(os.Args) == 6 {
-		if os.Args[1] == "quickpath" {
-			fmt.Println("Quick Path")
-			var startIndex, endIndex Point
-			startLat, err := strconv.ParseFloat(os.Args[2], 64)
-			if err != nil {
-				fmt.Println("Error parsing start latitude:", err)
-				return
-			}
-			startIndex.Lat = startLat
 
-			startLng, err := strconv.ParseFloat(os.Args[3], 64)
-			if err != nil {
-				fmt.Println("Error parsing start longitude:", err)
-				return
-			}
-			startIndex.Lng = startLng
-
-			endLat, err := strconv.ParseFloat(os.Args[4], 64)
-			if err != nil {
-				fmt.Println("Error parsing end latitude:", err)
-				return
-			}
-			endIndex.Lat = endLat
-
-			endLng, err := strconv.ParseFloat(os.Args[5], 64)
-			if err != nil {
-				fmt.Println("Error parsing end longitude:", err)
-				return
-			}
-			endIndex.Lng = endLng
-
-			fmt.Println(startIndex, endIndex)
-
-			shortestPath := Algo(startIndex, endIndex)
-			fmt.Println("Shortest Path:", shortestPath)
-		}
-	} else {
-		fmt.Println("Invalid arguments")
-	}
-}
-
-func Algo(Start Point, End Point) []Point {
-	//read graphNodes graphEdges distancesEdges grid from json files
-	var start = time.Now()
 	graphNodesJSON, err := os.ReadFile("graphNodes.json")
 	if err != nil {
 		fmt.Println("Error reading graphNodes from file:", err)
@@ -473,6 +421,61 @@ func Algo(Start Point, End Point) []Point {
 	if err != nil {
 		fmt.Println("Error unmarshalling grid:", err)
 	}
+
+	if len(os.Args) == 2 {
+		fmt.Println("1 argument")
+		if os.Args[1] == "server" {
+			fmt.Println("Server")
+			server(graphNodes, graphEdges, distancesEdges, grid)
+		} else if os.Args[1] == "graph" {
+			fmt.Println("Graph Generator")
+			graphGenerator()
+		}
+	} else if len(os.Args) == 6 {
+		if os.Args[1] == "quickpath" {
+			fmt.Println("Quick Path")
+			var startIndex, endIndex Point
+			startLat, err := strconv.ParseFloat(os.Args[2], 64)
+			if err != nil {
+				fmt.Println("Error parsing start latitude:", err)
+				return
+			}
+			startIndex.Lat = startLat
+
+			startLng, err := strconv.ParseFloat(os.Args[3], 64)
+			if err != nil {
+				fmt.Println("Error parsing start longitude:", err)
+				return
+			}
+			startIndex.Lng = startLng
+
+			endLat, err := strconv.ParseFloat(os.Args[4], 64)
+			if err != nil {
+				fmt.Println("Error parsing end latitude:", err)
+				return
+			}
+			endIndex.Lat = endLat
+
+			endLng, err := strconv.ParseFloat(os.Args[5], 64)
+			if err != nil {
+				fmt.Println("Error parsing end longitude:", err)
+				return
+			}
+			endIndex.Lng = endLng
+
+			fmt.Println(startIndex, endIndex)
+
+			shortestPath := Algo(startIndex, endIndex, graphNodes, graphEdges, distancesEdges, grid)
+			fmt.Println("Shortest Path:", shortestPath)
+		}
+	} else {
+		fmt.Println("Invalid arguments")
+	}
+}
+
+func Algo(Start Point, End Point, graphNodes [][2]float64, graphEdges [][4]int, distancesEdges [][4]int, grid [][][]int) []Point {
+	//read graphNodes graphEdges distancesEdges grid from json files
+	var start = time.Now()
 
 	// fmt.Println(distancesEdges)
 

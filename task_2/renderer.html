@@ -24,14 +24,20 @@
 
         var startPoint = null;
         var endPoint = null;
+        var markers = [];
+        var polylines = [];
+        var colors = ['red', 'blue', 'green', 'orange', 'purple', 'yellow'];
+        var colorIndex = 0;
 
         map.on('click', function(e) {
             if (startPoint === null) {
                 startPoint = e.latlng;
-                L.marker(startPoint).addTo(map).bindPopup('Start Point').openPopup();
+                var startMarker = L.marker(startPoint).addTo(map).bindPopup('Start Point').openPopup();
+                markers.push(startMarker);
             } else if (endPoint === null) {
                 endPoint = e.latlng;
-                L.marker(endPoint).addTo(map).bindPopup('End Point').openPopup();
+                var endMarker = L.marker(endPoint).addTo(map).bindPopup('End Point').openPopup();
+                markers.push(endMarker);
                 sendPointsToServer(startPoint, endPoint);
             }
         });
@@ -49,31 +55,44 @@
                 if (xhr.readyState === 4 && xhr.status === 200) {
                     var response = JSON.parse(xhr.responseText);
                     var shortestPath = response.shortest_path;
-                    plotPoints(shortestPath); //change here
-                    function plotPoints(points) {
-                        points.forEach(function(point) {
-                            <!-- L.circleMarker([point.lat, point.lng], { radius: 10 }).addTo(map); -->
-                            drawPath(points);
-                        });
-                    }
-                    alert("Points submitted successfully!");
+                    plotPath(shortestPath);
+                    resetPoints();
                 }
             };
         }
 
-        function plotPoints(points) {
-            points.forEach(function(point) {
-                L.marker([point.lat, point.lng]).addTo(map);
-            });
-        }
-
-        function drawPath(path) {
+        function plotPath(path) {
             var latlngs = [];
             path.forEach(function(coord) {
                 latlngs.push(L.latLng(coord.lat, coord.lng));
             });
-            var polyline = L.polyline(latlngs, {color: 'red'}).addTo(map);
+
+            var color = colors[colorIndex % colors.length];
+            var polyline = L.polyline(latlngs, { color: color }).addTo(map);
+            polylines.push(polyline);
             map.fitBounds(polyline.getBounds());
+            colorIndex++;
+        }
+
+        function clearMarkers() {
+            markers.forEach(function(marker) {
+                map.removeLayer(marker);
+            });
+            markers = [];
+        }
+
+        function clearPolylines() {
+            polylines.forEach(function(polyline) {
+                map.removeLayer(polyline);
+            });
+            polylines = [];
+        }
+
+        function resetPoints() {
+            <!-- clearMarkers(); -->
+            <!-- clearPolylines(); -->
+            startPoint = null;
+            endPoint = null;
         }
     </script>
 </body>
