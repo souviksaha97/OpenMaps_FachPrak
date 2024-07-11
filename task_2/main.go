@@ -20,6 +20,7 @@ import (
 
 	"net/http"
 
+	"github.com/adhocore/chin"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 )
@@ -101,7 +102,7 @@ func (pq *PriorityQueue) Pop() interface{} {
 */
 const PBF_FILE_PATH = "/home/sahask/osm_data/planet-coastlines.osm.pbf"
 
-const pointcount = 10000
+const pointcount = 100000
 const longBincount = 3600
 
 func graphGenerator() {
@@ -124,8 +125,8 @@ func graphGenerator() {
 	ways_map := make(map[osm.NodeID][]osm.NodeID)
 	nodeRelations := make(map[osm.NodeID]WayComplete)
 
-	rows := 400
-	colums := 800
+	rows := 180
+	colums := 360
 	randomPointCount := pointcount
 	grid := make([][][]int, rows)
 	graphNodes := [pointcount][2]float64{}
@@ -238,10 +239,10 @@ func graphGenerator() {
 	fmt.Println(returedges)
 
 	//random points
-	slog.Info("starttime 1 mio: " + time.Since(start).String())
+	slog.Info("starttime 4 mio: " + time.Since(start).String())
 	for s := 0; s < randomPointCount; s++ {
-		randLong := rand.Float64()*360.0 - 180.0
-		randLat := float64((math.Asin(rand.Float64()*2.0-1.0) * 180.0 / math.Pi))
+		var randLong float64
+		var randLat float64
 		for {
 			randLong = rand.Float64()*360.0 - 180.0
 			randLat = float64((math.Asin(rand.Float64()*2.0-1.0) * 180.0 / math.Pi))
@@ -267,14 +268,13 @@ func graphGenerator() {
 		graphNodes[s] = [2]float64{randLat, randLong}
 	}
 	fmt.Println("00 grid length", len(grid[0][0]))
-	slog.Info("endtime 1 mio: " + time.Since(start).String())
-	//fmt.Println(graphNodes)
-	//fmt.Println(grid)
+	slog.Info("endtime 4 mio: " + time.Since(start).String())
+
 	for k := range graphNodes {
 		if k%10000 == 0 {
 			fmt.Println("10k")
 		}
-		//fmt.Println(k)
+
 		u := graphNodes[k]
 		edge := graphEdges[k]
 		a, b := findRowAndColumnInGrid(rows, colums, u[0], u[1])
@@ -431,6 +431,48 @@ func main() {
 			fmt.Println("Graph Generator")
 			graphGenerator()
 		}
+	} else if len(os.Args) == 3 {
+		fidgeter := chin.New()
+		if os.Args[1] == "multiple" {
+			fmt.Println("Multiple Analysis")
+			go fidgeter.Start()
+			iterations, err := strconv.Atoi(os.Args[2])
+			if err != nil {
+				fmt.Println("Error parsing iterations:", err)
+				return
+			}
+			var startDijkstra = time.Now()
+			for i := 0; i < iterations; i++ {
+
+				var randomStartIndex = rand.Intn(len(graphNodes))
+				var randomEndIndex = rand.Intn(len(graphNodes))
+				// var startIndex = Point{Lat: graphNodes[randomStartIndex][0], Lng: graphNodes[randomStartIndex][1]}
+				// var endIndex = Point{Lat: graphNodes[randomEndIndex][0], Lng: graphNodes[randomEndIndex][1]}
+				// fmt.Println("Iteration Dijkstra: ", i, "Start Index: ", randomStartIndex, "End Index: ", randomEndIndex)
+				// fmt.Println("Start Point: ", startIndex)
+				// fmt.Println("End Point: ", endIndex)
+				// _ = Algo(startIndex, endIndex, graphNodes, graphEdges, distancesEdges, grid)
+				Dijkstra(graphNodes, graphEdges, distancesEdges, randomStartIndex, randomEndIndex)
+				// AStar(graphNodes, graphEdges, distancesEdges, randomStartIndex, randomEndIndex)
+			}
+			fmt.Println("Average Dijsktra time: ", time.Since(startDijkstra)/time.Duration(iterations))
+			// var endDijkstra = time.Now()
+			var startAStar = time.Now()
+			for i := 0; i < iterations; i++ {
+				var randomStartIndex = rand.Intn(len(graphNodes))
+				var randomEndIndex = rand.Intn(len(graphNodes))
+				// var startIndex = Point{Lat: graphNodes[randomStartIndex][0], Lng: graphNodes[randomStartIndex][1]}
+				// var endIndex = Point{Lat: graphNodes[randomEndIndex][0], Lng: graphNodes[randomEndIndex][1]}
+				// fmt.Println("Iteration AStar: ", i, "Start Index: ", randomStartIndex, "End Index: ", randomEndIndex)
+				// fmt.Println("Start Point: ", startIndex)
+				// fmt.Println("End Point: ", endIndex)
+
+				AStar(graphNodes, graphEdges, distancesEdges, randomStartIndex, randomEndIndex)
+			}
+
+			fmt.Println("Average AStar time: ", time.Since(startAStar)/time.Duration(iterations))
+			fidgeter.Stop()
+		}
 	} else if len(os.Args) == 6 {
 		if os.Args[1] == "quickpath" {
 			fmt.Println("Quick Path")
@@ -475,7 +517,7 @@ func main() {
 
 func Algo(Start Point, End Point, graphNodes [][2]float64, graphEdges [][4]int, distancesEdges [][4]int, grid [][][]int) []Point {
 	//read graphNodes graphEdges distancesEdges grid from json files
-	var start = time.Now()
+	// var start = time.Now()
 
 	// fmt.Println(distancesEdges)
 
@@ -498,12 +540,14 @@ func Algo(Start Point, End Point, graphNodes [][2]float64, graphEdges [][4]int, 
 			distpointEnd = distpointENdNew
 		}
 	}
-	fmt.Println("dijkstra go", nearestpointStartIndex, graphNodes[nearestpointStartIndex], nearpointEndIndex, graphNodes[nearpointEndIndex])
-	slog.Info("dykstra start: " + time.Since(start).String())
 
-	dist, path := Dijkstra(graphNodes[:], graphEdges[:], distancesEdges[:], nearestpointStartIndex, nearpointEndIndex)
-	fmt.Println(dist)
-	slog.Info("dykstra end: " + time.Since(start).String())
+	// fmt.Println("dijkstra go", nearestpointStartIndex, graphNodes[nearestpointStartIndex], nearpointEndIndex, graphNodes[nearpointEndIndex])
+	// slog.Info("dykstra start: " + time.Since(start).String())
+	// var startDijkstra = time.Now()
+	// _, path := Dijkstra(graphNodes[:], graphEdges[:], distancesEdges[:], nearestpointStartIndex, nearpointEndIndex)
+	_, path := AStar(graphNodes[:], graphEdges[:], distancesEdges[:], nearestpointStartIndex, nearpointEndIndex)
+	// fmt.Println(dist)
+	// slog.Info("dykstra end: " + time.Since(startDijkstra).String())
 	returndykstrapath := [][2]float64{}
 	for k := range path {
 		returndykstrapath = append(returndykstrapath, graphNodes[path[k]])
@@ -513,21 +557,21 @@ func Algo(Start Point, End Point, graphNodes [][2]float64, graphEdges [][4]int, 
 	//fmt.Println(graphEdges)
 	//fmt.Println(returnEdges2)
 
-	highest := -1
-	counter := 0
-	for k := range grid {
-		for l := range grid[k] {
-			if len(grid[k][l]) > highest {
-				highest = len(grid[k][l])
-			}
-			if len(grid[k][l]) > 0 && len(grid[k][l]) < 5 {
-				counter++
-			}
+	// highest := -1
+	// counter := 0
+	// for k := range grid {
+	// 	for l := range grid[k] {
+	// 		if len(grid[k][l]) > highest {
+	// 			highest = len(grid[k][l])
+	// 		}
+	// 		if len(grid[k][l]) > 0 && len(grid[k][l]) < 5 {
+	// 			counter++
+	// 		}
 
-		}
+	// 	}
 
-	}
-	fmt.Println("highest", highest, "count greater 0", counter)
+	// }
+	// fmt.Println("highest", highest, "count greater 0", counter)
 
 	//randompoints end
 	// fmt.Println(returndykstrapath)
@@ -1507,7 +1551,7 @@ func findBottomRight(u int, graphpoints [pointcount][2]float64, graphEdges *[poi
 	return false
 
 }
-func Dijkstra(nodes [][2]float64, edges [][4]int, edgeweights [][4]int, src, dst int) (int, []int) {
+func Dijkstra(nodes [][2]float64, edges [][4]int, edgeweights [][4]int, src int, dst int) (int, []int) {
 	dist := make(map[int]int)
 	prev := make(map[int]int)
 	found := false
@@ -1525,7 +1569,7 @@ func Dijkstra(nodes [][2]float64, edges [][4]int, edgeweights [][4]int, src, dst
 		currentNode := current.node
 
 		if currentNode == dst {
-			fmt.Println("reached from", currentNode)
+			// fmt.Println("reached from", currentNode)
 			found = true
 			break
 		}
@@ -1553,7 +1597,6 @@ func Dijkstra(nodes [][2]float64, edges [][4]int, edgeweights [][4]int, src, dst
 			}
 		}
 	}
-	fmt.Println("finisheddykstra , calculating path")
 
 	path := []int{}
 	if found {
@@ -1646,4 +1689,56 @@ func getAllNeighbourCellss(grid [][][]int, x int, y int, latitude float64, radiu
 	}
 	//fmt.Println("nachbarlänge", counter)
 	return neighbors
+}
+
+func AStar(nodes [][2]float64, edges [][4]int, edgeweights [][4]int, src int, dst int) (int, []int) {
+	dist := make(map[int]int)
+	prev := make(map[int]int)
+	found := false
+	for node := range nodes {
+		dist[node] = math.MaxInt64
+	}
+	dist[src] = 0
+
+	pq := &PriorityQueue{}
+	heap.Init(pq)
+	heap.Push(pq, &QueueItem{node: src, priority: 0})
+
+	for pq.Len() > 0 {
+		current := heap.Pop(pq).(*QueueItem)
+		currentNode := current.node
+
+		if currentNode == dst {
+			found = true
+			break
+		}
+
+		for _, neighbor := range edges[currentNode] {
+			if neighbor < 0 {
+				break
+			}
+			newDist := dist[currentNode] + int(haversine(nodes[neighbor][0], nodes[neighbor][1], nodes[dst][0], nodes[dst][1]))
+			if newDist < dist[neighbor] {
+				dist[neighbor] = newDist
+				prev[neighbor] = currentNode
+				heap.Push(pq, &QueueItem{node: neighbor, priority: newDist})
+			}
+
+		}
+
+	}
+
+	path := []int{}
+	if found {
+		for at := dst; at != src; at = prev[at] {
+			path = append([]int{at}, path...)
+		}
+		path = append([]int{src}, path...)
+	} else {
+		path = append([]int{dst}, path...)
+		path = append([]int{src}, path...)
+		return -1, path
+	}
+	return dist[dst], path
+
 }
