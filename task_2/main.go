@@ -20,9 +20,10 @@ import (
 
 	"net/http"
 
-	"github.com/adhocore/chin"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
+
+	"github.com/adhocore/chin"
 )
 
 /*
@@ -102,8 +103,9 @@ func (pq *PriorityQueue) Pop() interface{} {
 */
 const PBF_FILE_PATH = "/home/sahask/osm_data/planet-coastlines.osm.pbf"
 
-const pointcount = 100000
+const pointcount = 1000000
 const longBincount = 3600
+const landmarksCount = 0.0001 * pointcount
 
 func graphGenerator() {
 	var start = time.Now()
@@ -369,7 +371,7 @@ func server(graphNodes [][2]float64, graphEdges [][4]int, distancesEdges [][4]in
 		fmt.Printf("Received end point: %+v\n", end)
 
 		// Call the Algo function
-		shortestPath := Algo(start, end, graphNodes, graphEdges, distancesEdges, grid)
+		shortestPath := AlgoAStar(start, end, graphNodes, graphEdges, distancesEdges, grid)
 
 		// fmt.Println("Shortest Path:", shortestPath)
 
@@ -422,100 +424,180 @@ func main() {
 		fmt.Println("Error unmarshalling grid:", err)
 	}
 
-	if len(os.Args) == 2 {
-		fmt.Println("1 argument")
-		if os.Args[1] == "server" {
-			fmt.Println("Server")
-			server(graphNodes, graphEdges, distancesEdges, grid)
-		} else if os.Args[1] == "graph" {
-			fmt.Println("Graph Generator")
-			graphGenerator()
+	if os.Args[1] == "server" {
+		fmt.Println("Server")
+		server(graphNodes, graphEdges, distancesEdges, grid)
+	} else if os.Args[1] == "graph" {
+		fmt.Println("Graph Generator")
+		graphGenerator()
+	} else if os.Args[1] == "a-star-pre" {
+		fmt.Println("Choosing Landmarks")
+		// Choose landmarks
+		minDistance, _ := strconv.Atoi(os.Args[2])
+		landmarks := chooseLandmarks(graphNodes, landmarksCount, minDistance)
+		if landmarks == nil {
+			fmt.Println("Error choosing landmarks")
+			return
 		}
-	} else if len(os.Args) == 3 {
-		fidgeter := chin.New()
-		if os.Args[1] == "multiple" {
-			fmt.Println("Multiple Analysis")
-			go fidgeter.Start()
-			iterations, err := strconv.Atoi(os.Args[2])
-			if err != nil {
-				fmt.Println("Error parsing iterations:", err)
-				return
-			}
-			var startDijkstra = time.Now()
-			for i := 0; i < iterations; i++ {
 
-				var randomStartIndex = rand.Intn(len(graphNodes))
-				var randomEndIndex = rand.Intn(len(graphNodes))
-				// var startIndex = Point{Lat: graphNodes[randomStartIndex][0], Lng: graphNodes[randomStartIndex][1]}
-				// var endIndex = Point{Lat: graphNodes[randomEndIndex][0], Lng: graphNodes[randomEndIndex][1]}
-				// fmt.Println("Iteration Dijkstra: ", i, "Start Index: ", randomStartIndex, "End Index: ", randomEndIndex)
-				// fmt.Println("Start Point: ", startIndex)
-				// fmt.Println("End Point: ", endIndex)
-				// _ = Algo(startIndex, endIndex, graphNodes, graphEdges, distancesEdges, grid)
-				Dijkstra(graphNodes, graphEdges, distancesEdges, randomStartIndex, randomEndIndex)
-				// AStar(graphNodes, graphEdges, distancesEdges, randomStartIndex, randomEndIndex)
-			}
-			fmt.Println("Average Dijsktra time: ", time.Since(startDijkstra)/time.Duration(iterations))
-			// var endDijkstra = time.Now()
-			var startAStar = time.Now()
-			for i := 0; i < iterations; i++ {
-				var randomStartIndex = rand.Intn(len(graphNodes))
-				var randomEndIndex = rand.Intn(len(graphNodes))
-				// var startIndex = Point{Lat: graphNodes[randomStartIndex][0], Lng: graphNodes[randomStartIndex][1]}
-				// var endIndex = Point{Lat: graphNodes[randomEndIndex][0], Lng: graphNodes[randomEndIndex][1]}
-				// fmt.Println("Iteration AStar: ", i, "Start Index: ", randomStartIndex, "End Index: ", randomEndIndex)
-				// fmt.Println("Start Point: ", startIndex)
-				// fmt.Println("End Point: ", endIndex)
-
-				AStar(graphNodes, graphEdges, distancesEdges, randomStartIndex, randomEndIndex)
-			}
-
-			fmt.Println("Average AStar time: ", time.Since(startAStar)/time.Duration(iterations))
-			fidgeter.Stop()
+		landmarksNodes := make([][2]float64, len(landmarks))
+		for i, landmark := range landmarks {
+			landmarksNodes[i][0] = graphNodes[landmark][0]
+			landmarksNodes[i][1] = graphNodes[landmark][1]
 		}
-	} else if len(os.Args) == 6 {
-		if os.Args[1] == "quickpath" {
-			fmt.Println("Quick Path")
-			var startIndex, endIndex Point
-			startLat, err := strconv.ParseFloat(os.Args[2], 64)
-			if err != nil {
-				fmt.Println("Error parsing start latitude:", err)
-				return
-			}
-			startIndex.Lat = startLat
 
-			startLng, err := strconv.ParseFloat(os.Args[3], 64)
-			if err != nil {
-				fmt.Println("Error parsing start longitude:", err)
-				return
-			}
-			startIndex.Lng = startLng
+		// Write landmarks to file
+		landmarksJSON, _ := json.Marshal(landmarksNodes)
+		err = os.WriteFile("landmarks.json", landmarksJSON, 0644)
+		if err != nil {
+			fmt.Println("Error writing landmarks to file:", err)
+		}
 
-			endLat, err := strconv.ParseFloat(os.Args[4], 64)
-			if err != nil {
-				fmt.Println("Error parsing end latitude:", err)
-				return
-			}
-			endIndex.Lat = endLat
-
-			endLng, err := strconv.ParseFloat(os.Args[5], 64)
-			if err != nil {
-				fmt.Println("Error parsing end longitude:", err)
-				return
-			}
-			endIndex.Lng = endLng
-
-			fmt.Println(startIndex, endIndex)
-
-			shortestPath := Algo(startIndex, endIndex, graphNodes, graphEdges, distancesEdges, grid)
+	} else if os.Args[1] == "quickpath" {
+		fmt.Println("Quick Path")
+		var startIndex, endIndex Point
+		startLat, err := strconv.ParseFloat(os.Args[2], 64)
+		if err != nil {
+			fmt.Println("Error parsing start latitude:", err)
+			return
+		}
+		startIndex.Lat = startLat
+		startLng, err := strconv.ParseFloat(os.Args[3], 64)
+		if err != nil {
+			fmt.Println("Error parsing start longitude:", err)
+			return
+		}
+		startIndex.Lng = startLng
+		endLat, err := strconv.ParseFloat(os.Args[4], 64)
+		if err != nil {
+			fmt.Println("Error parsing end latitude:", err)
+			return
+		}
+		endIndex.Lat = endLat
+		endLng, err := strconv.ParseFloat(os.Args[5], 64)
+		if err != nil {
+			fmt.Println("Error parsing end longitude:", err)
+			return
+		}
+		endIndex.Lng = endLng
+		algo := os.Args[6]
+		var startTime = time.Now()
+		if algo == "dijkstra" {
+			fmt.Println("Dijkstra")
+			shortestPath := AlgoDijkstra(startIndex, endIndex, graphNodes, graphEdges, distancesEdges, grid)
+			fmt.Println("Shortest Path:", shortestPath)
+		} else if algo == "astar" {
+			fmt.Println("AStar")
+			shortestPath := AlgoAStar(startIndex, endIndex, graphNodes, graphEdges, distancesEdges, grid)
 			fmt.Println("Shortest Path:", shortestPath)
 		}
+		fmt.Println("Time taken:", time.Since(startTime))
+
+	} else if os.Args[1] == "multiple" {
+		fmt.Println("Multiple Analysis")
+		iterations, err := strconv.Atoi(os.Args[2])
+		if err != nil {
+			fmt.Println("Error parsing iterations:", err)
+			return
+		}
+		fidgeter := chin.New()
+		go fidgeter.Start()
+
+		var randomIndices = make([][2]int, iterations)
+		for i := 0; i < iterations; i++ {
+			randomIndices[i][0] = rand.Intn(len(graphNodes))
+			randomIndices[i][1] = rand.Intn(len(graphNodes))
+		}
+
+		var startDijkstra = time.Now()
+		for i := 0; i < iterations; i++ {
+			Dijkstra(graphNodes, graphEdges, distancesEdges, randomIndices[i][0], randomIndices[i][1])
+		}
+		fmt.Println("Average Dijsktra time: ", time.Since(startDijkstra)/time.Duration(iterations))
+
+		var startAStar = time.Now()
+		for i := 0; i < iterations; i++ {
+			AStar(graphNodes, graphEdges, distancesEdges, randomIndices[i][0], randomIndices[i][1])
+		}
+
+		fmt.Println("Average AStar time: ", time.Since(startAStar)/time.Duration(iterations))
+		fidgeter.Stop()
 	} else {
 		fmt.Println("Invalid arguments")
 	}
 }
 
-func Algo(Start Point, End Point, graphNodes [][2]float64, graphEdges [][4]int, distancesEdges [][4]int, grid [][][]int) []Point {
+func AlgoDijkstra(Start Point, End Point, graphNodes [][2]float64, graphEdges [][4]int, distancesEdges [][4]int, grid [][][]int) []Point {
+	//read graphNodes graphEdges distancesEdges grid from json files
+	// var start = time.Now()
+
+	// fmt.Println(distancesEdges)
+
+	nearestnodeStart := [2]float64{Start.Lat, Start.Lng}
+	distpointStart := 100000000.0
+	distpointEnd := 100000000.0
+	nearestnodeEnd := [2]float64{End.Lat, End.Lng}
+	nearestpointStartIndex := -1
+	nearpointEndIndex := -1
+	for k := range graphNodes {
+		distpointStartNew := haversine(graphNodes[k][0], graphNodes[k][1], nearestnodeStart[0], nearestnodeStart[1])
+		distpointENdNew := haversine(graphNodes[k][0], graphNodes[k][1], nearestnodeEnd[0], nearestnodeEnd[1])
+
+		if distpointStartNew < float64(distpointStart) {
+			nearestpointStartIndex = k
+			distpointStart = distpointStartNew
+		}
+		if distpointENdNew < distpointEnd {
+			nearpointEndIndex = k
+			distpointEnd = distpointENdNew
+		}
+	}
+
+	// fmt.Println("dijkstra go", nearestpointStartIndex, graphNodes[nearestpointStartIndex], nearpointEndIndex, graphNodes[nearpointEndIndex])
+	// slog.Info("dykstra start: " + time.Since(start).String())
+	// var startDijkstra = time.Now()
+	// _, path := Dijkstra(graphNodes[:], graphEdges[:], distancesEdges[:], nearestpointStartIndex, nearpointEndIndex)
+	_, path := Dijkstra(graphNodes[:], graphEdges[:], distancesEdges[:], nearestpointStartIndex, nearpointEndIndex)
+	// fmt.Println(dist)
+	// slog.Info("dykstra end: " + time.Since(startDijkstra).String())
+	returndykstrapath := [][2]float64{}
+	for k := range path {
+		returndykstrapath = append(returndykstrapath, graphNodes[path[k]])
+	}
+
+	//fmt.Println(viewEdges)
+	//fmt.Println(graphEdges)
+	//fmt.Println(returnEdges2)
+
+	// highest := -1
+	// counter := 0
+	// for k := range grid {
+	// 	for l := range grid[k] {
+	// 		if len(grid[k][l]) > highest {
+	// 			highest = len(grid[k][l])
+	// 		}
+	// 		if len(grid[k][l]) > 0 && len(grid[k][l]) < 5 {
+	// 			counter++
+	// 		}
+
+	// 	}
+
+	// }
+	// fmt.Println("highest", highest, "count greater 0", counter)
+
+	//randompoints end
+	// fmt.Println(returndykstrapath)
+
+	// Convert returndykstrapath to []Point
+	shortestPath := make([]Point, len(returndykstrapath))
+	for i, point := range returndykstrapath {
+		shortestPath[i] = Point{Lat: point[0], Lng: point[1]}
+	}
+
+	return shortestPath
+}
+
+func AlgoAStar(Start Point, End Point, graphNodes [][2]float64, graphEdges [][4]int, distancesEdges [][4]int, grid [][][]int) []Point {
 	//read graphNodes graphEdges distancesEdges grid from json files
 	// var start = time.Now()
 
@@ -1740,5 +1822,46 @@ func AStar(nodes [][2]float64, edges [][4]int, edgeweights [][4]int, src int, ds
 		return -1, path
 	}
 	return dist[dst], path
+}
 
+// Function to check if a key exists in a slice
+func contains(slice []int, key int) bool {
+	for _, element := range slice {
+		if element == key {
+			return true
+		}
+	}
+	return false
+}
+
+func chooseLandmarks(nodes [][2]float64, numLandmarks int, minDistance int) []int {
+	landmarks := make([]int, numLandmarks)
+	landmarkCounter := 0
+	validityCounter := 0
+	for landmarkCounter < numLandmarks && validityCounter < 10 {
+		randomPoint := rand.Intn(len(nodes))
+		suitablePoint := true
+		if !contains(landmarks, randomPoint) {
+			for _, landmark := range landmarks {
+				if haversine(nodes[randomPoint][0], nodes[randomPoint][1], nodes[landmark][0], nodes[landmark][1]) < float64(minDistance) {
+					suitablePoint = false
+					validityCounter++
+					break
+				}
+			}
+			if suitablePoint {
+				landmarks[landmarkCounter] = randomPoint
+				landmarkCounter++
+				validityCounter = 0
+				slog.Infof("Landmark %d: %d", landmarkCounter, randomPoint)
+			}
+
+		}
+	}
+
+	if validityCounter >= 2 {
+		fmt.Println("Could not find suitable landmarks")
+		return nil
+	}
+	return landmarks
 }

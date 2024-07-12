@@ -2,9 +2,10 @@ import json
 import folium
 
 # Read the JSON file
-with open('/home/fsociety/Documents/Uni-Stuttgart/SS2024/OpenMaps_FachPrak/task_2/graphNodes.json', 'r') as file:
+with open('/home/fsociety/Documents/Uni-Stuttgart/SS2024/OpenMaps_FachPrak/task_2/landmarks.json', 'r') as file:
     data = json.load(file)
 
+print(len(data))
 # Initialize a map centered on an average location
 map_center = [20, 0]  # Slightly adjusted center for better visibility of points
 m = folium.Map(location=map_center, zoom_start=2)
@@ -29,4 +30,4 @@ for item in data:
         ).add_to(m)
 
 # Save the map to an HTML file
-m.save('map.html')
+m.save('/home/fsociety/Documents/Uni-Stuttgart/SS2024/OpenMaps_FachPrak/task_2/map.html')
