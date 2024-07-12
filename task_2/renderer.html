@@ -9,11 +9,26 @@
             height: 600px;
             width: 100%;
         }
+        .controls {
+            margin-top: 10px;
+        }
+        .controls input,
+        .controls button {
+            display: block;
+            margin: 5px 0;
+        }
     </style>
 </head>
 <body>
     <h1>Select Start and End Points</h1>
     <div id="map"></div>
+    <div class="controls">
+        <label for="dijkstra-time">Dijkstra Time (ms):</label>
+        <input type="text" id="dijkstra-time" readonly>
+        <label for="astar-time">A* Time (ms):</label>
+        <input type="text" id="astar-time" readonly>
+        <button id="clear-map">Clear Map</button>
+    </div>
     <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
     <script>
         var map = L.map('map').setView([0, 0], 2);
@@ -42,6 +57,8 @@
             }
         });
 
+        document.getElementById('clear-map').addEventListener('click', clearMap);
+
         function sendPointsToServer(start, end) {
             var xhr = new XMLHttpRequest();
             xhr.open("POST", "http://localhost:5000/submit_points", true);
@@ -54,8 +71,19 @@
             xhr.onreadystatechange = function () {
                 if (xhr.readyState === 4 && xhr.status === 200) {
                     var response = JSON.parse(xhr.responseText);
-                    var shortestPath = response.shortest_path;
-                    plotPath(shortestPath);
+                    var shortestPath_djik = response.shortest_path_djik;
+                    var shortestPath_astar = response.shortest_path_astar;
+                    var dijkstraTime = response.dijkstra_time;
+                    var astarTime = response.astar_time;
+
+                    var dijkstraColor = plotPath(shortestPath_djik);
+                    var astarColor = plotPath(shortestPath_astar);
+
+                    document.getElementById('dijkstra-time').value = dijkstraTime.toFixed(2) + " ms";
+                    document.getElementById('dijkstra-time').style.color = dijkstraColor;
+                    document.getElementById('astar-time').value = astarTime.toFixed(2) + " ms";
+                    document.getElementById('astar-time').style.color = astarColor;
+
                     resetPoints();
                 }
             };
@@ -72,25 +100,22 @@
             polylines.push(polyline);
             map.fitBounds(polyline.getBounds());
             colorIndex++;
+            return color;
         }
 
-        function clearMarkers() {
+        function clearMap() {
             markers.forEach(function(marker) {
                 map.removeLayer(marker);
             });
             markers = [];
-        }
-
-        function clearPolylines() {
             polylines.forEach(function(polyline) {
                 map.removeLayer(polyline);
             });
             polylines = [];
+            colorIndex = 0;
         }
 
         function resetPoints() {
-            <!-- clearMarkers(); -->
-            <!-- clearPolylines(); -->
             startPoint = null;
             endPoint = null;
         }

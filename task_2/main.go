@@ -367,15 +367,22 @@ func server(graphNodes [][2]float64, graphEdges [][4]int, distancesEdges [][4]in
 			return
 		}
 
-		fmt.Printf("Received start point: %+v\n", start)
-		fmt.Printf("Received end point: %+v\n", end)
+		// fmt.Printf("Received start point: %+v\n", start)
+		// fmt.Printf("Received end point: %+v\n", end)
 
 		// Call the Algo function
-		shortestPath := AlgoAStar(start, end, graphNodes, graphEdges, distancesEdges, grid)
+		var startTimeAStar = time.Now()
+		shortestPath1 := AlgoAStar(start, end, graphNodes, graphEdges, distancesEdges, grid)
+		var timeTakenAStar = time.Since(startTimeAStar).Milliseconds()
+		var startTimeDijkstra = time.Now()
+		shortestPath2 := AlgoDijkstra(start, end, graphNodes, graphEdges, distancesEdges, grid)
+		var timeTakenDijkstra = time.Since(startTimeDijkstra).Milliseconds()
 
+		fmt.Println("AStar Time:", timeTakenAStar)
+		fmt.Println("Dijkstra Time:", timeTakenDijkstra)
 		// fmt.Println("Shortest Path:", shortestPath)
 
-		c.JSON(http.StatusOK, gin.H{"message": "Points received successfully", "shortest_path": shortestPath})
+		c.JSON(http.StatusOK, gin.H{"astar_time": timeTakenAStar, "dijkstra_time": timeTakenDijkstra, "shortest_path_astar": shortestPath1, "shortest_path_djik": shortestPath2})
 	})
 
 	router.Run(":5000")
@@ -422,6 +429,16 @@ func main() {
 	err = json.Unmarshal(gridJSON, &grid)
 	if err != nil {
 		fmt.Println("Error unmarshalling grid:", err)
+	}
+
+	var landmarks [][2]float64
+	landmarksJSON, err := os.ReadFile("landmarks.json")
+	if err != nil {
+		fmt.Println("Error reading landmarks from file:", err)
+	}
+	err = json.Unmarshal(landmarksJSON, &landmarks)
+	if err != nil {
+		fmt.Println("Error unmarshalling landmarks:", err)
 	}
 
 	if os.Args[1] == "server" {
@@ -520,6 +537,14 @@ func main() {
 		}
 
 		fmt.Println("Average AStar time: ", time.Since(startAStar)/time.Duration(iterations))
+
+		// var startALT = time.Now()
+		// for i := 0; i < iterations; i++ {
+		// 	ALT(graphNodes, graphEdges, distancesEdges, landmarks, randomIndices[i][0], randomIndices[i][1])
+		// }
+
+		// fmt.Println("Average ALT time: ", time.Since(startALT)/time.Duration(iterations))
+
 		fidgeter.Stop()
 	} else {
 		fmt.Println("Invalid arguments")
@@ -1794,15 +1819,16 @@ func AStar(nodes [][2]float64, edges [][4]int, edgeweights [][4]int, src int, ds
 			break
 		}
 
-		for _, neighbor := range edges[currentNode] {
+		for i, neighbor := range edges[currentNode] {
 			if neighbor < 0 {
 				break
 			}
-			newDist := dist[currentNode] + int(haversine(nodes[neighbor][0], nodes[neighbor][1], nodes[dst][0], nodes[dst][1]))
+			newDist := dist[currentNode] + edgeweights[currentNode][i] + int(haversine(nodes[edges[currentNode][i]][0], nodes[edges[currentNode][i]][1], nodes[dst][0], nodes[dst][1]))
 			if newDist < dist[neighbor] {
 				dist[neighbor] = newDist
 				prev[neighbor] = currentNode
-				heap.Push(pq, &QueueItem{node: neighbor, priority: newDist})
+				priority := newDist
+				heap.Push(pq, &QueueItem{node: neighbor, priority: priority})
 			}
 
 		}
@@ -1894,3 +1920,7 @@ func landmarksDistanceMaximiser(nodes [][2]float64, numLandmarks int) []int {
 
 	return landmarks
 }
+
+// func ALT(nodes [][2]float64, edges [][4]int, edgeweights [][4]int, landmarks [][2]float64, src int, dst int) (int, []int) {
+
+// }
