@@ -430,15 +430,13 @@ func main() {
 	} else if os.Args[1] == "graph" {
 		fmt.Println("Graph Generator")
 		graphGenerator()
-	} else if os.Args[1] == "a-star-pre" {
+	} else if os.Args[1] == "alt-pre" {
 		fmt.Println("Choosing Landmarks")
 		// Choose landmarks
-		minDistance, _ := strconv.Atoi(os.Args[2])
-		landmarks := chooseLandmarks(graphNodes, landmarksCount, minDistance)
-		if landmarks == nil {
-			fmt.Println("Error choosing landmarks")
-			return
-		}
+		// minDistance, _ := strconv.Atoi(os.Args[2])
+		fidgeter := chin.New()
+		go fidgeter.Start()
+		landmarks := landmarksDistanceMaximiser(graphNodes, landmarksCount)
 
 		landmarksNodes := make([][2]float64, len(landmarks))
 		for i, landmark := range landmarks {
@@ -452,6 +450,7 @@ func main() {
 		if err != nil {
 			fmt.Println("Error writing landmarks to file:", err)
 		}
+		fidgeter.Stop()
 
 	} else if os.Args[1] == "quickpath" {
 		fmt.Println("Quick Path")
@@ -1838,7 +1837,7 @@ func chooseLandmarks(nodes [][2]float64, numLandmarks int, minDistance int) []in
 	landmarks := make([]int, numLandmarks)
 	landmarkCounter := 0
 	validityCounter := 0
-	for landmarkCounter < numLandmarks && validityCounter < 10 {
+	for landmarkCounter < numLandmarks && validityCounter < 1000 {
 		randomPoint := rand.Intn(len(nodes))
 		suitablePoint := true
 		if !contains(landmarks, randomPoint) {
@@ -1859,9 +1858,39 @@ func chooseLandmarks(nodes [][2]float64, numLandmarks int, minDistance int) []in
 		}
 	}
 
-	if validityCounter >= 2 {
+	if validityCounter >= 1000 {
 		fmt.Println("Could not find suitable landmarks")
 		return nil
 	}
+	return landmarks
+}
+
+func landmarksDistanceMaximiser(nodes [][2]float64, numLandmarks int) []int {
+	landmarks := make([]int, numLandmarks)
+
+	maxDistance := 0.0
+
+	for i := 0; i < len(nodes); i++ {
+		for j := i + 1; j < len(nodes); j++ {
+			distance := haversine(nodes[i][0], nodes[i][1], nodes[j][0], nodes[j][1])
+			if distance > maxDistance {
+				maxDistance = distance
+			}
+		}
+	}
+
+	fmt.Printf("Max distance: %f\n", maxDistance)
+
+	for {
+		res := chooseLandmarks(nodes, numLandmarks, int(maxDistance))
+		if res == nil {
+			maxDistance = maxDistance * 0.9
+			fmt.Println("Trying with smaller distance: ", maxDistance)
+		} else {
+			landmarks = res
+			break
+		}
+	}
+
 	return landmarks
 }
