@@ -106,9 +106,9 @@ func (pq *PriorityQueue) Pop() interface{} {
 */
 const PBF_FILE_PATH = "/home/sahask/osm_data/planet-coastlines.osm.pbf"
 
-const pointcount = 1000000
+const pointcount = 4000000
 const longBincount = 3600
-const landmarksCount = 0.00001 * pointcount
+const landmarksCount = 40
 
 func graphGenerator() {
 	var start = time.Now()
@@ -380,21 +380,20 @@ func server(graphNodes [][2]float64, graphEdges [][4]int, distancesEdges [][4]in
 		// fmt.Printf("Received end point: %+v\n", end)
 
 		// Call the Algo function
-		tempDist := make(map[int]int)
 		// copier.CopyWithOption(&tempDist, &dist, copier.Option{DeepCopy: true})
-		copier.Copy(&tempDist, &dist)
+		// copier.Copy(&tempDist, &dist)
 		var startTimeAStar = time.Now()
-		shortestPathAStar := AlgoAStar(tempDist, start, end, graphNodes, graphEdges, distancesEdges, grid)
+		shortestPathAStar := AlgoAStar(start, end, graphNodes, graphEdges, distancesEdges, grid)
 		var timeTakenAStar = time.Since(startTimeAStar).Milliseconds()
 		// copier.CopyWithOption(&tempDist, &dist, copier.Option{DeepCopy: true})
-		copier.Copy(&tempDist, &dist)
+		// copier.Copy(&tempDist, &dist)
 		var startTimeDijkstra = time.Now()
-		shortestPathDjikstra := AlgoDijkstra(tempDist, start, end, graphNodes, graphEdges, distancesEdges, grid)
+		shortestPathDjikstra := AlgoDijkstra(start, end, graphNodes, graphEdges, distancesEdges, grid)
 		var timeTakenDijkstra = time.Since(startTimeDijkstra).Milliseconds()
 
-		copier.Copy(&tempDist, &dist)
+		// copier.Copy(&tempDist, &dist)
 		var startTimeALT = time.Now()
-		shortestPathALT := AlgoALT(tempDist, start, end, graphNodes, graphEdges, distancesEdges, landmarks, grid)
+		shortestPathALT := AlgoALT(start, end, graphNodes, graphEdges, distancesEdges, landmarks, grid)
 		var timeTakenALT = time.Since(startTimeALT).Milliseconds()
 
 		fmt.Println("AStar Time:", timeTakenAStar)
@@ -573,28 +572,28 @@ func main() {
 
 		fmt.Println(iterations, "Random points generated")
 
-		tempDist := make(map[int]int)
+		// tempDist := make(map[int]int)
 		var startDijkstra = time.Now()
 		for i := 0; i < iterations; i++ {
 			// copier.CopyWithOption(&tempDist, &dist, copier.Option{DeepCopy: true})
-			copier.Copy(&tempDist, &dist)
-			Dijkstra(tempDist, graphNodes, graphEdges, distancesEdges, randomIndices[i][0], randomIndices[i][1])
+			// copier.Copy(&tempDist, &dist)
+			Dijkstra(graphNodes, graphEdges, distancesEdges, randomIndices[i][0], randomIndices[i][1])
 		}
 		fmt.Println("Average Dijsktra time: ", time.Since(startDijkstra)/time.Duration(iterations))
 
 		var startAStar = time.Now()
 		for i := 0; i < iterations; i++ {
 			// copier.CopyWithOption(&tempDist, &dist, copier.Option{DeepCopy: true})
-			copier.Copy(&tempDist, &dist)
-			AStar(tempDist, graphNodes, graphEdges, distancesEdges, randomIndices[i][0], randomIndices[i][1])
+			// copier.Copy(&tempDist, &dist)
+			AStar(graphNodes, graphEdges, distancesEdges, randomIndices[i][0], randomIndices[i][1])
 		}
 
 		fmt.Println("Average AStar time: ", time.Since(startAStar)/time.Duration(iterations))
 
 		var startALT = time.Now()
 		for i := 0; i < iterations; i++ {
-			copier.Copy(&tempDist, &dist)
-			ALT(tempDist, graphNodes, graphEdges, distancesEdges, landmarks, randomIndices[i][0], randomIndices[i][1])
+			// copier.Copy(&tempDist, &dist)
+			ALT(graphNodes, graphEdges, distancesEdges, landmarks, randomIndices[i][0], randomIndices[i][1])
 		}
 
 		fmt.Println("Average ALT time: ", time.Since(startALT)/time.Duration(iterations))
@@ -605,7 +604,7 @@ func main() {
 	}
 }
 
-func AlgoDijkstra(dist map[int]int, Start Point, End Point, graphNodes [][2]float64, graphEdges [][4]int, distancesEdges [][4]int, grid [][][]int) []Point {
+func AlgoDijkstra(Start Point, End Point, graphNodes [][2]float64, graphEdges [][4]int, distancesEdges [][4]int, grid [][][]int) []Point {
 	//read graphNodes graphEdges distancesEdges grid from json files
 	// var start = time.Now()
 
@@ -635,7 +634,7 @@ func AlgoDijkstra(dist map[int]int, Start Point, End Point, graphNodes [][2]floa
 	// slog.Info("dykstra start: " + time.Since(start).String())
 	// var startDijkstra = time.Now()
 	// _, path := Dijkstra(graphNodes[:], graphEdges[:], distancesEdges[:], nearestpointStartIndex, nearpointEndIndex)
-	_, path := Dijkstra(dist, graphNodes[:], graphEdges[:], distancesEdges[:], nearestpointStartIndex, nearpointEndIndex)
+	_, path := Dijkstra(graphNodes[:], graphEdges[:], distancesEdges[:], nearestpointStartIndex, nearpointEndIndex)
 	// fmt.Println(dist)
 	// slog.Info("dykstra end: " + time.Since(startDijkstra).String())
 	returndykstrapath := [][2]float64{}
@@ -675,7 +674,7 @@ func AlgoDijkstra(dist map[int]int, Start Point, End Point, graphNodes [][2]floa
 	return shortestPath
 }
 
-func AlgoAStar(dist map[int]int, Start Point, End Point, graphNodes [][2]float64, graphEdges [][4]int, distancesEdges [][4]int, grid [][][]int) []Point {
+func AlgoAStar(Start Point, End Point, graphNodes [][2]float64, graphEdges [][4]int, distancesEdges [][4]int, grid [][][]int) []Point {
 	//read graphNodes graphEdges distancesEdges grid from json files
 	// var start = time.Now()
 
@@ -705,7 +704,7 @@ func AlgoAStar(dist map[int]int, Start Point, End Point, graphNodes [][2]float64
 	// slog.Info("dykstra start: " + time.Since(start).String())
 	// var startDijkstra = time.Now()
 	// _, path := Dijkstra(graphNodes[:], graphEdges[:], distancesEdges[:], nearestpointStartIndex, nearpointEndIndex)
-	_, path := AStar(dist, graphNodes[:], graphEdges[:], distancesEdges[:], nearestpointStartIndex, nearpointEndIndex)
+	_, path := AStar(graphNodes[:], graphEdges[:], distancesEdges[:], nearestpointStartIndex, nearpointEndIndex)
 	// fmt.Println(dist)
 	// slog.Info("dykstra end: " + time.Since(startDijkstra).String())
 	returndykstrapath := [][2]float64{}
@@ -745,7 +744,7 @@ func AlgoAStar(dist map[int]int, Start Point, End Point, graphNodes [][2]float64
 	return shortestPath
 }
 
-func AlgoALT(dist map[int]int, Start Point, End Point, graphNodes [][2]float64, graphEdges [][4]int, distancesEdges [][4]int, landmarks [][2]float64, grid [][][]int) []Point {
+func AlgoALT(Start Point, End Point, graphNodes [][2]float64, graphEdges [][4]int, distancesEdges [][4]int, landmarks [][2]float64, grid [][][]int) []Point {
 	//read graphNodes graphEdges distancesEdges grid from json files
 	// var start = time.Now()
 
@@ -775,7 +774,7 @@ func AlgoALT(dist map[int]int, Start Point, End Point, graphNodes [][2]float64, 
 	// slog.Info("dykstra start: " + time.Since(start).String())
 	// var startDijkstra = time.Now()
 	// _, path := Dijkstra(graphNodes[:], graphEdges[:], distancesEdges[:], nearestpointStartIndex, nearpointEndIndex)
-	_, path := ALT(dist, graphNodes[:], graphEdges[:], distancesEdges[:], landmarks, nearestpointStartIndex, nearpointEndIndex)
+	_, path := ALT(graphNodes[:], graphEdges[:], distancesEdges[:], landmarks, nearestpointStartIndex, nearpointEndIndex)
 	// fmt.Println(dist)
 	// slog.Info("dykstra end: " + time.Since(startDijkstra).String())
 	returndykstrapath := [][2]float64{}
@@ -1781,13 +1780,13 @@ func findBottomRight(u int, graphpoints [pointcount][2]float64, graphEdges *[poi
 	return false
 
 }
-func Dijkstra(dist map[int]int, nodes [][2]float64, edges [][4]int, edgeweights [][4]int, src int, dst int) (int, []int) {
-	// dist := make(map[int]int)
+func Dijkstra(nodes [][2]float64, edges [][4]int, edgeweights [][4]int, src int, dst int) (int, []int) {
+	dist := make(map[int]int)
 	prev := make(map[int]int)
 	found := false
-	// for node := range nodes {
-	// 	dist[node] = math.MaxInt32
-	// }
+	for node := range nodes {
+		dist[node] = math.MaxInt32
+	}
 	dist[src] = 0
 	//fmt.Println("dist", dist)
 	pq := &PriorityQueue{}
@@ -1921,13 +1920,13 @@ func getAllNeighbourCellss(grid [][][]int, x int, y int, latitude float64, radiu
 	return neighbors
 }
 
-func AStar(dist map[int]int, nodes [][2]float64, edges [][4]int, edgeweights [][4]int, src int, dst int) (int, []int) {
-	// dist := make(map[int]int)
+func AStar(nodes [][2]float64, edges [][4]int, edgeweights [][4]int, src int, dst int) (int, []int) {
+	dist := make(map[int]int)
 	prev := make(map[int]int)
 	found := false
-	// for node := range nodes {
-	// 	dist[node] = math.MaxInt32
-	// }
+	for node := range nodes {
+		dist[node] = math.MaxInt32
+	}
 	dist[src] = 0
 
 	pq := &PriorityQueue{}
@@ -2047,13 +2046,13 @@ func landmarksDistanceMaximiser(nodes [][2]float64, numLandmarks int, longSearch
 	return landmarks
 }
 
-func ALT(dist map[int]int, nodes [][2]float64, edges [][4]int, edgeweights [][4]int, landmarks [][2]float64, src int, dst int) (int, []int) {
-	// dist := make(map[int]int)
+func ALT(nodes [][2]float64, edges [][4]int, edgeweights [][4]int, landmarks [][2]float64, src int, dst int) (int, []int) {
+	dist := make(map[int]int)
 	prev := make(map[int]int)
 	found := false
-	// for node := range nodes {
-	// 	dist[node] = math.MaxInt32
-	// }
+	for node := range nodes {
+		dist[node] = math.MaxInt32
+	}
 	dist[src] = 0
 
 	pq := &PriorityQueue{}

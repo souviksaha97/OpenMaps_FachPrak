@@ -81,8 +81,11 @@
                     var altTime = response.alt_time;
 
                     var dijkstraColor = plotPath(shortestPath_dijkstra);
+                    console.log(dijkstraColor);
                     var astarColor = plotPath(shortestPath_astar);
+                    console.log(astarColor);
                     var altColor = plotPath(shortestPath_alt);
+                    console.log(altColor);
 
                     document.getElementById('dijkstra-time').value = dijkstraTime.toFixed(2) + " ms";
                     document.getElementById('dijkstra-time').style.color = dijkstraColor;
