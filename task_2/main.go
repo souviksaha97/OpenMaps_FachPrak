@@ -545,11 +545,11 @@ func main() {
 		var startTime = time.Now()
 		if algo == "dijkstra" {
 			fmt.Println("Dijkstra")
-			shortestPath := AlgoDijkstra(tempDist, startIndex, endIndex, graphNodes, graphEdges, distancesEdges, grid)
+			shortestPath := AlgoDijkstra(startIndex, endIndex, graphNodes, graphEdges, distancesEdges, grid)
 			fmt.Println("Shortest Path:", shortestPath)
 		} else if algo == "astar" {
 			fmt.Println("AStar")
-			shortestPath := AlgoAStar(tempDist, startIndex, endIndex, graphNodes, graphEdges, distancesEdges, grid)
+			shortestPath := AlgoAStar(startIndex, endIndex, graphNodes, graphEdges, distancesEdges, grid)
 			fmt.Println("Shortest Path:", shortestPath)
 		}
 		fmt.Println("Time taken:", time.Since(startTime))
