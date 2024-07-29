@@ -1,10 +1,14 @@
 package main
 
 import (
+	"bufio"
 	"final/generator"
 	"final/router"
 	"final/server"
+	"fmt"
 	"os"
+	"strconv"
+	"strings"
 
 	"time"
 
@@ -15,9 +19,19 @@ func main() {
 	slog.Info("Starting the program")
 	if !init_main() {
 		generateTime := time.Now()
-		slog.Info("Running the generator")
-		slog.Info("Good night! 💤")
-		generator.Generator()
+		reader := bufio.NewReader(os.Stdin)
+		fmt.Print("Do you want to run the generator? (y/N): ")
+		input, _ := reader.ReadString('\n')
+		input = strings.TrimSpace(input) // Trim any leading/trailing whitespace
+
+		if strings.EqualFold(input, "y") {
+			slog.Info("Running the generator")
+			slog.Info("Good night! 💤")
+			generator.Generator()
+		} else {
+			fmt.Println("Exiting program.")
+			os.Exit(0)
+		}
 		slog.Info("Generator finished")
 		slog.Info("Time taken: ", time.Since(generateTime))
 		slog.Info("Good morning! ☀️")
@@ -31,7 +45,10 @@ func main() {
 		server.Server()
 	} else if os.Args[1] == "multi" {
 		slog.Info("Running the multi")
-		router.Router()
+		iterations, _ := strconv.Atoi(os.Args[2])
+		router.MultiRouter(iterations)
+	} else {
+		slog.Info("Invalid argument")
 	}
 
 }
@@ -48,7 +65,6 @@ func init_main() bool {
 	for _, file := range filesList {
 		if _, err := os.Stat(basePath + file); os.IsNotExist(err) {
 			slog.Info("File: " + file + " does not exist")
-			slog.Info("Running the generator")
 			return false
 		} else {
 			slog.Debug("File: " + file + " exists")
