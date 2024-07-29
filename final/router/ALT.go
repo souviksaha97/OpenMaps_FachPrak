@@ -11,7 +11,7 @@ import (
 	"github.com/gookit/slog"
 )
 
-const numLandmarks = 10
+const numLandmarks = 40
 
 func ALT(nodes [][2]float64, edges [][4]int, edgeweights [][4]int, landmarks [][2]float64, src int, dst int) (int, []int) {
 	dist := make(map[int]int)

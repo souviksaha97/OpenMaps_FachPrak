@@ -76,5 +76,14 @@ func Server() {
 		})
 	})
 
+	serv.GET("/landmarks", func(c *gin.Context) {
+		// convert landmarks to json
+		landmark_json := make([]types.Point, len(landmarks))
+		for i := range landmarks {
+			landmark_json[i] = types.Point{Lat: landmarks[i][0], Lng: landmarks[i][1]}
+		}
+		c.JSON(http.StatusOK, gin.H{"landmarks": landmark_json})
+	})
+
 	serv.Run(":5000")
 }

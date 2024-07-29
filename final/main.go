@@ -41,17 +41,34 @@ func main() {
 		slog.Debug("All files exist")
 	}
 
-	if os.Args[1] == "server" {
+	if len(os.Args) < 2 {
+		slog.Info("No arguments provided")
+		return
+	}
+
+	switch os.Args[1] {
+	case "server":
 		slog.Info("Running the server")
 		server.Server()
-	} else if os.Args[1] == "multi" {
+
+	case "multi":
 		slog.Info("Running the multi")
-		iterations, _ := strconv.Atoi(os.Args[2])
+		if len(os.Args) < 3 {
+			slog.Info("Iterations argument missing")
+			return
+		}
+		iterations, err := strconv.Atoi(os.Args[2])
+		if err != nil {
+			slog.Info("Invalid iterations argument")
+			return
+		}
 		router.MultiRouter(iterations)
-	} else if os.Args[1] == "alt-pre" {
+
+	case "alt-pre":
 		slog.Info("Running the alt-pre")
 		router.LandmarksDistanceMaximiser()
-	} else {
+
+	default:
 		slog.Info("Invalid argument")
 	}
 

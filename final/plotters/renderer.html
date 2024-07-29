@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Map with Start and End Points</title>
+    <title>Map with Landmarks</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
     <style>
         #map {
@@ -46,6 +46,38 @@
         var colors = ['red', 'blue', 'green', 'orange', 'purple', 'pink', 'yellow', 'cyan', 'magenta', 'lime', 'brown', 'black'];
         var colorIndex = 0;
 
+        // Define a red circle icon for landmarks
+        var redIcon = L.divIcon({
+            className: 'red-icon',
+            html: '<div style="background-color: red; border-radius: 50%; width: 10px; height: 10px;"></div>',
+            iconSize: [10, 10]
+        });
+
+        // Fetch and plot landmarks once at the beginning
+        function plotLandmarks() {
+            fetch('http://localhost:5000/landmarks')
+                .then(response => response.json())
+                .then(data => {
+                    // Check if the data contains landmarks
+                    if (data && data.landmarks) {
+                        data.landmarks.forEach(function(coord) {
+                            // Create a marker for each landmark with the red icon
+                            console.log(coord);
+                            var marker = L.marker([coord.lat, coord.lng], { icon: redIcon }).addTo(map);
+                        });
+                        // Adjust map view to fit all markers
+                        var bounds = L.latLngBounds(markers.map(marker => marker.getLatLng()));
+                        map.fitBounds(bounds);
+                    } else {
+                        console.error('Invalid data format:', data);
+                    }
+                })
+                .catch(error => console.error('Error fetching landmarks:', error));
+        }
+
+        // Call the function to plot landmarks
+        plotLandmarks();
+
         map.on('click', function(e) {
             if (startPoint === null) {
                 startPoint = e.latlng;
@@ -81,11 +113,8 @@
                     var altTime = response.alt_time;
 
                     var dijkstraColor = plotPath(shortestPath_dijkstra);
-                    console.log(dijkstraColor);
                     var astarColor = plotPath(shortestPath_astar);
-                    console.log(astarColor);
                     var altColor = plotPath(shortestPath_alt);
-                    console.log(altColor);
 
                     document.getElementById('dijkstra-time').value = dijkstraTime.toFixed(2) + " ms";
                     document.getElementById('dijkstra-time').style.color = dijkstraColor;
