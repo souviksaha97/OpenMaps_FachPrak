@@ -21,7 +21,7 @@ import (
 // const PBF_FILE_PATH = "/home/sahask/osm_data/planet-coastlines.osm.pbf"
 const PBF_FILE_PATH = "/home/fsociety/Documents/Uni-Stuttgart/SS2024/OpenMaps_FachPrak/osm_data/planet-coastlines.osm.pbf"
 
-const pointcount = 1000
+const pointcount = 4000000
 const longBincount = 3600
 
 func Generator() {

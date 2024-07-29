@@ -630,42 +630,13 @@ func AlgoDijkstra(Start Point, End Point, graphNodes [][2]float64, graphEdges []
 		}
 	}
 
-	// fmt.Println("dijkstra go", nearestpointStartIndex, graphNodes[nearestpointStartIndex], nearpointEndIndex, graphNodes[nearpointEndIndex])
-	// slog.Info("dykstra start: " + time.Since(start).String())
-	// var startDijkstra = time.Now()
-	// _, path := Dijkstra(graphNodes[:], graphEdges[:], distancesEdges[:], nearestpointStartIndex, nearpointEndIndex)
 	_, path := Dijkstra(graphNodes[:], graphEdges[:], distancesEdges[:], nearestpointStartIndex, nearpointEndIndex)
-	// fmt.Println(dist)
-	// slog.Info("dykstra end: " + time.Since(startDijkstra).String())
+
 	returndykstrapath := [][2]float64{}
 	for k := range path {
 		returndykstrapath = append(returndykstrapath, graphNodes[path[k]])
 	}
 
-	//fmt.Println(viewEdges)
-	//fmt.Println(graphEdges)
-	//fmt.Println(returnEdges2)
-
-	// highest := -1
-	// counter := 0
-	// for k := range grid {
-	// 	for l := range grid[k] {
-	// 		if len(grid[k][l]) > highest {
-	// 			highest = len(grid[k][l])
-	// 		}
-	// 		if len(grid[k][l]) > 0 && len(grid[k][l]) < 5 {
-	// 			counter++
-	// 		}
-
-	// 	}
-
-	// }
-	// fmt.Println("highest", highest, "count greater 0", counter)
-
-	//randompoints end
-	// fmt.Println(returndykstrapath)
-
-	// Convert returndykstrapath to []Point
 	shortestPath := make([]Point, len(returndykstrapath))
 	for i, point := range returndykstrapath {
 		shortestPath[i] = Point{Lat: point[0], Lng: point[1]}
@@ -675,10 +646,6 @@ func AlgoDijkstra(Start Point, End Point, graphNodes [][2]float64, graphEdges []
 }
 
 func AlgoAStar(Start Point, End Point, graphNodes [][2]float64, graphEdges [][4]int, distancesEdges [][4]int, grid [][][]int) []Point {
-	//read graphNodes graphEdges distancesEdges grid from json files
-	// var start = time.Now()
-
-	// fmt.Println(distancesEdges)
 
 	nearestnodeStart := [2]float64{Start.Lat, Start.Lng}
 	distpointStart := 100000000.0
@@ -700,42 +667,13 @@ func AlgoAStar(Start Point, End Point, graphNodes [][2]float64, graphEdges [][4]
 		}
 	}
 
-	// fmt.Println("dijkstra go", nearestpointStartIndex, graphNodes[nearestpointStartIndex], nearpointEndIndex, graphNodes[nearpointEndIndex])
-	// slog.Info("dykstra start: " + time.Since(start).String())
-	// var startDijkstra = time.Now()
-	// _, path := Dijkstra(graphNodes[:], graphEdges[:], distancesEdges[:], nearestpointStartIndex, nearpointEndIndex)
 	_, path := AStar(graphNodes[:], graphEdges[:], distancesEdges[:], nearestpointStartIndex, nearpointEndIndex)
-	// fmt.Println(dist)
-	// slog.Info("dykstra end: " + time.Since(startDijkstra).String())
+
 	returndykstrapath := [][2]float64{}
 	for k := range path {
 		returndykstrapath = append(returndykstrapath, graphNodes[path[k]])
 	}
 
-	//fmt.Println(viewEdges)
-	//fmt.Println(graphEdges)
-	//fmt.Println(returnEdges2)
-
-	// highest := -1
-	// counter := 0
-	// for k := range grid {
-	// 	for l := range grid[k] {
-	// 		if len(grid[k][l]) > highest {
-	// 			highest = len(grid[k][l])
-	// 		}
-	// 		if len(grid[k][l]) > 0 && len(grid[k][l]) < 5 {
-	// 			counter++
-	// 		}
-
-	// 	}
-
-	// }
-	// fmt.Println("highest", highest, "count greater 0", counter)
-
-	//randompoints end
-	// fmt.Println(returndykstrapath)
-
-	// Convert returndykstrapath to []Point
 	shortestPath := make([]Point, len(returndykstrapath))
 	for i, point := range returndykstrapath {
 		shortestPath[i] = Point{Lat: point[0], Lng: point[1]}
@@ -745,10 +683,6 @@ func AlgoAStar(Start Point, End Point, graphNodes [][2]float64, graphEdges [][4]
 }
 
 func AlgoALT(Start Point, End Point, graphNodes [][2]float64, graphEdges [][4]int, distancesEdges [][4]int, landmarks [][2]float64, grid [][][]int) []Point {
-	//read graphNodes graphEdges distancesEdges grid from json files
-	// var start = time.Now()
-
-	// fmt.Println(distancesEdges)
 
 	nearestnodeStart := [2]float64{Start.Lat, Start.Lng}
 	distpointStart := 100000000.0
@@ -770,39 +704,13 @@ func AlgoALT(Start Point, End Point, graphNodes [][2]float64, graphEdges [][4]in
 		}
 	}
 
-	// fmt.Println("dijkstra go", nearestpointStartIndex, graphNodes[nearestpointStartIndex], nearpointEndIndex, graphNodes[nearpointEndIndex])
-	// slog.Info("dykstra start: " + time.Since(start).String())
-	// var startDijkstra = time.Now()
-	// _, path := Dijkstra(graphNodes[:], graphEdges[:], distancesEdges[:], nearestpointStartIndex, nearpointEndIndex)
 	_, path := ALT(graphNodes[:], graphEdges[:], distancesEdges[:], landmarks, nearestpointStartIndex, nearpointEndIndex)
-	// fmt.Println(dist)
-	// slog.Info("dykstra end: " + time.Since(startDijkstra).String())
+
 	returndykstrapath := [][2]float64{}
 	for k := range path {
 		returndykstrapath = append(returndykstrapath, graphNodes[path[k]])
 	}
 
-	//fmt.Println(viewEdges)
-	//fmt.Println(graphEdges)
-	//fmt.Println(returnEdges2)
-
-	// highest := -1
-	// counter := 0
-	// for k := range grid {
-	// 	for l := range grid[k] {
-	// 		if len(grid[k][l]) > highest {
-	// 			highest = len(grid[k][l])
-	// 		}
-	// 		if len(grid[k][l]) > 0 && len(grid[k][l]) < 5 {
-	// 			counter++
-	// 		}
-
-	// 	}
-
-	// }
-	// fmt.Println("highest", highest, "count greater 0", counter)
-
-	//randompoints end
 	// fmt.Println(returndykstrapath)
 
 	// Convert returndykstrapath to []Point

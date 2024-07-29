@@ -2,6 +2,7 @@ package router
 
 import (
 	"encoding/json"
+	"fmt"
 	"math/rand"
 	"os"
 	"time"
@@ -92,21 +93,22 @@ func MultiRouter(iterations int) {
 	for i := 0; i < iterations; i++ {
 		Djikstra(graphNodes, graphEdges, distancesEdges, randomIndices[i][0], randomIndices[i][1])
 	}
-	slog.Info("Average Dijsktra time: ", time.Since(startDijkstra)/time.Duration(iterations))
+
+	fmt.Println("Average Dijsktra time: ", time.Since(startDijkstra)/time.Duration(iterations))
 
 	var startAStar = time.Now()
 	for i := 0; i < iterations; i++ {
 		AStar(graphNodes, graphEdges, distancesEdges, randomIndices[i][0], randomIndices[i][1])
 	}
 
-	slog.Info("Average AStar time: ", time.Since(startAStar)/time.Duration(iterations))
+	fmt.Println("Average AStar time: ", time.Since(startAStar)/time.Duration(iterations))
 
 	var startALT = time.Now()
 	for i := 0; i < iterations; i++ {
 		ALT(graphNodes, graphEdges, distancesEdges, landmarks, randomIndices[i][0], randomIndices[i][1])
 	}
 
-	slog.Info("Average ALT time: ", time.Since(startALT)/time.Duration(iterations))
+	fmt.Println("Average ALT time: ", time.Since(startALT)/time.Duration(iterations))
 
 	fidgeter.Stop()
 

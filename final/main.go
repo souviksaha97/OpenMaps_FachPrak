@@ -28,6 +28,7 @@ func main() {
 			slog.Info("Running the generator")
 			slog.Info("Good night! 💤")
 			generator.Generator()
+			router.LandmarksDistanceMaximiser()
 		} else {
 			fmt.Println("Exiting program.")
 			os.Exit(0)
@@ -47,6 +48,9 @@ func main() {
 		slog.Info("Running the multi")
 		iterations, _ := strconv.Atoi(os.Args[2])
 		router.MultiRouter(iterations)
+	} else if os.Args[1] == "alt-pre" {
+		slog.Info("Running the alt-pre")
+		router.LandmarksDistanceMaximiser()
 	} else {
 		slog.Info("Invalid argument")
 	}

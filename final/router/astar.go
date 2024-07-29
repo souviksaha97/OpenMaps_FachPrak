@@ -60,10 +60,6 @@ func AStar(nodes [][2]float64, edges [][4]int, edgeweights [][4]int, src int, ds
 }
 
 func AlgoAStar(Start types.Point, End types.Point, graphNodes [][2]float64, graphEdges [][4]int, distancesEdges [][4]int, grid [][][]int) []types.Point {
-	//read graphNodes graphEdges distancesEdges grid from json files
-	// var start = time.Now()
-
-	// fmt.Println(distancesEdges)
 
 	nearestnodeStart := [2]float64{Start.Lat, Start.Lng}
 	distpointStart := 100000000.0

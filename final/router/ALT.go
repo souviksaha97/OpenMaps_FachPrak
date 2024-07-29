@@ -11,6 +11,8 @@ import (
 	"github.com/gookit/slog"
 )
 
+const numLandmarks = 10
+
 func ALT(nodes [][2]float64, edges [][4]int, edgeweights [][4]int, landmarks [][2]float64, src int, dst int) (int, []int) {
 	dist := make(map[int]int)
 	prev := make(map[int]int)
@@ -68,10 +70,6 @@ func ALT(nodes [][2]float64, edges [][4]int, edgeweights [][4]int, landmarks [][
 }
 
 func AlgoALT(Start types.Point, End types.Point, graphNodes [][2]float64, graphEdges [][4]int, distancesEdges [][4]int, landmarks [][2]float64, grid [][][]int) []types.Point {
-	//read graphNodes graphEdges distancesEdges grid from json files
-	// var start = time.Now()
-
-	// fmt.Println(distancesEdges)
 
 	nearestnodeStart := [2]float64{Start.Lat, Start.Lng}
 	distpointStart := 100000000.0
@@ -93,40 +91,12 @@ func AlgoALT(Start types.Point, End types.Point, graphNodes [][2]float64, graphE
 		}
 	}
 
-	// fmt.Println("dijkstra go", nearestpointStartIndex, graphNodes[nearestpointStartIndex], nearpointEndIndex, graphNodes[nearpointEndIndex])
-	// slog.Info("dykstra start: " + time.Since(start).String())
-	// var startDijkstra = time.Now()
-	// _, path := Dijkstra(graphNodes[:], graphEdges[:], distancesEdges[:], nearestpointStartIndex, nearpointEndIndex)
 	_, path := ALT(graphNodes[:], graphEdges[:], distancesEdges[:], landmarks, nearestpointStartIndex, nearpointEndIndex)
-	// fmt.Println(dist)
-	// slog.Info("dykstra end: " + time.Since(startDijkstra).String())
+
 	returndykstrapath := [][2]float64{}
 	for k := range path {
 		returndykstrapath = append(returndykstrapath, graphNodes[path[k]])
 	}
-
-	//fmt.Println(viewEdges)
-	//fmt.Println(graphEdges)
-	//fmt.Println(returnEdges2)
-
-	// highest := -1
-	// counter := 0
-	// for k := range grid {
-	// 	for l := range grid[k] {
-	// 		if len(grid[k][l]) > highest {
-	// 			highest = len(grid[k][l])
-	// 		}
-	// 		if len(grid[k][l]) > 0 && len(grid[k][l]) < 5 {
-	// 			counter++
-	// 		}
-
-	// 	}
-
-	// }
-	// fmt.Println("highest", highest, "count greater 0", counter)
-
-	//randompoints end
-	// fmt.Println(returndykstrapath)
 
 	// Convert returndykstrapath to []types.Point
 	shortestPath := make([]types.Point, len(returndykstrapath))
@@ -137,7 +107,9 @@ func AlgoALT(Start types.Point, End types.Point, graphNodes [][2]float64, graphE
 	return shortestPath
 }
 
-func landmarksDistanceMaximiser(nodes [][2]float64, numLandmarks int, longSearch bool) []int {
+func LandmarksDistanceMaximiser() {
+	nodes, _, _, _, _ := FileReader()
+	longSearch := false
 	landmarks := make([]int, numLandmarks)
 	maxDistance := 0.0
 	if longSearch {
@@ -150,7 +122,8 @@ func landmarksDistanceMaximiser(nodes [][2]float64, numLandmarks int, longSearch
 			}
 		}
 	} else {
-		maxDistance = 10000.0
+		// radius of earth in km
+		maxDistance = 6350.0
 	}
 
 	slog.Info("Max distance: %f\n", maxDistance)
@@ -166,8 +139,14 @@ func landmarksDistanceMaximiser(nodes [][2]float64, numLandmarks int, longSearch
 		}
 	}
 
-	return landmarks
+	landmarksNodes := make([][2]float64, len(landmarks))
+	for i, landmark := range landmarks {
+		landmarksNodes[i][0] = nodes[landmark][0]
+		landmarksNodes[i][1] = nodes[landmark][1]
+	}
+	generator.WriteToJSONFile("objects/landmarks.json", landmarksNodes)
 }
+
 func chooseLandmarks(nodes [][2]float64, numLandmarks int, minDistance int) []int {
 	landmarks := make([]int, numLandmarks)
 	landmarkCounter := 0
@@ -187,7 +166,7 @@ func chooseLandmarks(nodes [][2]float64, numLandmarks int, minDistance int) []in
 				landmarks[landmarkCounter] = randomPoint
 				landmarkCounter++
 				validityCounter = 0
-				slog.Info("Landmark %d: %d", landmarkCounter, randomPoint)
+				slog.Info("Landmark", landmarkCounter, ":", randomPoint)
 			}
 
 		}

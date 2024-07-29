@@ -806,10 +806,8 @@ func findTopLeft(u int, graphpoints [pointcount][2]float64, graphEdges *[pointco
 		(*distancesEdges)[u][0] = int(closestDist)
 		(*distancesEdges)[pointIndexes[smallestIndex]][3] = int(closestDist)
 		return true
-	} else {
-		return false
-		(*graphEdges)[u][0] = -2 //no neighbour found
 	}
+
 	return false
 }
 func findTopRight(u int, graphpoints [pointcount][2]float64, graphEdges *[pointcount][4]int, distancesEdges *[pointcount][4]int, pointIndexes []int) bool {
@@ -840,9 +838,6 @@ func findTopRight(u int, graphpoints [pointcount][2]float64, graphEdges *[pointc
 		(*distancesEdges)[pointIndexes[smallestIndex]][2] = int(closestDist)
 		return true
 
-	} else {
-		return false
-		(*graphEdges)[u][1] = -2 //no neighbour found
 	}
 	return false
 
@@ -875,9 +870,6 @@ func findBottomLeft(u int, graphpoints [pointcount][2]float64, graphEdges *[poin
 		(*distancesEdges)[pointIndexes[smallestIndex]][1] = int(closestDist)
 		return true
 
-	} else {
-		return false
-		(*graphEdges)[u][2] = -2 //no neighbour found
 	}
 	return false
 
@@ -910,9 +902,6 @@ func findBottomRight(u int, graphpoints [pointcount][2]float64, graphEdges *[poi
 		(*distancesEdges)[u][3] = int(closestDist)
 		(*distancesEdges)[pointIndexes[smallestIndex]][0] = int(closestDist)
 		return true
-	} else {
-		return false
-		(*graphEdges)[u][3] = -2 //no neighbour found
 	}
 	return false
 
