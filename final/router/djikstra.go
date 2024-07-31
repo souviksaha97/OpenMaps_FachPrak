@@ -6,101 +6,93 @@ import (
 	"final/types"
 	"fmt"
 	"math"
+	"time"
 )
 
-func Djikstra(nodes [][2]float64, edges [][4]int, edgeweights [][4]int, src int, dst int) (int, []int) {
-	dist := make(map[int]int)
-	prev := make(map[int]int)
-	found := false
-	for node := range nodes {
-		dist[node] = math.MaxInt32
-	}
-	dist[src] = 0
-	//fmt.Println("dist", dist)
-	pq := &types.PriorityQueue{}
-	heap.Init(pq)
-	heap.Push(pq, &types.QueueItem{Node: src, Priority: 0})
+func Djikstra(nodes [][2]float64, edges [][4]int, edgeweights [][4]int, src int, dst int) ([]int, int) {
+	// Initialize GraphData
+	// init_time := time.Now()
+	// total_push_time := time.Duration(0)
+	total_loop2_time := time.Duration(0)
+	// no_of_pushes := 0
+	data := types.NewGraphData(len(nodes), src)
+	// fmt.Println("Init time: ", time.Since(init_time))
 
-	for pq.Len() > 0 {
-		current := heap.Pop(pq).(*types.QueueItem)
+	// loop_time := time.Now()
+	for data.PQ.Len() > 0 {
+		current := heap.Pop(data.PQ).(*types.QueueItem)
 		currentNode := current.Node
 
+		// If the node is already visited, skip it
+		if data.Visited[currentNode] {
+			continue
+		}
+		data.Visited[currentNode] = true
+
+		// If we reached the destination, exit the loop
 		if currentNode == dst {
-			// fmt.Println("reached from", currentNode)
-			found = true
 			break
 		}
-		//fmt.Println("cuurentnode", currentNode)
 
-		for k := range edges[currentNode] {
-			neighbor := edges[currentNode][k]
-			if neighbor < 0 {
-				break
+		// Iterate over neighbors
+		loop2_time := time.Now()
+		for i, neighbor := range edges[currentNode] {
+			if neighbor < 0 || data.Visited[neighbor] {
+				continue
 			}
-			newDist := dist[currentNode] + edgeweights[currentNode][k]
-			if edgeweights[currentNode][k] > 10000 {
-				fmt.Println("not allowed")
-				break
-			}
-			//fmt.Println(neighbor)
-			//fmt.Println("dist", newDist, dist[neighbor])
-			if newDist < 0 {
-				fmt.Println("neine")
-			}
-			if newDist < dist[neighbor] {
-				dist[neighbor] = newDist
-				prev[neighbor] = currentNode
-				heap.Push(pq, &types.QueueItem{Node: neighbor, Priority: newDist})
+			newDist := data.Dist[currentNode] + edgeweights[currentNode][i]
+			if newDist < data.Dist[neighbor] {
+				data.Dist[neighbor] = newDist
+				data.Prev[neighbor] = currentNode
+				// push_time := time.Now()
+				heap.Push(data.PQ, &types.QueueItem{Node: neighbor, Priority: newDist})
+				// total_push_time += time.Since(push_time)
+				// no_of_pushes++
 			}
 		}
+		total_loop2_time += time.Since(loop2_time)
 	}
+	fmt.Println("loop2 time: ", total_loop2_time)
 
+	// Reconstruct the path
 	path := []int{}
-	if found {
-		for at := dst; at != src; at = prev[at] {
+	if data.Prev[dst] != -1 || src == dst {
+		for at := dst; at != -1; at = data.Prev[at] {
 			path = append([]int{at}, path...)
 		}
-		path = append([]int{src}, path...)
-	} else {
-		path = append([]int{dst}, path...)
-		path = append([]int{src}, path...)
-		return -1, path
 	}
-	return dist[dst], path
+	return path, data.Dist[dst]
 }
 
-func AlgoDijkstra(Start types.Point, End types.Point, graphNodes [][2]float64, graphEdges [][4]int, distancesEdges [][4]int, grid [][][]int) []types.Point {
+func AlgoDijkstra(Start types.Point, End types.Point, graphNodes [][2]float64, graphEdges [][4]int, distancesEdges [][4]int, grid [][][]int) ([]types.Point, int) {
 	nearestnodeStart := [2]float64{Start.Lat, Start.Lng}
-	distpointStart := 100000000.0
-	distpointEnd := 100000000.0
 	nearestnodeEnd := [2]float64{End.Lat, End.Lng}
 	nearestpointStartIndex := -1
 	nearpointEndIndex := -1
-	for k := range graphNodes {
-		distpointStartNew := generator.Haversine(graphNodes[k][0], graphNodes[k][1], nearestnodeStart[0], nearestnodeStart[1])
-		distpointENdNew := generator.Haversine(graphNodes[k][0], graphNodes[k][1], nearestnodeEnd[0], nearestnodeEnd[1])
+	distpointStart := math.MaxFloat64
+	distpointEnd := math.MaxFloat64
 
-		if distpointStartNew < float64(distpointStart) {
+	// Find the nearest start and end nodes
+	for k, node := range graphNodes {
+		distStart := generator.Haversine(node[0], node[1], nearestnodeStart[0], nearestnodeStart[1])
+		distEnd := generator.Haversine(node[0], node[1], nearestnodeEnd[0], nearestnodeEnd[1])
+
+		if distStart < distpointStart {
 			nearestpointStartIndex = k
-			distpointStart = distpointStartNew
+			distpointStart = distStart
 		}
-		if distpointENdNew < distpointEnd {
+		if distEnd < distpointEnd {
 			nearpointEndIndex = k
-			distpointEnd = distpointENdNew
+			distpointEnd = distEnd
 		}
 	}
 
-	_, path := Djikstra(graphNodes[:], graphEdges[:], distancesEdges[:], nearestpointStartIndex, nearpointEndIndex)
+	path, dist := Djikstra(graphNodes, graphEdges, distancesEdges, nearestpointStartIndex, nearpointEndIndex)
 
-	returndykstrapath := [][2]float64{}
-	for k := range path {
-		returndykstrapath = append(returndykstrapath, graphNodes[path[k]])
+	// Convert the path to the required format
+	shortestPath := make([]types.Point, len(path))
+	for i, nodeIndex := range path {
+		shortestPath[i] = types.Point{Lat: graphNodes[nodeIndex][0], Lng: graphNodes[nodeIndex][1]}
 	}
-
-	shortestPath := make([]types.Point, len(returndykstrapath))
-	for i, point := range returndykstrapath {
-		shortestPath[i] = types.Point{Lat: point[0], Lng: point[1]}
-	}
-
-	return shortestPath
+	return shortestPath, dist
 }

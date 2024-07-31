@@ -77,7 +77,7 @@ func FileReader() ([][2]float64, [][4]int, [][4]int, [][][]int, [][2]float64) {
 }
 
 func MultiRouter(iterations int) {
-	slog.Info("Router started")
+	slog.Info("Multi Router started")
 	fidgeter := chin.New()
 	go fidgeter.Start()
 
@@ -112,4 +112,52 @@ func MultiRouter(iterations int) {
 
 	fidgeter.Stop()
 
+}
+
+func SingleRouter(router string, iterations int) {
+	slog.Info("Single Router started")
+	fidgeter := chin.New()
+	go fidgeter.Start()
+
+	graphNodes, graphEdges, distancesEdges, _, landmarks := FileReader()
+
+	var randomIndices = make([][2]int, iterations)
+	for i := 0; i < iterations; i++ {
+		randomIndices[i][0] = rand.Intn(len(graphNodes))
+		randomIndices[i][1] = rand.Intn(len(graphNodes))
+	}
+
+	switch router {
+	case "djikstra":
+		slog.Info("Running Djikstra")
+		var startDijkstra = time.Now()
+		for i := 0; i < iterations; i++ {
+			midStart := time.Now()
+			_, dist := Djikstra(graphNodes, graphEdges, distancesEdges, randomIndices[i][0], randomIndices[i][1])
+			fmt.Println("Djikstra time Iteration: ", i, time.Since(midStart), "Distance: ", dist)
+		}
+
+		fmt.Println("Average Dijsktra time: ", time.Since(startDijkstra)/time.Duration(iterations))
+
+	case "astar":
+		var startAStar = time.Now()
+		for i := 0; i < iterations; i++ {
+			midStart := time.Now()
+			_, dist := AStar(graphNodes, graphEdges, distancesEdges, randomIndices[i][0], randomIndices[i][1])
+			fmt.Println("A* time Iteration: ", i, time.Since(midStart), "Distance: ", dist)
+		}
+
+		fmt.Println("Average AStar time: ", time.Since(startAStar)/time.Duration(iterations))
+
+	case "alt":
+		var startALT = time.Now()
+		for i := 0; i < iterations; i++ {
+			midStart := time.Now()
+			_, dist := ALT(graphNodes, graphEdges, distancesEdges, landmarks, randomIndices[i][0], randomIndices[i][1])
+			fmt.Println("ALT time Iteration: ", i, time.Since(midStart), "Distance: ", dist)
+		}
+
+		fmt.Println("Average ALT time: ", time.Since(startALT)/time.Duration(iterations))
+	}
+	fidgeter.Stop()
 }

@@ -13,98 +13,89 @@ import (
 
 const numLandmarks = 40
 
-func ALT(nodes [][2]float64, edges [][4]int, edgeweights [][4]int, landmarks [][2]float64, src int, dst int) (int, []int) {
-	dist := make(map[int]int)
-	prev := make(map[int]int)
-	found := false
-	for node := range nodes {
-		dist[node] = math.MaxInt32
-	}
-	dist[src] = 0
+func ALT(nodes [][2]float64, edges [][4]int, edgeweights [][4]int, landmarks [][2]float64, src int, dst int) ([]int, int) {
+	// Initialize GraphData
+	data := types.NewGraphData(len(nodes), src)
 
-	pq := &types.PriorityQueue{}
-	heap.Init(pq)
-	heap.Push(pq, &types.QueueItem{Node: src, Priority: 0})
-
-	for pq.Len() > 0 {
-		current := heap.Pop(pq).(*types.QueueItem)
+	for data.PQ.Len() > 0 {
+		current := heap.Pop(data.PQ).(*types.QueueItem)
 		currentNode := current.Node
 
+		// If the node is already visited, skip it
+		if data.Visited[currentNode] {
+			continue
+		}
+		data.Visited[currentNode] = true
+
+		// If we reached the destination, exit the loop
 		if currentNode == dst {
-			found = true
 			break
 		}
 
+		// Iterate over neighbors
 		for i, neighbor := range edges[currentNode] {
-			if neighbor < 0 {
-				break
+			if neighbor < 0 || data.Visited[neighbor] {
+				continue
 			}
+
 			heuristic := 0
 			for _, landmark := range landmarks {
 				heuristic = int(math.Max(float64(heuristic), generator.Haversine(nodes[neighbor][0], nodes[neighbor][1], landmark[0], landmark[1])-generator.Haversine(nodes[dst][0], nodes[dst][1], landmark[0], landmark[1])))
 			}
-			newDist := dist[currentNode] + edgeweights[currentNode][i] + heuristic
-			if newDist < dist[neighbor] {
-				dist[neighbor] = newDist
-				prev[neighbor] = currentNode
+
+			newDist := data.Dist[currentNode] + edgeweights[currentNode][i] + heuristic
+			if newDist < data.Dist[neighbor] {
+				data.Dist[neighbor] = newDist
+				data.Prev[neighbor] = currentNode
 				priority := newDist
-				heap.Push(pq, &types.QueueItem{Node: neighbor, Priority: priority})
+				heap.Push(data.PQ, &types.QueueItem{Node: neighbor, Priority: priority})
 			}
-
 		}
-
 	}
 
+	// Reconstruct the path
 	path := []int{}
-	if found {
-		for at := dst; at != src; at = prev[at] {
+	if data.Prev[dst] != -1 || src == dst {
+		for at := dst; at != -1; at = data.Prev[at] {
 			path = append([]int{at}, path...)
 		}
-		path = append([]int{src}, path...)
-	} else {
-		path = append([]int{dst}, path...)
-		path = append([]int{src}, path...)
-		return -1, path
 	}
-	return dist[dst], path
+
+	return path, data.Dist[dst]
 }
 
-func AlgoALT(Start types.Point, End types.Point, graphNodes [][2]float64, graphEdges [][4]int, distancesEdges [][4]int, landmarks [][2]float64, grid [][][]int) []types.Point {
-
+func AlgoALT(Start types.Point, End types.Point, graphNodes [][2]float64, graphEdges [][4]int, distancesEdges [][4]int, landmarks [][2]float64, grid [][][]int) ([]types.Point, int) {
 	nearestnodeStart := [2]float64{Start.Lat, Start.Lng}
-	distpointStart := 100000000.0
-	distpointEnd := 100000000.0
 	nearestnodeEnd := [2]float64{End.Lat, End.Lng}
 	nearestpointStartIndex := -1
 	nearpointEndIndex := -1
-	for k := range graphNodes {
-		distpointStartNew := generator.Haversine(graphNodes[k][0], graphNodes[k][1], nearestnodeStart[0], nearestnodeStart[1])
-		distpointENdNew := generator.Haversine(graphNodes[k][0], graphNodes[k][1], nearestnodeEnd[0], nearestnodeEnd[1])
+	distpointStart := math.MaxFloat64
+	distpointEnd := math.MaxFloat64
 
-		if distpointStartNew < float64(distpointStart) {
+	// Find the nearest start and end nodes
+	for k, node := range graphNodes {
+		distStart := generator.Haversine(node[0], node[1], nearestnodeStart[0], nearestnodeStart[1])
+		distEnd := generator.Haversine(node[0], node[1], nearestnodeEnd[0], nearestnodeEnd[1])
+
+		if distStart < distpointStart {
 			nearestpointStartIndex = k
-			distpointStart = distpointStartNew
+			distpointStart = distStart
 		}
-		if distpointENdNew < distpointEnd {
+		if distEnd < distpointEnd {
 			nearpointEndIndex = k
-			distpointEnd = distpointENdNew
+			distpointEnd = distEnd
 		}
 	}
 
-	_, path := ALT(graphNodes[:], graphEdges[:], distancesEdges[:], landmarks, nearestpointStartIndex, nearpointEndIndex)
+	path, dist := ALT(graphNodes, graphEdges, distancesEdges, landmarks, nearestpointStartIndex, nearpointEndIndex)
 
-	returndykstrapath := [][2]float64{}
-	for k := range path {
-		returndykstrapath = append(returndykstrapath, graphNodes[path[k]])
+	// Convert the path to the required format
+	shortestPath := make([]types.Point, len(path))
+	for i, nodeIndex := range path {
+		shortestPath[i] = types.Point{Lat: graphNodes[nodeIndex][0], Lng: graphNodes[nodeIndex][1]}
 	}
 
-	// Convert returndykstrapath to []types.Point
-	shortestPath := make([]types.Point, len(returndykstrapath))
-	for i, point := range returndykstrapath {
-		shortestPath[i] = types.Point{Lat: point[0], Lng: point[1]}
-	}
-
-	return shortestPath
+	return shortestPath, dist
 }
 
 func LandmarksDistanceMaximiser() {

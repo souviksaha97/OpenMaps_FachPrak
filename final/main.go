@@ -64,6 +64,22 @@ func main() {
 		}
 		router.MultiRouter(iterations)
 
+	case "single":
+		slog.Info("Running the single")
+		if len(os.Args) < 4 {
+			slog.Info("Arguments missing")
+		}
+
+		run := os.Args[2]
+
+		iterations, err2 := strconv.Atoi(os.Args[3])
+		if err2 != nil {
+			slog.Info("Invalid iterations argument")
+			return
+		}
+
+		router.SingleRouter(run, iterations)
+
 	case "alt-pre":
 		slog.Info("Running the alt-pre")
 		router.LandmarksDistanceMaximiser()
