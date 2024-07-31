@@ -12,7 +12,7 @@ import (
 	"github.com/gookit/slog"
 )
 
-const numLandmarks = 40
+const numLandmarksConst = 40
 
 // Nodes, Edges, Distances, Landmarks, LandmarkDistances, src, dst
 func ALT(nodes [][2]float64, edges [][4]int, edgeweights [][4]int, landmarks []int, landmarkDistances map[int][]int, src int, dst int) ([]int, int) {
@@ -116,7 +116,7 @@ func AlgoALT(Start types.Point, End types.Point, graphNodes [][2]float64, graphE
 	return shortestPath, dist
 }
 
-func LandmarksDistanceMaximiser() {
+func LandmarksDistanceMaximiser(numLandmarks int) {
 	nodes, _, _, _, _, _, _ := FileReader()
 	longSearch := false
 
@@ -136,6 +136,9 @@ func LandmarksDistanceMaximiser() {
 	}
 
 	slog.Info("Max distance: ", maxDistance)
+	if numLandmarks == 0 {
+		numLandmarks = numLandmarksConst
+	}
 
 	landmarks := make([]int, numLandmarks)
 	for {
@@ -184,14 +187,14 @@ func chooseLandmarks(nodes [][2]float64, numLandmarks int, minDistance int) []in
 				landmarks[landmarkCounter] = randomPoint
 				landmarkCounter++
 				validityCounter = 0
-				slog.Info("Landmark", landmarkCounter, ":", randomPoint)
+				slog.Debug("Landmark", landmarkCounter, ":", randomPoint)
 			}
 
 		}
 	}
 
 	if validityCounter >= 1000 {
-		slog.Info("Could not find suitable landmarks")
+		slog.Debug("Could not find suitable landmarks")
 		return nil
 	}
 	return landmarks
@@ -201,7 +204,7 @@ func landMarksDistanceFinder() {
 	graphNodes, graphEdges, distancesEdges, _, _, landmarkNodes, _ := FileReader()
 	completeLandmarksMap := make(map[int][]int)
 	for i, landmark := range landmarkNodes {
-		slog.Info("Landmark:", i)
+		slog.Debug("Landmark:", i)
 		_, dist := Djikstra(graphNodes, graphEdges, distancesEdges, landmark, -1)
 		completeLandmarksMap[landmark] = dist
 	}

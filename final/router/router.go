@@ -74,7 +74,7 @@ func FileReader() ([][2]float64, [][4]int, [][4]int, [][][]int, [][2]float64, []
 
 	slog.Info("Landmarks:", len(landmarks))
 
-	landmarkNodes := make([]int, numLandmarks)
+	landmarkNodes := make([]int, numLandmarksConst)
 	landmarkNodesJSON, err := os.ReadFile("objects/landmarkNodes.json")
 	if err != nil {
 		slog.Info("Error reading landmarkNodes from file:", err)

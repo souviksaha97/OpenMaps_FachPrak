@@ -5,6 +5,7 @@ import (
 	"final/generator"
 	"final/router"
 	"final/server"
+	"final/tester"
 	"fmt"
 	"os"
 	"strconv"
@@ -28,7 +29,7 @@ func main() {
 			slog.Info("Running the generator")
 			slog.Info("Good night! 💤")
 			generator.Generator()
-			router.LandmarksDistanceMaximiser()
+			router.LandmarksDistanceMaximiser(0)
 		} else {
 			fmt.Println("Exiting program.")
 			os.Exit(0)
@@ -82,7 +83,20 @@ func main() {
 
 	case "alt-pre":
 		slog.Info("Running the alt-pre")
-		router.LandmarksDistanceMaximiser()
+		router.LandmarksDistanceMaximiser(0)
+
+	case "tester":
+		slog.Info("Running the tester")
+		if len(os.Args) < 3 {
+			slog.Info("Iterations argument missing")
+			return
+		}
+		iterations, err := strconv.Atoi(os.Args[2])
+		if err != nil {
+			slog.Info("Invalid iterations argument")
+			return
+		}
+		tester.Tester(iterations)
 
 	default:
 		slog.Info("Invalid argument")
@@ -98,7 +112,8 @@ func init_main() bool {
 	})
 	slog.Info("Initializing the program")
 	basePath := "objects/"
-	filesList := []string{"graphEdges.json", "graphNodes.json", "grid.json", "distancesEdges.json", "landmarks.json"}
+	filesList := []string{"graphEdges.json", "graphNodes.json", "grid.json", "distancesEdges.json",
+		"landmarks.json", "landmarkNodes.json", "landmarkDistances.json"}
 	for _, file := range filesList {
 		if _, err := os.Stat(basePath + file); os.IsNotExist(err) {
 			slog.Info("File: " + file + " does not exist")
