@@ -83,7 +83,16 @@ func main() {
 
 	case "alt-pre":
 		slog.Info("Running the alt-pre")
-		router.LandmarksDistanceMaximiser(0)
+		if len(os.Args) < 3 {
+			slog.Info("Iterations argument missing")
+			return
+		}
+		iterations, err := strconv.Atoi(os.Args[2])
+		if err != nil {
+			slog.Info("Invalid iterations argument")
+			return
+		}
+		router.LandmarksDistanceMaximiser(iterations)
 
 	case "tester":
 		slog.Info("Running the tester")
