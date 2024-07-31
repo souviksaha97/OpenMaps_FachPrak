@@ -31,7 +31,7 @@ func AStar(nodes [][2]float64, edges [][4]int, edgeweights [][4]int, src int, ds
 			if neighbor < 0 || data.Visited[neighbor] {
 				continue
 			}
-			newDist := data.Dist[currentNode] + edgeweights[currentNode][i] + int(generator.Haversine(nodes[neighbor][0], nodes[neighbor][1], nodes[dst][0], nodes[dst][1]))
+			newDist := data.Dist[currentNode] + edgeweights[currentNode][i] + int(generator.Haversine(nodes[currentNode][0], nodes[currentNode][1], nodes[neighbor][0], nodes[neighbor][1]))
 			if newDist < data.Dist[neighbor] {
 				data.Dist[neighbor] = newDist
 				data.Prev[neighbor] = currentNode

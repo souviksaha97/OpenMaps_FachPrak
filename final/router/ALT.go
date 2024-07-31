@@ -18,7 +18,6 @@ const numLandmarks = 40
 func ALT(nodes [][2]float64, edges [][4]int, edgeweights [][4]int, landmarks []int, landmarkDistances map[int][]int, src int, dst int) ([]int, int) {
 	// Initialize GraphData
 	data := types.NewGraphData(len(nodes), src)
-	fmt.Println("Length", len(landmarkDistances), len(landmarkDistances[landmarks[0]]))
 	// fmt.Println("Distance array", landmarkDistances[landmarks[0]][src])
 	for data.PQ.Len() > 0 {
 		current := heap.Pop(data.PQ).(*types.QueueItem)
