@@ -27,7 +27,7 @@ func Tester(iterations int) {
 		dst := rand.Intn(len(nodes))
 		srcDstPairs = append(srcDstPairs, [2]int{src, dst})
 	}
-	slog.Info("Generated 100 random pairs of src and dst")
+	slog.Info("Generated random pairs of src and dst")
 	// run alt with increasing number of landmarks from 0.001% to 0.1% of total nodes
 	// and calculate the average time taken for each number of landmarks
 	// print the optimal number of landmarks

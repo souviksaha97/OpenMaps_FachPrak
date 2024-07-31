@@ -24,7 +24,7 @@ func FileReader() ([][2]float64, [][4]int, [][4]int, [][][]int, [][2]float64, []
 		slog.Info("Error unmarshalling graphNodes:", err)
 	}
 
-	slog.Info("Graph Nodes:", len(graphNodes))
+	slog.Debug("Graph Nodes:", len(graphNodes))
 
 	graphEdgesJSON, err := os.ReadFile("objects/graphEdges.json")
 	if err != nil {
@@ -36,7 +36,7 @@ func FileReader() ([][2]float64, [][4]int, [][4]int, [][][]int, [][2]float64, []
 		slog.Info("Error unmarshalling graphEdges:", err)
 	}
 
-	slog.Info("Graph Edges:", len(graphEdges))
+	slog.Debug("Graph Edges:", len(graphEdges))
 
 	distancesEdgesJSON, err := os.ReadFile("objects/distancesEdges.json")
 	if err != nil {
@@ -48,7 +48,7 @@ func FileReader() ([][2]float64, [][4]int, [][4]int, [][][]int, [][2]float64, []
 		slog.Info("Error unmarshalling distancesEdges:", err)
 	}
 
-	slog.Info("Distances Edges:", len(distancesEdges))
+	slog.Debug("Distances Edges:", len(distancesEdges))
 
 	gridJSON, err := os.ReadFile("objects/grid.json")
 	if err != nil {
@@ -60,7 +60,7 @@ func FileReader() ([][2]float64, [][4]int, [][4]int, [][][]int, [][2]float64, []
 		slog.Info("Error unmarshalling grid:", err)
 	}
 
-	slog.Info("Grid:", len(grid))
+	slog.Debug("Grid:", len(grid))
 
 	var landmarks [][2]float64
 	landmarksJSON, err := os.ReadFile("objects/landmarks.json")
@@ -72,7 +72,7 @@ func FileReader() ([][2]float64, [][4]int, [][4]int, [][][]int, [][2]float64, []
 		slog.Info("Error unmarshalling landmarks:", err)
 	}
 
-	slog.Info("Landmarks:", len(landmarks))
+	slog.Debug("Landmarks:", len(landmarks))
 
 	landmarkNodes := make([]int, numLandmarksConst)
 	landmarkNodesJSON, err := os.ReadFile("objects/landmarkNodes.json")

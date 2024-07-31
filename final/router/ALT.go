@@ -4,7 +4,6 @@ import (
 	"container/heap"
 	"final/generator"
 	"final/types"
-	"fmt"
 	"math"
 	"math/rand"
 
@@ -145,7 +144,7 @@ func LandmarksDistanceMaximiser(numLandmarks int) {
 		res := chooseLandmarks(nodes, numLandmarks, int(maxDistance))
 		if res == nil {
 			maxDistance = maxDistance * 0.9
-			fmt.Println("Trying with smaller distance: ", maxDistance)
+			slog.Debug("Trying with smaller distance: ", maxDistance)
 		} else {
 			landmarks = res
 			break
