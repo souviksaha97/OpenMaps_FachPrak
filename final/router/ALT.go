@@ -19,6 +19,19 @@ func ALT(nodes [][2]float64, edges [][4]int, edgeweights [][4]int, landmarks []i
 	// Initialize GraphData
 	data := types.NewGraphData(len(nodes), src)
 	// fmt.Println("Distance array", landmarkDistances[landmarks[0]][src])
+
+	heuristic := 0
+	closestLandmark := landmarks[0]
+	for i, landmark := range landmarks {
+		if landmarkDistances[landmark][dst] < landmarkDistances[closestLandmark][dst] {
+			closestLandmark = landmarks[i]
+		}
+		// fmt.Println("Landmark:", landmark)
+	}
+	closestLandmarkArray := landmarkDistances[closestLandmark]
+	// fmt.Println("Closest landmark:", closestLandmark)
+	// fmt.Println("Distnace from src to closest landmark:", landmarkDistances[closestLandmark][src])
+
 	for data.PQ.Len() > 0 {
 		current := heap.Pop(data.PQ).(*types.QueueItem)
 		currentNode := current.Node
@@ -40,10 +53,13 @@ func ALT(nodes [][2]float64, edges [][4]int, edgeweights [][4]int, landmarks []i
 				continue
 			}
 
-			heuristic := 0
-			for _, landmark := range landmarks {
-				heuristic = int(math.Abs(float64(landmarkDistances[landmark][currentNode] - landmarkDistances[landmark][neighbor])))
-			}
+			// for _, landmark := range landmarks {
+			// 	temp := int(math.Abs(float64(landmarkDistances[landmark][currentNode] - landmarkDistances[landmark][neighbor])))
+			// 	if temp > heuristic {
+			// 		heuristic = temp
+			// 	}
+			// }
+			heuristic = int(math.Abs(float64(closestLandmarkArray[currentNode] - closestLandmarkArray[dst])))
 
 			newDist := data.Dist[currentNode] + edgeweights[currentNode][i] + heuristic
 			if newDist < data.Dist[neighbor] {
