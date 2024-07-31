@@ -11,7 +11,8 @@ import (
 	"github.com/gookit/slog"
 )
 
-func FileReader() ([][2]float64, [][4]int, [][4]int, [][][]int, [][2]float64, []int) {
+// Nodes, Edges, Distances, Grid, Landmarks, LandmarkNodes, LandmarkDistances
+func FileReader() ([][2]float64, [][4]int, [][4]int, [][][]int, [][2]float64, []int, map[int][]int) {
 	slog.Info("Reading the files")
 	graphNodesJSON, err := os.ReadFile("objects/graphNodes.json")
 	if err != nil {
@@ -83,7 +84,17 @@ func FileReader() ([][2]float64, [][4]int, [][4]int, [][][]int, [][2]float64, []
 		slog.Info("Error unmarshalling landmarkNodes:", err)
 	}
 
-	return graphNodes, graphEdges, distancesEdges, grid, landmarks, landmarkNodes
+	landmarkDistances := make(map[int][]int)
+	landmarkDistancesJSON, err := os.ReadFile("objects/landmarkDistances.json")
+	if err != nil {
+		slog.Info("Error reading landmarkDistances from file:", err)
+	}
+	err = json.Unmarshal(landmarkDistancesJSON, &landmarkDistances)
+	if err != nil {
+		slog.Info("Error unmarshalling landmarkDistances:", err)
+	}
+
+	return graphNodes, graphEdges, distancesEdges, grid, landmarks, landmarkNodes, landmarkDistances
 }
 
 func MultiRouter(iterations int) {
@@ -91,7 +102,7 @@ func MultiRouter(iterations int) {
 	fidgeter := chin.New()
 	go fidgeter.Start()
 
-	graphNodes, graphEdges, distancesEdges, _, landmarks, _ := FileReader()
+	graphNodes, graphEdges, distancesEdges, _, _, landmarkNodes, LandmarkDistances := FileReader()
 
 	var randomIndices = make([][2]int, iterations)
 	for i := 0; i < iterations; i++ {
@@ -115,7 +126,7 @@ func MultiRouter(iterations int) {
 
 	var startALT = time.Now()
 	for i := 0; i < iterations; i++ {
-		ALT(graphNodes, graphEdges, distancesEdges, landmarks, randomIndices[i][0], randomIndices[i][1])
+		ALT(graphNodes, graphEdges, distancesEdges, landmarkNodes, LandmarkDistances, randomIndices[i][0], randomIndices[i][1])
 	}
 
 	fmt.Println("Average ALT time: ", time.Since(startALT)/time.Duration(iterations))
@@ -129,7 +140,7 @@ func SingleRouter(router string, iterations int) {
 	fidgeter := chin.New()
 	go fidgeter.Start()
 
-	graphNodes, graphEdges, distancesEdges, _, landmarks, _ := FileReader()
+	graphNodes, graphEdges, distancesEdges, _, _, landmarkNodes, landmarkDistances := FileReader()
 
 	var randomIndices = make([][2]int, iterations)
 	for i := 0; i < iterations; i++ {
@@ -163,7 +174,7 @@ func SingleRouter(router string, iterations int) {
 		var startALT = time.Now()
 		for i := 0; i < iterations; i++ {
 			midStart := time.Now()
-			_, dist := ALT(graphNodes, graphEdges, distancesEdges, landmarks, randomIndices[i][0], randomIndices[i][1])
+			_, dist := ALT(graphNodes, graphEdges, distancesEdges, landmarkNodes, landmarkDistances, randomIndices[i][0], randomIndices[i][1])
 			fmt.Println("ALT time Iteration: ", i, time.Since(midStart), "Distance: ", dist)
 		}
 

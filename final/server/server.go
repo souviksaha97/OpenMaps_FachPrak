@@ -25,7 +25,7 @@ func Server() {
 	serv.Use(cors.New(config))
 
 	// Read the files
-	graphNodes, graphEdges, distancesEdges, grid, landmarks, _ := router.FileReader()
+	graphNodes, graphEdges, distancesEdges, grid, landmarks, landmarkNodes, landmarkDistances := router.FileReader()
 
 	serv.POST("/submit_points", func(c *gin.Context) {
 		var requestData map[string]types.Point
@@ -58,7 +58,7 @@ func Server() {
 
 		// copier.Copy(&tempDist, &dist)
 		var startTimeALT = time.Now()
-		shortestPathALT, _ := router.AlgoALT(start, end, graphNodes, graphEdges, distancesEdges, landmarks, grid)
+		shortestPathALT, _ := router.AlgoALT(start, end, graphNodes, graphEdges, distancesEdges, landmarkNodes, landmarkDistances, grid)
 		var timeTakenALT = time.Since(startTimeALT).Milliseconds()
 
 		slog.Info("AStar Time:", timeTakenAStar)

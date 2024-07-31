@@ -12,12 +12,14 @@ import (
 	"github.com/gookit/slog"
 )
 
-const numLandmarks = 5
+const numLandmarks = 40
 
-func ALT(nodes [][2]float64, edges [][4]int, edgeweights [][4]int, landmarks [][2]float64, src int, dst int) ([]int, int) {
+// Nodes, Edges, Distances, Landmarks, LandmarkDistances, src, dst
+func ALT(nodes [][2]float64, edges [][4]int, edgeweights [][4]int, landmarks []int, landmarkDistances map[int][]int, src int, dst int) ([]int, int) {
 	// Initialize GraphData
 	data := types.NewGraphData(len(nodes), src)
-
+	fmt.Println("Length", len(landmarkDistances), len(landmarkDistances[landmarks[0]]))
+	// fmt.Println("Distance array", landmarkDistances[landmarks[0]][src])
 	for data.PQ.Len() > 0 {
 		current := heap.Pop(data.PQ).(*types.QueueItem)
 		currentNode := current.Node
@@ -41,7 +43,7 @@ func ALT(nodes [][2]float64, edges [][4]int, edgeweights [][4]int, landmarks [][
 
 			heuristic := 0
 			for _, landmark := range landmarks {
-				heuristic = int(math.Max(float64(heuristic), generator.Haversine(nodes[neighbor][0], nodes[neighbor][1], landmark[0], landmark[1])-generator.Haversine(nodes[dst][0], nodes[dst][1], landmark[0], landmark[1])))
+				heuristic = int(math.Abs(float64(landmarkDistances[landmark][currentNode] - landmarkDistances[landmark][neighbor])))
 			}
 
 			newDist := data.Dist[currentNode] + edgeweights[currentNode][i] + heuristic
@@ -65,7 +67,7 @@ func ALT(nodes [][2]float64, edges [][4]int, edgeweights [][4]int, landmarks [][
 	return path, data.Dist[dst]
 }
 
-func AlgoALT(Start types.Point, End types.Point, graphNodes [][2]float64, graphEdges [][4]int, distancesEdges [][4]int, landmarks [][2]float64, grid [][][]int) ([]types.Point, int) {
+func AlgoALT(Start types.Point, End types.Point, graphNodes [][2]float64, graphEdges [][4]int, distancesEdges [][4]int, landmarks []int, landmarkDistances map[int][]int, grid [][][]int) ([]types.Point, int) {
 	nearestnodeStart := [2]float64{Start.Lat, Start.Lng}
 	nearestnodeEnd := [2]float64{End.Lat, End.Lng}
 	nearestpointStartIndex := -1
@@ -88,7 +90,7 @@ func AlgoALT(Start types.Point, End types.Point, graphNodes [][2]float64, graphE
 		}
 	}
 
-	path, dist := ALT(graphNodes, graphEdges, distancesEdges, landmarks, nearestpointStartIndex, nearpointEndIndex)
+	path, dist := ALT(graphNodes, graphEdges, distancesEdges, landmarks, landmarkDistances, nearestpointStartIndex, nearpointEndIndex)
 
 	// Convert the path to the required format
 	shortestPath := make([]types.Point, len(path))
@@ -100,7 +102,7 @@ func AlgoALT(Start types.Point, End types.Point, graphNodes [][2]float64, graphE
 }
 
 func LandmarksDistanceMaximiser() {
-	nodes, _, _, _, _, _ := FileReader()
+	nodes, _, _, _, _, _, _ := FileReader()
 	longSearch := false
 
 	maxDistance := 0.0
@@ -181,12 +183,12 @@ func chooseLandmarks(nodes [][2]float64, numLandmarks int, minDistance int) []in
 }
 
 func landMarksDistanceFinder() {
-	graphNodes, graphEdges, distancesEdges, _, _, landmarkNodes := FileReader()
+	graphNodes, graphEdges, distancesEdges, _, _, landmarkNodes, _ := FileReader()
 	completeLandmarksMap := make(map[int][]int)
 	for i, landmark := range landmarkNodes {
 		slog.Info("Landmark:", i)
 		_, dist := Djikstra(graphNodes, graphEdges, distancesEdges, landmark, -1)
-		completeLandmarksMap[i] = dist
+		completeLandmarksMap[landmark] = dist
 	}
 	generator.WriteToJSONFile("objects/landmarkDistances.json", completeLandmarksMap)
 }
