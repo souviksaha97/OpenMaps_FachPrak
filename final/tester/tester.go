@@ -59,7 +59,7 @@ func Tester(iterations int) {
 			optimalTime = int(averageTimeInt)
 			optimalLandmarks = numLandmarks
 		}
-		slog.Info("Number of landmarks: ", numLandmarks, "Average time: ", averageTime)
+		fmt.Println("Number of landmarks: ", numLandmarks, "Average time: ", averageTime)
 		slog.Info("___________________________________________________________________________")
 	}
 	slog.Info("Optimal number of landmarks: %d\n", optimalLandmarks)
