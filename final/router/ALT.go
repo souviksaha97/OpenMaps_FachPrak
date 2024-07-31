@@ -8,10 +8,11 @@ import (
 	"math"
 	"math/rand"
 
+	"github.com/adhocore/chin"
 	"github.com/gookit/slog"
 )
 
-const numLandmarks = 40
+const numLandmarks = 5
 
 func ALT(nodes [][2]float64, edges [][4]int, edgeweights [][4]int, landmarks [][2]float64, src int, dst int) ([]int, int) {
 	// Initialize GraphData
@@ -99,9 +100,9 @@ func AlgoALT(Start types.Point, End types.Point, graphNodes [][2]float64, graphE
 }
 
 func LandmarksDistanceMaximiser() {
-	nodes, _, _, _, _ := FileReader()
+	nodes, _, _, _, _, _ := FileReader()
 	longSearch := false
-	landmarks := make([]int, numLandmarks)
+
 	maxDistance := 0.0
 	if longSearch {
 		for i := 0; i < len(nodes); i++ {
@@ -113,12 +114,13 @@ func LandmarksDistanceMaximiser() {
 			}
 		}
 	} else {
-		// radius of earth in km
+		// circumference of earth in km
 		maxDistance = 6350.0
 	}
 
-	slog.Info("Max distance: %f\n", maxDistance)
+	slog.Info("Max distance: ", maxDistance)
 
+	landmarks := make([]int, numLandmarks)
 	for {
 		res := chooseLandmarks(nodes, numLandmarks, int(maxDistance))
 		if res == nil {
@@ -131,11 +133,19 @@ func LandmarksDistanceMaximiser() {
 	}
 
 	landmarksNodes := make([][2]float64, len(landmarks))
+
+	generator.WriteToJSONFile("objects/landmarkNodes.json", landmarks)
+
 	for i, landmark := range landmarks {
 		landmarksNodes[i][0] = nodes[landmark][0]
 		landmarksNodes[i][1] = nodes[landmark][1]
 	}
 	generator.WriteToJSONFile("objects/landmarks.json", landmarksNodes)
+
+	fidgetor := chin.New()
+	go fidgetor.Start()
+	landMarksDistanceFinder()
+	fidgetor.Stop()
 }
 
 func chooseLandmarks(nodes [][2]float64, numLandmarks int, minDistance int) []int {
@@ -168,4 +178,15 @@ func chooseLandmarks(nodes [][2]float64, numLandmarks int, minDistance int) []in
 		return nil
 	}
 	return landmarks
+}
+
+func landMarksDistanceFinder() {
+	graphNodes, graphEdges, distancesEdges, _, _, landmarkNodes := FileReader()
+	completeLandmarksMap := make(map[int][]int)
+	for i, landmark := range landmarkNodes {
+		slog.Info("Landmark:", i)
+		_, dist := Djikstra(graphNodes, graphEdges, distancesEdges, landmark, -1)
+		completeLandmarksMap[i] = dist
+	}
+	generator.WriteToJSONFile("objects/landmarkDistances.json", completeLandmarksMap)
 }

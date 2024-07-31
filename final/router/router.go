@@ -11,7 +11,7 @@ import (
 	"github.com/gookit/slog"
 )
 
-func FileReader() ([][2]float64, [][4]int, [][4]int, [][][]int, [][2]float64) {
+func FileReader() ([][2]float64, [][4]int, [][4]int, [][][]int, [][2]float64, []int) {
 	slog.Info("Reading the files")
 	graphNodesJSON, err := os.ReadFile("objects/graphNodes.json")
 	if err != nil {
@@ -73,7 +73,17 @@ func FileReader() ([][2]float64, [][4]int, [][4]int, [][][]int, [][2]float64) {
 
 	slog.Info("Landmarks:", len(landmarks))
 
-	return graphNodes, graphEdges, distancesEdges, grid, landmarks
+	landmarkNodes := make([]int, numLandmarks)
+	landmarkNodesJSON, err := os.ReadFile("objects/landmarkNodes.json")
+	if err != nil {
+		slog.Info("Error reading landmarkNodes from file:", err)
+	}
+	err = json.Unmarshal(landmarkNodesJSON, &landmarkNodes)
+	if err != nil {
+		slog.Info("Error unmarshalling landmarkNodes:", err)
+	}
+
+	return graphNodes, graphEdges, distancesEdges, grid, landmarks, landmarkNodes
 }
 
 func MultiRouter(iterations int) {
@@ -81,7 +91,7 @@ func MultiRouter(iterations int) {
 	fidgeter := chin.New()
 	go fidgeter.Start()
 
-	graphNodes, graphEdges, distancesEdges, _, landmarks := FileReader()
+	graphNodes, graphEdges, distancesEdges, _, landmarks, _ := FileReader()
 
 	var randomIndices = make([][2]int, iterations)
 	for i := 0; i < iterations; i++ {
@@ -119,7 +129,7 @@ func SingleRouter(router string, iterations int) {
 	fidgeter := chin.New()
 	go fidgeter.Start()
 
-	graphNodes, graphEdges, distancesEdges, _, landmarks := FileReader()
+	graphNodes, graphEdges, distancesEdges, _, landmarks, _ := FileReader()
 
 	var randomIndices = make([][2]int, iterations)
 	for i := 0; i < iterations; i++ {
@@ -134,7 +144,7 @@ func SingleRouter(router string, iterations int) {
 		for i := 0; i < iterations; i++ {
 			midStart := time.Now()
 			_, dist := Djikstra(graphNodes, graphEdges, distancesEdges, randomIndices[i][0], randomIndices[i][1])
-			fmt.Println("Djikstra time Iteration: ", i, time.Since(midStart), "Distance: ", dist)
+			fmt.Println("Djikstra time Iteration: ", i, time.Since(midStart), "Distance: ", dist[randomIndices[i][1]])
 		}
 
 		fmt.Println("Average Dijsktra time: ", time.Since(startDijkstra)/time.Duration(iterations))

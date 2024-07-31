@@ -4,12 +4,11 @@ import (
 	"container/heap"
 	"final/generator"
 	"final/types"
-	"fmt"
 	"math"
 	"time"
 )
 
-func Djikstra(nodes [][2]float64, edges [][4]int, edgeweights [][4]int, src int, dst int) ([]int, int) {
+func Djikstra(nodes [][2]float64, edges [][4]int, edgeweights [][4]int, src int, dst int) ([]int, []int) {
 	// Initialize GraphData
 	// init_time := time.Now()
 	// total_push_time := time.Duration(0)
@@ -52,16 +51,19 @@ func Djikstra(nodes [][2]float64, edges [][4]int, edgeweights [][4]int, src int,
 		}
 		total_loop2_time += time.Since(loop2_time)
 	}
-	fmt.Println("loop2 time: ", total_loop2_time)
+	// fmt.Println("loop2 time: ", total_loop2_time)
+	// fmt.Println("Dest dist: ", data.Dist[dst])
 
 	// Reconstruct the path
 	path := []int{}
-	if data.Prev[dst] != -1 || src == dst {
-		for at := dst; at != -1; at = data.Prev[at] {
-			path = append([]int{at}, path...)
+	if dst != -1 {
+		if data.Prev[dst] != -1 || src == dst {
+			for at := dst; at != -1; at = data.Prev[at] {
+				path = append([]int{at}, path...)
+			}
 		}
 	}
-	return path, data.Dist[dst]
+	return path, data.Dist
 }
 
 func AlgoDijkstra(Start types.Point, End types.Point, graphNodes [][2]float64, graphEdges [][4]int, distancesEdges [][4]int, grid [][][]int) ([]types.Point, int) {
@@ -94,5 +96,5 @@ func AlgoDijkstra(Start types.Point, End types.Point, graphNodes [][2]float64, g
 	for i, nodeIndex := range path {
 		shortestPath[i] = types.Point{Lat: graphNodes[nodeIndex][0], Lng: graphNodes[nodeIndex][1]}
 	}
-	return shortestPath, dist
+	return shortestPath, dist[nearpointEndIndex]
 }

@@ -25,7 +25,7 @@ func Server() {
 	serv.Use(cors.New(config))
 
 	// Read the files
-	graphNodes, graphEdges, distancesEdges, grid, landmarks := router.FileReader()
+	graphNodes, graphEdges, distancesEdges, grid, landmarks, _ := router.FileReader()
 
 	serv.POST("/submit_points", func(c *gin.Context) {
 		var requestData map[string]types.Point
