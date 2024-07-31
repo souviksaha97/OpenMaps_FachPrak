@@ -35,8 +35,8 @@ func Tester(iterations int) {
 	// print the optimal number of landmarks
 	optimalLandmarks := 0
 	optimalTime := math.MaxInt64
-	for i := 1; i <= 1000; i *= 10 {
-		numLandmarks := int(float64(len(nodes)) * 0.000001 * float64(i))
+	for i := 1; i <= 400; i *= 4 {
+		numLandmarks := i
 		slog.Info("___________________________________________________________________________")
 		slog.Info("Number of landmarks: ", numLandmarks)
 		router.LandmarksDistanceMaximiser(numLandmarks)

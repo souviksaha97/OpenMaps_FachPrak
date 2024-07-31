@@ -134,7 +134,7 @@ func LandmarksDistanceMaximiser(numLandmarks int) {
 		maxDistance = 6350.0
 	}
 
-	slog.Info("Max distance: ", maxDistance)
+	slog.Debug("Max distance: ", maxDistance)
 	if numLandmarks == 0 {
 		numLandmarks = numLandmarksConst
 	}
