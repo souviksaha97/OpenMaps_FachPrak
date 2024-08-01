@@ -126,16 +126,25 @@ func MultiRouter(iterations int) {
 	avgAstar := time.Since(startAStar) / time.Duration(iterations)
 	fmt.Println("Average AStar time: ", avgAstar)
 
-	var startALT = time.Now()
+	var startALTv1 = time.Now()
 	for i := 0; i < iterations; i++ {
 		ALT(graphNodes, graphEdges, distancesEdges, landmarkNodes, LandmarkDistances, randomIndices[i][0], randomIndices[i][1])
 	}
 
-	avgALT := time.Since(startALT) / time.Duration(iterations)
-	fmt.Println("Average ALT time: ", avgALT)
+	avgALTv1 := time.Since(startALTv1) / time.Duration(iterations)
+	fmt.Println("Average ALT time: ", avgALTv1)
+
+	var startALTv2 = time.Now()
+	for i := 0; i < iterations; i++ {
+		ALTv2(graphNodes, graphEdges, distancesEdges, landmarkNodes, LandmarkDistances, randomIndices[i][0], randomIndices[i][1])
+	}
+
+	avgALTv2 := time.Since(startALTv2) / time.Duration(iterations)
+	fmt.Println("Average ALTv2 time: ", avgALTv2)
 
 	fmt.Println("A* speedup percent: ", float64(avgDijkstra-avgAstar)/float64(avgDijkstra)*100)
-	fmt.Println("ALT speedup percent: ", float64(avgDijkstra-avgALT)/float64(avgDijkstra)*100)
+	fmt.Println("ALTv1 speedup percent: ", float64(avgDijkstra-avgALTv1)/float64(avgDijkstra)*100)
+	fmt.Println("ALTv2 speedup percent: ", float64(avgDijkstra-avgALTv2)/float64(avgDijkstra)*100)
 
 	fidgeter.Stop()
 
