@@ -568,13 +568,6 @@ func main() {
 	if err != nil {
 		fmt.Println("Error unmarshalling landmarks:", err)
 	}
-	dist := make(map[int]int)
-
-	for node := range graphNodes {
-		dist[node] = math.MaxInt32
-	}
-
-	fmt.Println("Landmarks:", len(landmarks))
 
 	if os.Args[1] == "server" {
 		fmt.Println("Server")
