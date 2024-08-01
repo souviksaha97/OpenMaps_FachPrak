@@ -59,7 +59,7 @@ func ALT(nodes [][2]float64, edges [][4]int, edgeweights [][4]int, landmarks []i
 			// 		heuristic = temp
 			// 	}
 			// }
-			heuristic = int(math.Abs(float64(closestLandmarkArray[currentNode] - closestLandmarkArray[dst])))
+			heuristic = generator.Abs(closestLandmarkArray[currentNode] - closestLandmarkArray[dst])
 
 			newDist := data.Dist[currentNode] + edgeweights[currentNode][i] + heuristic
 			if newDist < data.Dist[neighbor] {
@@ -134,7 +134,26 @@ func ALTv2(nodes [][2]float64, edges [][4]int, edgeweights [][4]int, landmarks [
 			// 		heuristic = temp
 			// 	}
 			// }
-			heuristic = int(math.Max(math.Abs(float64(l1Array[currentNode]-l1Array[dst])), math.Abs(float64(l2Array[currentNode]-l2Array[dst]))))
+
+			//|d(v, l1) − d(l1 , t)
+			triangle1 := generator.Abs(l1Array[currentNode] - l1Array[dst])
+
+			// |d(v, l2) − d(l2 , t)|
+			triangle2 := generator.Abs(l2Array[currentNode] - l2Array[dst])
+
+			// |d(v, l1 ) − d(l1 , l2 )| − d(l2 , t)
+			quad1 := generator.Abs(l1Array[currentNode]-l2Array[l1]) - l2Array[dst]
+
+			//  |d(v, l1 ) − d(l2 , t)| − d(l1, l2 )
+			quad2 := generator.Abs(l1Array[currentNode]-l2Array[dst]) - l1Array[l2]
+
+			// |d(l1 , l2 ) − d(l2 , t)| − d(v, l1 )
+			quad3 := generator.Abs(l1Array[l2]-l2Array[dst]) - l1Array[currentNode]
+
+			bigGuy := (generator.Abs(l1Array[currentNode]-l1Array[l2])*generator.Abs(l1Array[l2]-l2Array[dst]) - (l1Array[currentNode] * l2Array[dst])) / l1Array[l2]
+			heuristicArray := []int{triangle1, triangle2, quad1, quad2, quad3, bigGuy}
+
+			heuristic = generator.Max(heuristicArray)
 
 			newDist := data.Dist[currentNode] + edgeweights[currentNode][i] + heuristic
 			if newDist < data.Dist[neighbor] {

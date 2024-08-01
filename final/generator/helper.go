@@ -931,3 +931,20 @@ func WriteToJSONFile(filename string, data interface{}) error {
 
 	return nil
 }
+
+func Abs(x int) int {
+	if x < 0 {
+		return -x
+	}
+	return x
+}
+
+func Max(x []int) int {
+	max := x[0]
+	for _, value := range x {
+		if value > max {
+			max = value
+		}
+	}
+	return max
+}
