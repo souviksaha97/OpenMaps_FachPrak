@@ -12,6 +12,7 @@ import (
 	"math/rand"
 	"os"
 	"runtime"
+	"sort"
 	"strconv"
 	"sync"
 	"time"
@@ -26,7 +27,6 @@ import (
 	"github.com/gin-gonic/gin"
 
 	"github.com/adhocore/chin"
-	"github.com/jinzhu/copier"
 )
 
 /*
@@ -65,8 +65,9 @@ type QueueItem struct {
 }
 type PriorityQueue []*QueueItem
 
-type Ocean struct {
-	graphIDs []int
+type EdgeWithDistance struct {
+	Edge     [2]int
+	Distance float64
 }
 
 // Point represents a geographical point with latitude and longitude
@@ -108,7 +109,6 @@ const PBF_FILE_PATH = "/home/sahask/osm_data/planet-coastlines.osm.pbf"
 
 const pointcount = 4000000
 const longBincount = 3600
-const landmarksCount = 40
 
 func graphGenerator() {
 	var start = time.Now()
@@ -129,11 +129,13 @@ func graphGenerator() {
 
 	ways_map := make(map[osm.NodeID][]osm.NodeID)
 	nodeRelations := make(map[osm.NodeID]WayComplete)
-
+	wayMapIdForNodeId := make(map[osm.NodeID]osm.NodeID)
+	wayBoundingBox := make(map[osm.NodeID][4]float64)
+	waysMidPoint := make(map[osm.NodeID][2]float64)
 	rows := 180
 	colums := 360
 	randomPointCount := pointcount
-	grid := make([][][]int, rows)
+	grid := make([][][][3]float64, rows)
 	graphNodes := [pointcount][2]float64{}
 	graphEdges := [pointcount][4]int{}
 	for i := range graphEdges {
@@ -143,9 +145,9 @@ func graphGenerator() {
 	}
 	distancesEdges := [pointcount][4]int{}
 	for i := range grid {
-		grid[i] = make([][]int, colums)
+		grid[i] = make([][][3]float64, colums)
 		for j := range grid[i] {
-			grid[i][j] = []int{}
+			grid[i][j] = [][3]float64{}
 		}
 	}
 
@@ -174,17 +176,6 @@ func graphGenerator() {
 			} else if v.Tags.Find("place") == "ocean" {
 				fmt.Println("found ocean")
 			}
-		}
-	}
-	runtime.GC()
-
-	slog.Info("Start cleaning nodes")
-	slog.Info("Nodes : " + strconv.Itoa(len(nodes_map)))
-
-	for key, node := range nodes_map {
-		if !node.isCoastline {
-			// fmt.Println("Deleting node: ", key)
-			delete(nodes_map, key)
 		}
 	}
 	runtime.GC()
@@ -244,75 +235,190 @@ func graphGenerator() {
 	fmt.Println(returedges)
 
 	//random points
-	slog.Info("starttime 4 mio: " + time.Since(start).String())
+	slog.Info("starttime 1 mio: " + time.Since(start).String())
 	for s := 0; s < randomPointCount; s++ {
-		var randLong float64
-		var randLat float64
+		if s%10000 == 0 {
+			slog.Info("10k: " + time.Since(start).String())
+		}
+		randLong := rand.Float64()*360.0 - 180.0
+		randLat := float64((math.Asin(rand.Float64()*2.0-1.0) * 180.0 / math.Pi))
 		for {
 			randLong = rand.Float64()*360.0 - 180.0
 			randLat = float64((math.Asin(rand.Float64()*2.0-1.0) * 180.0 / math.Pi))
 
-			edges := FindEdgesForPointpoint(&edges_map, [2]float64{randLat, randLong})
-			if len(edges)%2 == 0 {
+			edges := FindEdgesForPointpoint(&edges_map, [2]float64{randLat, randLong}) //polygon test
+			if len(edges)%2 == 0 && randLong != 0.0 && randLat != 0.0 {
 				break
 			}
-			if randLong == 0.0 || randLat == 0.0 {
-				break
-			}
+
 		}
 		if randLat >= 89.0 {
-			grid[0][0] = append(grid[0][0], s)
+			grid[0][0] = append(grid[0][0], [3]float64{randLat, randLong, float64(s)})
 		} else if randLat <= -89.0 {
-			grid[0][0] = append(grid[0][0], s)
+			grid[0][0] = append(grid[0][0], [3]float64{randLat, randLong, float64(s)})
 		} else {
 
 			a, b := findRowAndColumnInGrid(rows, colums, float64(randLat), randLong)
-
-			grid[a][b] = append(grid[a][b], s)
+			//fmt.Println(a, b, randLat, randLong)
+			grid[a][b] = append(grid[a][b], [3]float64{randLat, randLong, float64(s)})
 		}
 		graphNodes[s] = [2]float64{randLat, randLong}
 	}
-	fmt.Println("00 grid length", len(grid[0][0]))
-	slog.Info("endtime 4 mio: " + time.Since(start).String())
-
-	for k := range graphNodes {
-		if k%10000 == 0 {
-			fmt.Println("10k")
-		}
-
-		u := graphNodes[k]
-		edge := graphEdges[k]
-		a, b := findRowAndColumnInGrid(rows, colums, u[0], u[1])
-		points := getAllNeighbourCellss(grid, a, b, u[0], 2)
-		if edge[0] == -1 {
-
-			if !findTopLeft(k, graphNodes, &graphEdges, &distancesEdges, grid[a][b]) {
-				findTopLeft(k, graphNodes, &graphEdges, &distancesEdges, points)
+	highestam := -1
+	v := -1
+	u := -1
+	for k := 0; k < len(grid); k++ {
+		for l := 0; l < len(grid[k]); l++ {
+			if len(grid[k][l]) > highestam {
+				highestam = len(grid[k][l])
+				u = k
+				v = l
 			}
-		}
-		if edge[1] == -1 {
-			if !findTopRight(k, graphNodes, &graphEdges, &distancesEdges, grid[a][b]) {
-				findTopRight(k, graphNodes, &graphEdges, &distancesEdges, points)
-
-			}
-
-		}
-		if edge[2] == -1 {
-			if !findBottomLeft(k, graphNodes, &graphEdges, &distancesEdges, grid[a][b]) {
-				findBottomLeft(k, graphNodes, &graphEdges, &distancesEdges, points)
-
-			}
-
-		}
-		if edge[3] == -1 {
-			if !findBottomRight(k, graphNodes, &graphEdges, &distancesEdges, grid[a][b]) {
-				findBottomRight(k, graphNodes, &graphEdges, &distancesEdges, points)
-
-			}
-
 		}
 	}
+	fmt.Println("highestamountingrid", highestam, u, v)
+	fmt.Println("00 grid length", len(grid[0][0]))
+	slog.Info("endtime 1 mio: " + time.Since(start).String())
+	//fmt.Println(graphNodes)
+	//fmt.Println(grid)
+
+	//neu
+	//sorttest
+	edges := [][2]int{
+		{0, 3},
+		{2, 5},
+		{1, 3},
+		{0, 3},
+		{2, 5},
+		{1, 4},
+		{5, 4},
+	}
+	distances := []float64{
+		1.2,
+		2.3,
+		1.5,
+		1.2,
+		2.3,
+		2.5,
+		2.1,
+	}
+
+	// Sort and remove duplicates
+	sortedEdges, sortedDistances, startIndices := sortAndRemoveDuplicates(edges, distances, 5)
+	fmt.Println(sortedEdges, sortedDistances, startIndices)
+	var mu sync.Mutex
+	var wg sync.WaitGroup
+
+	for s, k := range grid {
+		for t, points := range k {
+
+			if len(points) == 0 {
+				break
+			}
+			p := getAllNeighbourCellss(grid, s, t, points[0][0], 1)
+
+			for _, u := range points {
+
+				nearestHelper(u, p, graphNodes, &edges, &distances, &mu, 1)
+				nearestHelper(u, p, graphNodes, &edges, &distances, &mu, 2)
+				nearestHelper(u, p, graphNodes, &edges, &distances, &mu, 3)
+				nearestHelper(u, p, graphNodes, &edges, &distances, &mu, 4)
+			}
+		}
+
+	}
+
+	slog.Info("neighbours finsished good: " + time.Since(start).String())
+
 	fmt.Println("finished neighbours")
+
+	for k := range ways_map { //fill boundingBox of ways map (used for faster point in polygon test) makes polygones around +-180longitude max but i dont care
+		latmin := math.MaxFloat64
+		latmax := -math.MaxFloat64
+		lonmin := math.MaxFloat64
+		lonmax := -math.MaxFloat64
+		for m := range ways_map[k] {
+			if nodes_map[ways_map[k][m]].Lat < latmin {
+				latmin = nodes_map[ways_map[k][m]].Lat
+			}
+			if nodes_map[ways_map[k][m]].Lon < lonmin {
+				lonmin = nodes_map[ways_map[k][m]].Lon
+			}
+			if nodes_map[ways_map[k][m]].Lat > latmax {
+				latmax = nodes_map[ways_map[k][m]].Lat
+			}
+			if nodes_map[ways_map[k][m]].Lon > lonmax {
+				lonmax = nodes_map[ways_map[k][m]].Lon
+			}
+		}
+		if latmin-0.01 > -90.0 {
+			latmin = latmin - 0.01
+		} else {
+			latmin = -90.0
+		}
+		if latmax+0.01 < 90.0 {
+			latmax = latmax + 0.01
+		} else {
+			latmax = 90.0
+		}
+		if lonmin-0.01 > -180.0 {
+			lonmin = lonmin - 0.01
+		} else {
+			lonmin = -180.0
+		}
+		if lonmax+0.01 < 180.0 {
+			lonmax = lonmax + 0.01
+		} else {
+			lonmax = 180.0
+		}
+		wayBoundingBox[k] = [4]float64{latmin, latmax, lonmin, lonmax}
+
+	}
+	slog.Info("bounding box finished...Julian")
+	//fmt.Println(wayBoundingBox)
+	for key, value := range ways_map { //used to find way associated with node id
+		for s := range value {
+			wayMapIdForNodeId[value[s]] = key
+		}
+	}
+	slog.Info("waymapcreated...Julian")
+
+	slog.Info("centroid...Julian")
+	//fmt.Println(waysMidPoint)
+	testPoint := [2]float64{-48.8766666, -123.3933333} //watwre
+	//testPoint := [2]float64{-62.2385073, -59.10429} //land way/way/1270573186
+	//fmt.Println(wayMapIdForNodeId)
+	//testWhichPolyCrosses180(ways_map, nodes_map)
+	fmt.Println(ways_map[wayMapIdForNodeId[11799186160]])
+	fmt.Println(testPolygon(testPoint, wayMapIdForNodeId[11799186160], ways_map[wayMapIdForNodeId[11799186160]], nodes_map, waysMidPoint))
+	//inttest := testAllPolygonesIfMidpointsisIn(ways_map, nodes_map, waysMidPoint, wayBoundingBox)
+	//fmt.Println("must be -1", inttest)
+	//inttest := testAllPolygonesWithBounding(testPoint, ways_map, nodes_map, waysMidPoint, wayBoundingBox)
+	//fmt.Println(inttest)
+	fmt.Println("Coastlines count:	")
+	fmt.Println(len(ways_map))
+	const numPoints = 200
+	const batchSize = 10
+
+	points := generateRandomPoints(numPoints)
+	results := make([]int, numPoints)
+
+	//var wg sync.WaitGroup
+	numBatches := (numPoints + batchSize - 1) / batchSize
+
+	for batch := 0; batch < numBatches; batch++ {
+		start := batch * batchSize
+		end := (batch + 1) * batchSize
+		if end > numPoints {
+			end = numPoints
+		}
+		wg.Add(1)
+		go processPoints(points, ways_map, nodes_map, wayBoundingBox, results, start, end, &wg)
+	}
+
+	wg.Wait()
+
+	slog.Info("neighbours finsished good: " + time.Since(start).String())
 
 	// write graphNodes graphEdges distancesEdges grid to different json files
 	graphNodesJSON, _ := json.Marshal(graphNodes)
@@ -382,9 +488,6 @@ func server(graphNodes [][2]float64, graphEdges [][4]int, distancesEdges [][4]in
 		// Call the Algo function
 		// copier.CopyWithOption(&tempDist, &dist, copier.Option{DeepCopy: true})
 		// copier.Copy(&tempDist, &dist)
-		var startTimeAStar = time.Now()
-		shortestPathAStar := AlgoAStar(start, end, graphNodes, graphEdges, distancesEdges, grid)
-		var timeTakenAStar = time.Since(startTimeAStar).Milliseconds()
 		// copier.CopyWithOption(&tempDist, &dist, copier.Option{DeepCopy: true})
 		// copier.Copy(&tempDist, &dist)
 		var startTimeDijkstra = time.Now()
@@ -392,22 +495,13 @@ func server(graphNodes [][2]float64, graphEdges [][4]int, distancesEdges [][4]in
 		var timeTakenDijkstra = time.Since(startTimeDijkstra).Milliseconds()
 
 		// copier.Copy(&tempDist, &dist)
-		var startTimeALT = time.Now()
-		shortestPathALT := AlgoALT(start, end, graphNodes, graphEdges, distancesEdges, landmarks, grid)
-		var timeTakenALT = time.Since(startTimeALT).Milliseconds()
 
-		fmt.Println("AStar Time:", timeTakenAStar)
 		fmt.Println("Dijkstra Time:", timeTakenDijkstra)
-		fmt.Println("ALT Time:", timeTakenALT)
 		// fmt.Println("Shortest Path:", shortestPath)
 
 		c.JSON(http.StatusOK, gin.H{
-			"astar_time":          timeTakenAStar,
-			"dijkstra_time":       timeTakenDijkstra,
-			"alt_time":            timeTakenALT,
-			"shortest_path_astar": shortestPathAStar,
-			"shortest_path_djik":  shortestPathDjikstra,
-			"shortest_path_alt":   shortestPathALT,
+			"dijkstra_time":      timeTakenDijkstra,
+			"shortest_path_djik": shortestPathDjikstra,
 		})
 	})
 
@@ -488,72 +582,6 @@ func main() {
 	} else if os.Args[1] == "graph" {
 		fmt.Println("Graph Generator")
 		graphGenerator()
-	} else if os.Args[1] == "alt-pre" {
-		fmt.Println("Choosing Landmarks")
-		// Choose landmarks
-		// minDistance, _ := strconv.Atoi(os.Args[2])
-		fidgeter := chin.New()
-		go fidgeter.Start()
-		landmarks := landmarksDistanceMaximiser(graphNodes, landmarksCount, false)
-
-		landmarksNodes := make([][2]float64, len(landmarks))
-		for i, landmark := range landmarks {
-			landmarksNodes[i][0] = graphNodes[landmark][0]
-			landmarksNodes[i][1] = graphNodes[landmark][1]
-		}
-
-		// landmarksDistance := make([][]int, len(landmarks))
-
-		// Write landmarks to file
-		landmarksJSON, _ := json.Marshal(landmarksNodes)
-		err = os.WriteFile("landmarks.json", landmarksJSON, 0644)
-		if err != nil {
-			fmt.Println("Error writing landmarks to file:", err)
-		}
-		fidgeter.Stop()
-
-	} else if os.Args[1] == "quickpath" {
-		fmt.Println("Quick Path")
-		var startIndex, endIndex Point
-		startLat, err := strconv.ParseFloat(os.Args[2], 64)
-		if err != nil {
-			fmt.Println("Error parsing start latitude:", err)
-			return
-		}
-		startIndex.Lat = startLat
-		startLng, err := strconv.ParseFloat(os.Args[3], 64)
-		if err != nil {
-			fmt.Println("Error parsing start longitude:", err)
-			return
-		}
-		startIndex.Lng = startLng
-		endLat, err := strconv.ParseFloat(os.Args[4], 64)
-		if err != nil {
-			fmt.Println("Error parsing end latitude:", err)
-			return
-		}
-		endIndex.Lat = endLat
-		endLng, err := strconv.ParseFloat(os.Args[5], 64)
-		if err != nil {
-			fmt.Println("Error parsing end longitude:", err)
-			return
-		}
-		endIndex.Lng = endLng
-		algo := os.Args[6]
-		tempDist := make(map[int]int)
-		copier.CopyWithOption(&tempDist, &dist, copier.Option{DeepCopy: true})
-		var startTime = time.Now()
-		if algo == "dijkstra" {
-			fmt.Println("Dijkstra")
-			shortestPath := AlgoDijkstra(startIndex, endIndex, graphNodes, graphEdges, distancesEdges, grid)
-			fmt.Println("Shortest Path:", shortestPath)
-		} else if algo == "astar" {
-			fmt.Println("AStar")
-			shortestPath := AlgoAStar(startIndex, endIndex, graphNodes, graphEdges, distancesEdges, grid)
-			fmt.Println("Shortest Path:", shortestPath)
-		}
-		fmt.Println("Time taken:", time.Since(startTime))
-
 	} else if os.Args[1] == "multiple" {
 		fmt.Println("Multiple Analysis")
 		iterations, err := strconv.Atoi(os.Args[2])
@@ -580,24 +608,6 @@ func main() {
 			Dijkstra(graphNodes, graphEdges, distancesEdges, randomIndices[i][0], randomIndices[i][1])
 		}
 		fmt.Println("Average Dijsktra time: ", time.Since(startDijkstra)/time.Duration(iterations))
-
-		var startAStar = time.Now()
-		for i := 0; i < iterations; i++ {
-			// copier.CopyWithOption(&tempDist, &dist, copier.Option{DeepCopy: true})
-			// copier.Copy(&tempDist, &dist)
-			AStar(graphNodes, graphEdges, distancesEdges, randomIndices[i][0], randomIndices[i][1])
-		}
-
-		fmt.Println("Average AStar time: ", time.Since(startAStar)/time.Duration(iterations))
-
-		var startALT = time.Now()
-		for i := 0; i < iterations; i++ {
-			// copier.Copy(&tempDist, &dist)
-			ALT(graphNodes, graphEdges, distancesEdges, landmarks, randomIndices[i][0], randomIndices[i][1])
-		}
-
-		fmt.Println("Average ALT time: ", time.Since(startALT)/time.Duration(iterations))
-
 		fidgeter.Stop()
 	} else {
 		fmt.Println("Invalid arguments")
@@ -635,146 +645,6 @@ func AlgoDijkstra(Start Point, End Point, graphNodes [][2]float64, graphEdges []
 	// var startDijkstra = time.Now()
 	// _, path := Dijkstra(graphNodes[:], graphEdges[:], distancesEdges[:], nearestpointStartIndex, nearpointEndIndex)
 	_, path := Dijkstra(graphNodes[:], graphEdges[:], distancesEdges[:], nearestpointStartIndex, nearpointEndIndex)
-	// fmt.Println(dist)
-	// slog.Info("dykstra end: " + time.Since(startDijkstra).String())
-	returndykstrapath := [][2]float64{}
-	for k := range path {
-		returndykstrapath = append(returndykstrapath, graphNodes[path[k]])
-	}
-
-	//fmt.Println(viewEdges)
-	//fmt.Println(graphEdges)
-	//fmt.Println(returnEdges2)
-
-	// highest := -1
-	// counter := 0
-	// for k := range grid {
-	// 	for l := range grid[k] {
-	// 		if len(grid[k][l]) > highest {
-	// 			highest = len(grid[k][l])
-	// 		}
-	// 		if len(grid[k][l]) > 0 && len(grid[k][l]) < 5 {
-	// 			counter++
-	// 		}
-
-	// 	}
-
-	// }
-	// fmt.Println("highest", highest, "count greater 0", counter)
-
-	//randompoints end
-	// fmt.Println(returndykstrapath)
-
-	// Convert returndykstrapath to []Point
-	shortestPath := make([]Point, len(returndykstrapath))
-	for i, point := range returndykstrapath {
-		shortestPath[i] = Point{Lat: point[0], Lng: point[1]}
-	}
-
-	return shortestPath
-}
-
-func AlgoAStar(Start Point, End Point, graphNodes [][2]float64, graphEdges [][4]int, distancesEdges [][4]int, grid [][][]int) []Point {
-	//read graphNodes graphEdges distancesEdges grid from json files
-	// var start = time.Now()
-
-	// fmt.Println(distancesEdges)
-
-	nearestnodeStart := [2]float64{Start.Lat, Start.Lng}
-	distpointStart := 100000000.0
-	distpointEnd := 100000000.0
-	nearestnodeEnd := [2]float64{End.Lat, End.Lng}
-	nearestpointStartIndex := -1
-	nearpointEndIndex := -1
-	for k := range graphNodes {
-		distpointStartNew := haversine(graphNodes[k][0], graphNodes[k][1], nearestnodeStart[0], nearestnodeStart[1])
-		distpointENdNew := haversine(graphNodes[k][0], graphNodes[k][1], nearestnodeEnd[0], nearestnodeEnd[1])
-
-		if distpointStartNew < float64(distpointStart) {
-			nearestpointStartIndex = k
-			distpointStart = distpointStartNew
-		}
-		if distpointENdNew < distpointEnd {
-			nearpointEndIndex = k
-			distpointEnd = distpointENdNew
-		}
-	}
-
-	// fmt.Println("dijkstra go", nearestpointStartIndex, graphNodes[nearestpointStartIndex], nearpointEndIndex, graphNodes[nearpointEndIndex])
-	// slog.Info("dykstra start: " + time.Since(start).String())
-	// var startDijkstra = time.Now()
-	// _, path := Dijkstra(graphNodes[:], graphEdges[:], distancesEdges[:], nearestpointStartIndex, nearpointEndIndex)
-	_, path := AStar(graphNodes[:], graphEdges[:], distancesEdges[:], nearestpointStartIndex, nearpointEndIndex)
-	// fmt.Println(dist)
-	// slog.Info("dykstra end: " + time.Since(startDijkstra).String())
-	returndykstrapath := [][2]float64{}
-	for k := range path {
-		returndykstrapath = append(returndykstrapath, graphNodes[path[k]])
-	}
-
-	//fmt.Println(viewEdges)
-	//fmt.Println(graphEdges)
-	//fmt.Println(returnEdges2)
-
-	// highest := -1
-	// counter := 0
-	// for k := range grid {
-	// 	for l := range grid[k] {
-	// 		if len(grid[k][l]) > highest {
-	// 			highest = len(grid[k][l])
-	// 		}
-	// 		if len(grid[k][l]) > 0 && len(grid[k][l]) < 5 {
-	// 			counter++
-	// 		}
-
-	// 	}
-
-	// }
-	// fmt.Println("highest", highest, "count greater 0", counter)
-
-	//randompoints end
-	// fmt.Println(returndykstrapath)
-
-	// Convert returndykstrapath to []Point
-	shortestPath := make([]Point, len(returndykstrapath))
-	for i, point := range returndykstrapath {
-		shortestPath[i] = Point{Lat: point[0], Lng: point[1]}
-	}
-
-	return shortestPath
-}
-
-func AlgoALT(Start Point, End Point, graphNodes [][2]float64, graphEdges [][4]int, distancesEdges [][4]int, landmarks [][2]float64, grid [][][]int) []Point {
-	//read graphNodes graphEdges distancesEdges grid from json files
-	// var start = time.Now()
-
-	// fmt.Println(distancesEdges)
-
-	nearestnodeStart := [2]float64{Start.Lat, Start.Lng}
-	distpointStart := 100000000.0
-	distpointEnd := 100000000.0
-	nearestnodeEnd := [2]float64{End.Lat, End.Lng}
-	nearestpointStartIndex := -1
-	nearpointEndIndex := -1
-	for k := range graphNodes {
-		distpointStartNew := haversine(graphNodes[k][0], graphNodes[k][1], nearestnodeStart[0], nearestnodeStart[1])
-		distpointENdNew := haversine(graphNodes[k][0], graphNodes[k][1], nearestnodeEnd[0], nearestnodeEnd[1])
-
-		if distpointStartNew < float64(distpointStart) {
-			nearestpointStartIndex = k
-			distpointStart = distpointStartNew
-		}
-		if distpointENdNew < distpointEnd {
-			nearpointEndIndex = k
-			distpointEnd = distpointENdNew
-		}
-	}
-
-	// fmt.Println("dijkstra go", nearestpointStartIndex, graphNodes[nearestpointStartIndex], nearpointEndIndex, graphNodes[nearpointEndIndex])
-	// slog.Info("dykstra start: " + time.Since(start).String())
-	// var startDijkstra = time.Now()
-	// _, path := Dijkstra(graphNodes[:], graphEdges[:], distancesEdges[:], nearestpointStartIndex, nearpointEndIndex)
-	_, path := ALT(graphNodes[:], graphEdges[:], distancesEdges[:], landmarks, nearestpointStartIndex, nearpointEndIndex)
 	// fmt.Println(dist)
 	// slog.Info("dykstra end: " + time.Since(startDijkstra).String())
 	returndykstrapath := [][2]float64{}
@@ -1641,6 +1511,48 @@ func haversine(lat1, lon1, lat2, lon2 float64) float64 { //chatgpt
 	//fmt.Println(distance)
 	return math.Abs(distance)
 }
+func findNearest(comparePoint [3]float64, pointIndexes [][3]float64, fall int) (bool, [3]float64, float64) {
+
+	closestDist := 3000.0
+	u := comparePoint
+	smallestIndex := comparePoint
+	searchpointLat := comparePoint[0]
+	searchPointLon := comparePoint[1]
+	for _, point := range pointIndexes {
+		switch fall {
+		case 1:
+			if !(point[0] > u[0] && point[1] < u[1]) {
+				break
+			}
+		case 2:
+			if !(point[0] > u[0] && point[1] > u[1]) {
+				break
+			}
+		case 3:
+			if !(point[0] < u[0] && point[1] < u[1]) {
+				break
+			}
+		case 4:
+			if !(point[0] < u[0] && point[1] > u[1]) {
+				break
+			}
+		}
+
+		dist := haversine(searchpointLat, searchPointLon, point[0], point[1])
+		if dist < closestDist {
+			closestDist = dist
+			smallestIndex = point
+		}
+
+	}
+	if smallestIndex != comparePoint {
+
+		return true, smallestIndex, closestDist
+	} else {
+		return false, smallestIndex, -1.0
+	}
+	return false, smallestIndex, -1.0
+}
 func findTopLeft(u int, graphpoints [pointcount][2]float64, graphEdges *[pointcount][4]int, distancesEdges *[pointcount][4]int, pointIndexes []int) bool {
 	comparePoint := graphpoints[u]
 
@@ -1780,12 +1692,12 @@ func findBottomRight(u int, graphpoints [pointcount][2]float64, graphEdges *[poi
 	return false
 
 }
-func Dijkstra(nodes [][2]float64, edges [][4]int, edgeweights [][4]int, src int, dst int) (int, []int) {
+func Dijkstra(nodes [][2]float64, edges [][4]int, edgeweights [][4]int, src, dst int) (int, []int) {
 	dist := make(map[int]int)
 	prev := make(map[int]int)
 	found := false
 	for node := range nodes {
-		dist[node] = math.MaxInt32
+		dist[node] = math.MaxInt64
 	}
 	dist[src] = 0
 	//fmt.Println("dist", dist)
@@ -1798,7 +1710,7 @@ func Dijkstra(nodes [][2]float64, edges [][4]int, edgeweights [][4]int, src int,
 		currentNode := current.node
 
 		if currentNode == dst {
-			// fmt.Println("reached from", currentNode)
+			fmt.Println("reached from", currentNode)
 			found = true
 			break
 		}
@@ -1826,6 +1738,7 @@ func Dijkstra(nodes [][2]float64, edges [][4]int, edgeweights [][4]int, src int,
 			}
 		}
 	}
+	fmt.Println("finisheddykstra , calculating path")
 
 	path := []int{}
 	if found {
@@ -1865,8 +1778,8 @@ func ReadCoordinates(filename string) ([][]float64, error) {
 
 	return coordinates, nil
 }
-func getAllNeighbourCellss(grid [][][]int, x int, y int, latitude float64, radius int) []int {
-	var neighbors []int
+func getAllNeighbourCellss(grid [][][][3]float64, x int, y int, latitude float64, radius int) [][3]float64 {
+	var neighbors [][3]float64
 
 	/*startlat, startlon := findLatLongInGrid(len(grid), len(grid[0]), x, y)
 	k := 0
@@ -1894,210 +1807,90 @@ func getAllNeighbourCellss(grid [][][]int, x int, y int, latitude float64, radiu
 	counter := 0
 	for dx := -radius; dx <= radius; dx++ {
 		for dy := -radius; dy <= radius; dy++ {
-			if dx != 0 || dy != 0 {
+			//if dx == radius || dy == radius || dx == -radius || dy == -radius {
 
-				aplus := dx + x
-				bplus := dy + y
-				if aplus >= len(grid) {
-					break
-				}
-				if aplus <= -1 {
-					break
-				}
-				if bplus >= len(grid[x]) {
-					break
-				}
-				if bplus <= -1 {
-					break
-				}
-				//add points to return
-				counter++
-				neighbors = append(neighbors, grid[aplus][bplus]...)
+			aplus := dx + x
+			bplus := dy + y
+			if aplus >= len(grid) {
+				break
 			}
+			if aplus <= -1 {
+				break
+			}
+			if bplus >= len(grid[x]) {
+				break
+			}
+			if bplus <= -1 {
+				break
+			}
+			//add points to return
+			counter++
+			neighbors = append(neighbors, grid[aplus][bplus]...)
+
+			//}
 		}
 	}
 	//fmt.Println("nachbarlänge", counter)
 	return neighbors
 }
-
-func AStar(nodes [][2]float64, edges [][4]int, edgeweights [][4]int, src int, dst int) (int, []int) {
-	dist := make(map[int]int)
-	prev := make(map[int]int)
-	found := false
-	for node := range nodes {
-		dist[node] = math.MaxInt32
+func sortAndRemoveDuplicates(edges [][2]int, distances []float64, maxNode int) ([][2]int, []float64, map[int]int) {
+	if len(edges) != len(distances) {
+		panic("edges and distances must have the same length")
 	}
-	dist[src] = 0
 
-	pq := &PriorityQueue{}
-	heap.Init(pq)
-	heap.Push(pq, &QueueItem{node: src, priority: 0})
+	// Combine edges and distances into a slice of EdgeWithDistance
+	combined := make([]EdgeWithDistance, len(edges))
+	for i := range edges {
+		combined[i] = EdgeWithDistance{Edge: edges[i], Distance: distances[i]}
+	}
 
-	for pq.Len() > 0 {
-		current := heap.Pop(pq).(*QueueItem)
-		currentNode := current.node
-
-		if currentNode == dst {
-			found = true
-			break
-		}
-
-		for i, neighbor := range edges[currentNode] {
-			if neighbor < 0 {
-				break
+	// Sort combined slice by the Edge
+	sort.Slice(combined, func(i, j int) bool {
+		if combined[i].Edge[0] == combined[j].Edge[0] {
+			if combined[i].Edge[1] == combined[j].Edge[1] {
+				return combined[i].Distance < combined[j].Distance
 			}
-			newDist := dist[currentNode] + edgeweights[currentNode][i] + int(haversine(nodes[edges[currentNode][i]][0], nodes[edges[currentNode][i]][1], nodes[dst][0], nodes[dst][1]))
-			if newDist < dist[neighbor] {
-				dist[neighbor] = newDist
-				prev[neighbor] = currentNode
-				priority := newDist
-				heap.Push(pq, &QueueItem{node: neighbor, priority: priority})
+			return combined[i].Edge[1] < combined[j].Edge[1]
+		}
+		return combined[i].Edge[0] < combined[j].Edge[0]
+	})
+
+	// Remove duplicates and maintain unique edges and distances
+	uniqueEdges := make([][2]int, 0, len(edges))
+	uniqueDistances := make([]float64, 0, len(distances))
+	for i, item := range combined {
+		if i == 0 || item.Edge != combined[i-1].Edge {
+			uniqueEdges = append(uniqueEdges, item.Edge)
+			uniqueDistances = append(uniqueDistances, item.Distance)
+		}
+	}
+
+	// Create start indices for each node, including nodes without edges
+	startIndices := make(map[int]int)
+	edgeIndex := 0
+	for node := 0; node <= maxNode; node++ {
+		if edgeIndex < len(uniqueEdges) && uniqueEdges[edgeIndex][0] == node {
+			startIndices[node] = edgeIndex
+			for edgeIndex < len(uniqueEdges) && uniqueEdges[edgeIndex][0] == node {
+				edgeIndex++
 			}
-
-		}
-
-	}
-
-	path := []int{}
-	if found {
-		for at := dst; at != src; at = prev[at] {
-			path = append([]int{at}, path...)
-		}
-		path = append([]int{src}, path...)
-	} else {
-		path = append([]int{dst}, path...)
-		path = append([]int{src}, path...)
-		return -1, path
-	}
-	return dist[dst], path
-}
-
-// Function to check if a key exists in a slice
-func contains(slice []int, key int) bool {
-	for _, element := range slice {
-		if element == key {
-			return true
-		}
-	}
-	return false
-}
-
-func chooseLandmarks(nodes [][2]float64, numLandmarks int, minDistance int) []int {
-	landmarks := make([]int, numLandmarks)
-	landmarkCounter := 0
-	validityCounter := 0
-	for landmarkCounter < numLandmarks && validityCounter < 1000 {
-		randomPoint := rand.Intn(len(nodes))
-		suitablePoint := true
-		if !contains(landmarks, randomPoint) {
-			for _, landmark := range landmarks {
-				if haversine(nodes[randomPoint][0], nodes[randomPoint][1], nodes[landmark][0], nodes[landmark][1]) < float64(minDistance) {
-					suitablePoint = false
-					validityCounter++
-					break
-				}
-			}
-			if suitablePoint {
-				landmarks[landmarkCounter] = randomPoint
-				landmarkCounter++
-				validityCounter = 0
-				slog.Infof("Landmark %d: %d", landmarkCounter, randomPoint)
-			}
-
-		}
-	}
-
-	if validityCounter >= 1000 {
-		fmt.Println("Could not find suitable landmarks")
-		return nil
-	}
-	return landmarks
-}
-
-func landmarksDistanceMaximiser(nodes [][2]float64, numLandmarks int, longSearch bool) []int {
-	landmarks := make([]int, numLandmarks)
-	maxDistance := 0.0
-	if longSearch {
-		for i := 0; i < len(nodes); i++ {
-			for j := i + 1; j < len(nodes); j++ {
-				distance := haversine(nodes[i][0], nodes[i][1], nodes[j][0], nodes[j][1])
-				if distance > maxDistance {
-					maxDistance = distance
-				}
-			}
-		}
-	} else {
-		maxDistance = 10000.0
-	}
-
-	fmt.Printf("Max distance: %f\n", maxDistance)
-
-	for {
-		res := chooseLandmarks(nodes, numLandmarks, int(maxDistance))
-		if res == nil {
-			maxDistance = maxDistance * 0.9
-			fmt.Println("Trying with smaller distance: ", maxDistance)
 		} else {
-			landmarks = res
-			break
+			startIndices[node] = edgeIndex
 		}
 	}
 
-	return landmarks
+	// Add dummy entry for the node maxNode + 1
+	startIndices[maxNode+1] = edgeIndex
+
+	return uniqueEdges, uniqueDistances, startIndices
 }
 
-func ALT(nodes [][2]float64, edges [][4]int, edgeweights [][4]int, landmarks [][2]float64, src int, dst int) (int, []int) {
-	dist := make(map[int]int)
-	prev := make(map[int]int)
-	found := false
-	for node := range nodes {
-		dist[node] = math.MaxInt32
-	}
-	dist[src] = 0
-
-	pq := &PriorityQueue{}
-	heap.Init(pq)
-	heap.Push(pq, &QueueItem{node: src, priority: 0})
-
-	for pq.Len() > 0 {
-		current := heap.Pop(pq).(*QueueItem)
-		currentNode := current.node
-
-		if currentNode == dst {
-			found = true
-			break
-		}
-
-		for i, neighbor := range edges[currentNode] {
-			if neighbor < 0 {
-				break
-			}
-			heuristic := 0
-			for _, landmark := range landmarks {
-				heuristic = int(math.Max(float64(heuristic), haversine(nodes[neighbor][0], nodes[neighbor][1], landmark[0], landmark[1])-haversine(nodes[dst][0], nodes[dst][1], landmark[0], landmark[1])))
-			}
-			newDist := dist[currentNode] + edgeweights[currentNode][i] + heuristic
-			if newDist < dist[neighbor] {
-				dist[neighbor] = newDist
-				prev[neighbor] = currentNode
-				priority := newDist
-				heap.Push(pq, &QueueItem{node: neighbor, priority: priority})
-			}
-
-		}
-
-	}
-
-	path := []int{}
+func nearestHelper(k [3]float64, points [][3]float64, graphNodes [pointcount][2]float64, edges *[][2]int, distances *[]float64, mu *sync.Mutex, fall int) {
+	found, index, dist := findNearest(k, points, fall)
 	if found {
-		for at := dst; at != src; at = prev[at] {
-			path = append([]int{at}, path...)
-		}
-		path = append([]int{src}, path...)
-	} else {
-		path = append([]int{dst}, path...)
-		path = append([]int{src}, path...)
-		return -1, path
+		mu.Lock()
+		*edges = append(*edges, [2]int{int(k[2]), int(index[2])})
+		*distances = append(*distances, dist)
+		mu.Unlock()
 	}
-	return dist[dst], path
 }
