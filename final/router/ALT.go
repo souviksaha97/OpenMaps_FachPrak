@@ -116,7 +116,7 @@ func AlgoALT(Start types.Point, End types.Point, graphNodes [][2]float64, graphE
 }
 
 func LandmarksDistanceMaximiser(numLandmarks int) {
-	nodes, _, _, _, _, _, _ := FileReader()
+	nodes, edges, distances, _, _, _, _ := FileReader()
 	longSearch := false
 
 	maxDistance := 0.0
@@ -131,7 +131,8 @@ func LandmarksDistanceMaximiser(numLandmarks int) {
 		}
 	} else {
 		// circumference of earth in km
-		maxDistance = 6350.0
+		// maxDistance = 6350.0
+		maxDistance = 10000			
 	}
 
 	slog.Debug("Max distance: ", maxDistance)
@@ -141,10 +142,11 @@ func LandmarksDistanceMaximiser(numLandmarks int) {
 
 	landmarks := make([]int, numLandmarks)
 	for {
-		res := chooseLandmarks(nodes, numLandmarks, int(maxDistance))
+		// res := chooseLandmarks(nodes, numLandmarks, int(maxDistance))
+		res := chooseLandmarksV2(nodes, edges, distances, numLandmarks, int(maxDistance))
 		if res == nil {
 			maxDistance = maxDistance * 0.9
-			slog.Debug("Trying with smaller distance: ", maxDistance)
+			slog.Info("Trying with smaller distance: ", maxDistance)
 		} else {
 			landmarks = res
 			break
@@ -187,6 +189,42 @@ func chooseLandmarks(nodes [][2]float64, numLandmarks int, minDistance int) []in
 				landmarkCounter++
 				validityCounter = 0
 				slog.Debug("Landmark", landmarkCounter, ":", randomPoint)
+			}
+
+		}
+	}
+
+	if validityCounter >= 2 {
+		slog.Info("Could not find suitable landmarks")
+		return nil
+	}
+	return landmarks
+}
+
+func chooseLandmarksV2(nodes [][2]float64, edges [][4]int, distances [][4]int, numLandmarks int, minDistance int) []int {
+	landmarks := make([]int, numLandmarks)
+	landmarkCounter := 0
+	validityCounter := 0
+	slog.Info("Starting landmark selection")
+	for landmarkCounter < numLandmarks && validityCounter < 1000 {
+		randomPoint := rand.Intn(len(nodes))
+		suitablePoint := true
+		if !generator.Contains(landmarks, randomPoint) {
+			for _, landmark := range landmarks {
+				// if generator.Haversine(nodes[randomPoint][0], nodes[randomPoint][1], nodes[landmark][0], nodes[landmark][1]) < float64(minDistance) {
+				_, dist := Djikstra(nodes, edges, distances, randomPoint, landmark)
+				distLandmark := dist[landmark]
+				if distLandmark < minDistance {
+					suitablePoint = false
+					validityCounter++
+					break
+				}
+			}
+			if suitablePoint {
+				landmarks[landmarkCounter] = randomPoint
+				landmarkCounter++
+				validityCounter = 0
+				slog.Info("Landmark", landmarkCounter, ":", randomPoint)
 			}
 
 		}
