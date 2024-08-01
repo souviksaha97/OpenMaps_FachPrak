@@ -134,8 +134,8 @@ func MultiRouter(iterations int) {
 	avgALT := time.Since(startALT) / time.Duration(iterations)
 	fmt.Println("Average ALT time: ", avgALT)
 
-	fmt.Println("A* speedup percent: ", (avgDijkstra-avgAstar)/avgDijkstra*100)
-	fmt.Println("ALT speedup percent: ", (avgDijkstra-avgALT)/avgDijkstra*100)
+	fmt.Println("A* speedup percent: ", float64(avgDijkstra-avgAstar)/float64(avgDijkstra)*100)
+	fmt.Println("ALT speedup percent: ", float64(avgDijkstra-avgALT)/float64(avgDijkstra)*100)
 
 	fidgeter.Stop()
 
