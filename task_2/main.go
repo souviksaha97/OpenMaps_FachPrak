@@ -388,19 +388,19 @@ func graphGenerator() {
 	}
 
 	DykstraEdgesJSON, _ := json.Marshal(sortedEdges1)
-	err = os.WriteFile("grid.json", DykstraEdgesJSON, 0644)
+	err = os.WriteFile("dykstra_edges.json", DykstraEdgesJSON, 0644)
 	if err != nil {
 		fmt.Println("Error writing Dykstra Edges to file:", err)
 	}
 
-	DykstraDisntancesJSON, _ := json.Marshal(sortedDistances1)
-	err = os.WriteFile("grid.json", DykstraDisntancesJSON, 0644)
+	DykstraDistancesJSON, _ := json.Marshal(sortedDistances1)
+	err = os.WriteFile("dykstra_distances.json", DykstraDistancesJSON, 0644)
 	if err != nil {
 		fmt.Println("Error writing Dykstra Distances to file:", err)
 	}
 
 	DykstraStartIndicesMapJSON, _ := json.Marshal(startIndices1)
-	err = os.WriteFile("grid.json", DykstraStartIndicesMapJSON, 0644)
+	err = os.WriteFile("dykstra_start_indices_map.json", DykstraStartIndicesMapJSON, 0644)
 	if err != nil {
 		fmt.Println("Error writing Dykstra Start Indices to file:", err)
 	}
@@ -511,7 +511,7 @@ func main() {
 	if err != nil {
 		fmt.Println("Error reading grid from file:", err)
 	}
-	var grid [][][]int
+	var grid [][][][3]float64
 	err = json.Unmarshal(gridJSON, &grid)
 	if err != nil {
 		fmt.Println("Error unmarshalling grid:", err)
@@ -521,7 +521,7 @@ func main() {
 	var sorted_distances []int
 	start_indices := make(map[int]int)
 
-	DykstraEdgesJSON, err := os.ReadFile("DykstraEdges.json")
+	DykstraEdgesJSON, err := os.ReadFile("dykstra_edges.json")
 	if err != nil {
 		fmt.Println("Error reading Dykstra Edges from file:", err)
 	}
@@ -530,7 +530,7 @@ func main() {
 		fmt.Println("Error unmarshalling Dykstra Edges:", err)
 	}
 
-	DykstraDistancesJSON, err := os.ReadFile("DykstraDistances.json")
+	DykstraDistancesJSON, err := os.ReadFile("dykstra_distances.json")
 	if err != nil {
 		fmt.Println("Error reading Dykstra Distances from file:", err)
 	}
@@ -539,7 +539,7 @@ func main() {
 		fmt.Println("Error unmarshalling Dykstra Distances:", err)
 	}
 
-	DykstraStartIndicesMapJSON, err := os.ReadFile("DykstraStartIndicesMap.json")
+	DykstraStartIndicesMapJSON, err := os.ReadFile("dykstra_start_indices_map.json")
 	if err != nil {
 		fmt.Println("Error reading Dykstra Start Indices from file:", err)
 	}
