@@ -9,7 +9,7 @@ import (
 
 func AStar(nodes [][2]float64, edges [][2]int, edgeweights []int, startindicesmap []int, src int, dst int) ([]int, int) {
 	data := types.NewGraphData(len(nodes), src)
-
+	// heuristic := 0
 	for data.PQ.Len() > 0 {
 		current := heap.Pop(data.PQ).(*types.QueueItem)
 		currentNode := current.Node
@@ -20,6 +20,8 @@ func AStar(nodes [][2]float64, edges [][2]int, edgeweights []int, startindicesma
 		data.Visited[currentNode] = true
 
 		if currentNode == dst {
+			// fmt.Println("Current Node: ", currentNode, "Destination: ", dst)
+			// fmt.Println("Found")
 			break
 		}
 
@@ -30,10 +32,15 @@ func AStar(nodes [][2]float64, edges [][2]int, edgeweights []int, startindicesma
 			if neighbor < 0 {
 				continue
 			}
-			// fmt.Println("Neighbor: ", nodes[neighbor])
-			heuristic := int(generator.Haversine(nodes[neighbor][0], nodes[neighbor][1], nodes[dst][0], nodes[dst][1])) * 1000
+			// fmt.Println("Current Node: ", currentNode, "Destination: ", dst)
+			// fmt.Println("Current Node: ", nodes[currentNode], "Destination: ", nodes[dst])
+			// fmt.Println("Distance Current Node: ", data.Dist[currentNode])
+			heuristic := int(math.Round(0.0001 * 1000.0 * generator.Haversine(nodes[currentNode][0], nodes[currentNode][1], nodes[dst][0], nodes[dst][1])))
 			newDist := data.Dist[currentNode] + edgeweights[i] + heuristic
+			// fmt.Println("Haversine Distance: ", int(math.Round(1000.0*generator.Haversine(nodes[currentNode][0], nodes[currentNode][1], nodes[dst][0], nodes[dst][1]))))
+
 			if newDist < data.Dist[neighbor] {
+				// fmt.Println("Heuristic Distance: ", heuristic, "Current Distance: ", data.Dist[neighbor])
 				data.Dist[neighbor] = newDist
 				data.Prev[neighbor] = currentNode
 				heap.Push(data.PQ, &types.QueueItem{Node: neighbor, Priority: newDist})

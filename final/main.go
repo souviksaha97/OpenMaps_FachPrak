@@ -86,12 +86,12 @@ func main() {
 			slog.Info("Iterations argument missing")
 			return
 		}
-		// iterations, err := strconv.Atoi(os.Args[2])
-		// if err != nil {
-		// 	slog.Info("Invalid iterations argument")
-		// 	return
-		// }
-		// router.LandmarksDistanceMaximiser(iterations)
+		iterations, err := strconv.Atoi(os.Args[2])
+		if err != nil {
+			slog.Info("Invalid iterations argument")
+			return
+		}
+		router.LandmarksDistanceMaximiser(iterations)
 
 	case "tester":
 		// slog.Info("Running the tester")
