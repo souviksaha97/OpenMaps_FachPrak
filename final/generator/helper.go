@@ -944,7 +944,7 @@ func WriteToJSONFile(filename string, data interface{}) error {
 	}
 
 	// Write the JSON data to the file
-	err = os.WriteFile(filename, jsonData, 0644)
+	err = os.WriteFile("objects/"+filename, jsonData, 0644)
 	if err != nil {
 		return fmt.Errorf("failed to write JSON to file: %w", err)
 	}
