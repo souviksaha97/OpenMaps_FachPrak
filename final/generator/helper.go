@@ -5,15 +5,34 @@ import (
 	"fmt"
 	"math"
 	"os"
+	"sort"
+	"sync"
+	"sync/atomic"
 
 	"github.com/paulmach/osm"
 
 	"final/types"
 )
 
-func getAllNeighbourCellss(grid [][][]int, x int, y int, latitude float64, radius int) []int {
-	var neighbors []int
+func getAllNeighbourCellss(grid [][][][3]float64, x int, y int, latitude float64, radius int) [][3]float64 {
+	var neighbors [][3]float64
 
+	/*startlat, startlon := findLatLongInGrid(len(grid), len(grid[0]), x, y)
+	k := 0
+	l := 0
+	if x+1 < len(grid) {
+		k = x + 1
+	} else {
+		k = x - 1
+	}
+	if y+1 < len(grid[0]) {
+		l = y + 1
+	} else {
+		l = y - 1
+	}*/
+	//cellendlat, cellendlong := findLatLongInGrid(len(grid), len(grid[0]), k, l)
+	//cellwidth := haversine(startlat, startlon, cellendlat, cellendlong)
+	//fmt.Println("cellwidth", cellwidth)
 	if latitude >= 89.0 {
 		neighbors = append(neighbors, grid[0][0]...)
 
@@ -24,26 +43,27 @@ func getAllNeighbourCellss(grid [][][]int, x int, y int, latitude float64, radiu
 	counter := 0
 	for dx := -radius; dx <= radius; dx++ {
 		for dy := -radius; dy <= radius; dy++ {
-			if dx != 0 || dy != 0 {
+			//if dx == radius || dy == radius || dx == -radius || dy == -radius {
 
-				aplus := dx + x
-				bplus := dy + y
-				if aplus >= len(grid) {
-					break
-				}
-				if aplus <= -1 {
-					break
-				}
-				if bplus >= len(grid[x]) {
-					break
-				}
-				if bplus <= -1 {
-					break
-				}
-				//add points to return
-				counter++
-				neighbors = append(neighbors, grid[aplus][bplus]...)
+			aplus := dx + x
+			bplus := dy + y
+			if aplus >= len(grid) {
+				break
 			}
+			if aplus <= -1 {
+				break
+			}
+			if bplus >= len(grid[x]) {
+				break
+			}
+			if bplus <= -1 {
+				break
+			}
+			//add points to return
+			counter++
+			neighbors = append(neighbors, grid[aplus][bplus]...)
+
+			//}
 		}
 	}
 	//fmt.Println("nachbarlänge", counter)
@@ -947,4 +967,148 @@ func Max(x []int) int {
 		}
 	}
 	return max
+}
+
+func nearestHelper(k [3]float64, points [][3]float64, edges *[][2]int, distances *[]int, idx *int64, mu *sync.Mutex, fall int) [3]float64 {
+	found, index, dist := FindNearest(k, points, fall)
+	//fmt.Println("Job", len(points), k, idx, found, index)
+	if found {
+		mu.Lock()
+		i := atomic.AddInt64(idx, 2) - 2
+		(*edges)[i] = [2]int{int(k[2]), int(index[2])}
+		(*distances)[i] = dist
+		(*edges)[i+1] = [2]int{int(index[2]), int(k[2])}
+		(*distances)[i+1] = dist
+		mu.Unlock()
+		return index
+	} else {
+		return index
+	}
+}
+
+func FindNearest(comparePoint [3]float64, pointIndexes [][3]float64, fall int) (bool, [3]float64, int) {
+	const epsilon = 1e-9
+
+	closestDist := 300000
+	u := comparePoint
+	smallestIndex := comparePoint
+	searchpointLat := comparePoint[0]
+	searchPointLon := comparePoint[1]
+
+	for _, point := range pointIndexes {
+		if AlmostEqual(point, comparePoint, epsilon) {
+			continue
+		}
+		valid := false
+		switch fall {
+		case 1:
+			// Northeast: point should be above and to the right of u
+			valid = point[0] > u[0] && point[1] < u[1]
+		case 2:
+			// Southeast: point should be above and to the left of u
+			valid = point[0] > u[0] && point[1] > u[1]
+		case 3:
+			// Southwest: point should be below and to the left of u
+			valid = point[0] < u[0] && point[1] < u[1]
+		case 4:
+			// Northwest: point should be below and to the right of u
+			valid = point[0] < u[0] && point[1] > u[1]
+		}
+
+		if !valid {
+			continue
+		}
+
+		dist := int(math.Round(1000.0 * Haversine(searchpointLat, searchPointLon, point[0], point[1])))
+		if dist < closestDist {
+			closestDist = dist
+			smallestIndex = point
+			//fmt.Printf("New closest point for fall %d: %v with dist %d\n", fall, smallestIndex, closestDist)
+		}
+	}
+
+	if !AlmostEqual(smallestIndex, comparePoint, epsilon) {
+		//fmt.Printf("Closest point for %v with fall %d: %v\n", comparePoint, fall, smallestIndex)
+		return true, smallestIndex, closestDist
+	} else {
+		//fmt.Printf("No closest point found for %v with fall %d\n", comparePoint, fall)
+		return false, smallestIndex, -1
+	}
+}
+
+func AlmostEqual(a, b [3]float64, epsilon float64) bool {
+	for i := 0; i < 2; i++ { // Only check the first two elements
+		if math.Abs(a[i]-b[i]) > epsilon {
+			return false
+		}
+	}
+	return true
+}
+
+func SortAndRemoveDuplicates(edges [][2]int, distances []int, maxNode int) ([][2]int, []int, []int) {
+	if len(edges) != len(distances) {
+		panic("edges and distances must have the same length")
+	}
+
+	// Combine edges and distances into a slice of EdgeWithDistance
+	combined := make([]EdgeWithDistance, len(edges))
+	for i := range edges {
+		combined[i] = EdgeWithDistance{Edge: edges[i], Distance: distances[i]}
+	}
+
+	// Sort combined slice by the Edge
+	sort.Slice(combined, func(i, j int) bool {
+		if combined[i].Edge[0] == combined[j].Edge[0] {
+			if combined[i].Edge[1] == combined[j].Edge[1] {
+				return combined[i].Distance < combined[j].Distance
+			}
+			return combined[i].Edge[1] < combined[j].Edge[1]
+		}
+		return combined[i].Edge[0] < combined[j].Edge[0]
+	})
+
+	// Remove duplicates and maintain unique edges and distances
+	uniqueEdges := make([][2]int, 0, len(edges))
+	uniqueDistances := make([]int, 0, len(distances))
+	for i, item := range combined {
+		if i == 0 || item.Edge != combined[i-1].Edge {
+			uniqueEdges = append(uniqueEdges, item.Edge)
+			uniqueDistances = append(uniqueDistances, item.Distance)
+		}
+	}
+
+	// Create start indices for each node, including nodes without edges
+	startIndices := make([]int, maxNode+2)
+	edgeIndex := 0
+	for node := 0; node <= maxNode; node++ {
+		startIndices[node] = edgeIndex
+		for edgeIndex < len(uniqueEdges) && uniqueEdges[edgeIndex][0] == node {
+			edgeIndex++
+		}
+	}
+	startIndices[maxNode+1] = edgeIndex
+
+	return uniqueEdges, uniqueDistances, startIndices
+}
+
+func Worker(id int, jobs <-chan types.Job, edges *[][2]int, distances *[]int, idx *int64, mu *sync.Mutex, wg *sync.WaitGroup) {
+	defer wg.Done()
+	for j := range jobs {
+		// badcounter := 0
+		points := j.Points
+		neighbours := j.Neighbours
+		for _, u := range points {
+			a := nearestHelper(u, neighbours, edges, distances, idx, mu, 1)
+			b := nearestHelper(u, neighbours, edges, distances, idx, mu, 2)
+			c := nearestHelper(u, neighbours, edges, distances, idx, mu, 3)
+			d := nearestHelper(u, neighbours, edges, distances, idx, mu, 4)
+			if a == b && b == c && c == d && a != u {
+				fmt.Println(u, a, b, c, d)
+			}
+		}
+		// if badcounter > 0 {
+		// 	fmt.Println(badcounter)
+		// }
+	}
+	//fmt.Printf("Worker %d finished\n", id)
 }

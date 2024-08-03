@@ -85,6 +85,16 @@ type GraphData struct {
 	PQ      *PriorityQueue
 }
 
+type Job struct {
+	Points     [][3]float64
+	Neighbours [][3]float64
+}
+
+type EdgeWithDistance struct {
+	Edge     [2]int
+	Distance int
+}
+
 // NewGraphData initializes and returns GraphData
 func NewGraphData(numNodes int, src int) *GraphData {
 	dist := make([]int, numNodes)

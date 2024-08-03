@@ -11,8 +11,13 @@ import (
 	"github.com/gookit/slog"
 )
 
+const numLandmarksConst = 11
+
 // Nodes, Edges, Distances, Grid, Landmarks, LandmarkNodes, LandmarkDistances
-func FileReader() ([][2]float64, [][4]int, [][4]int, [][][]int, [][2]float64, []int, map[int][]int) {
+func FileReader() (nodes [][2]float64, edges [][4]int, distances [][4]int, grid [][][][3]float64,
+	sorted_edges [][2]int, sorted_distances []int, start_indices []int,
+	landmarkCoords [][2]float64, landmarks []int, landmarkMap map[int][]int) {
+
 	slog.Info("Reading the files")
 	graphNodesJSON, err := os.ReadFile("objects/graphNodes.json")
 	if err != nil {
@@ -54,25 +59,25 @@ func FileReader() ([][2]float64, [][4]int, [][4]int, [][][]int, [][2]float64, []
 	if err != nil {
 		slog.Info("Error reading grid from file:", err)
 	}
-	var grid [][][]int
-	err = json.Unmarshal(gridJSON, &grid)
+	var gridNodes [][][][3]float64
+	err = json.Unmarshal(gridJSON, &gridNodes)
 	if err != nil {
 		slog.Info("Error unmarshalling grid:", err)
 	}
 
-	slog.Debug("Grid:", len(grid))
+	slog.Debug("Grid:", len(gridNodes))
 
-	var landmarks [][2]float64
+	var landmarksCoords [][2]float64
 	landmarksJSON, err := os.ReadFile("objects/landmarks.json")
 	if err != nil {
 		slog.Info("Error reading landmarks from file:", err)
 	}
-	err = json.Unmarshal(landmarksJSON, &landmarks)
+	err = json.Unmarshal(landmarksJSON, &landmarksCoords)
 	if err != nil {
 		slog.Info("Error unmarshalling landmarks:", err)
 	}
 
-	slog.Debug("Landmarks:", len(landmarks))
+	slog.Debug("Landmarks:", len(landmarksCoords))
 
 	landmarkNodes := make([]int, numLandmarksConst)
 	landmarkNodesJSON, err := os.ReadFile("objects/landmarkNodes.json")
@@ -94,7 +99,46 @@ func FileReader() ([][2]float64, [][4]int, [][4]int, [][][]int, [][2]float64, []
 		slog.Info("Error unmarshalling landmarkDistances:", err)
 	}
 
-	return graphNodes, graphEdges, distancesEdges, grid, landmarks, landmarkNodes, landmarkDistances
+	slog.Debug("Landmark Nodes:", len(landmarkNodes))
+	slog.Debug("Landmark Distances:", len(landmarkDistances))
+
+	var sEdges [][2]int
+	sortedEdgesJSON, err := os.ReadFile("objects/sortedEdges.json")
+	if err != nil {
+		slog.Info("Error reading sortedEdges from file:", err)
+	}
+	err = json.Unmarshal(sortedEdgesJSON, &sEdges)
+	if err != nil {
+		slog.Info("Error unmarshalling sortedEdges:", err)
+	}
+
+	slog.Debug("Sorted Edges:", len(sEdges))
+
+	var sDistances []int
+	sortedDistancesJSON, err := os.ReadFile("objects/sortedDistances.json")
+	if err != nil {
+		slog.Info("Error reading sortedDistances from file:", err)
+	}
+	err = json.Unmarshal(sortedDistancesJSON, &sDistances)
+	if err != nil {
+		slog.Info("Error unmarshalling sortedDistances:", err)
+	}
+
+	slog.Debug("Sorted Distances:", len(sDistances))
+
+	var startIndices []int
+	startIndicesJSON, err := os.ReadFile("objects/startIndices.json")
+	if err != nil {
+		slog.Info("Error reading startIndices from file:", err)
+	}
+	err = json.Unmarshal(startIndicesJSON, &startIndices)
+	if err != nil {
+		slog.Info("Error unmarshalling startIndices:", err)
+	}
+
+	slog.Debug("Start Indices:", len(startIndices))
+
+	return graphNodes, graphEdges, distancesEdges, gridNodes, sEdges, sDistances, startIndices, landmarksCoords, landmarkNodes, landmarkDistances
 }
 
 func MultiRouter(iterations int) {
@@ -102,7 +146,7 @@ func MultiRouter(iterations int) {
 	fidgeter := chin.New()
 	go fidgeter.Start()
 
-	graphNodes, graphEdges, distancesEdges, _, _, landmarkNodes, LandmarkDistances := FileReader()
+	graphNodes, _, _, _, sortedEdges, sortedDistances, startIndices, _, _, _ := FileReader()
 
 	var randomIndices = make([][2]int, iterations)
 	for i := 0; i < iterations; i++ {
@@ -112,39 +156,39 @@ func MultiRouter(iterations int) {
 
 	var startDijkstra = time.Now()
 	for i := 0; i < iterations; i++ {
-		Djikstra(graphNodes, graphEdges, distancesEdges, randomIndices[i][0], randomIndices[i][1])
+		Djikstra(graphNodes, sortedEdges, sortedDistances, startIndices, randomIndices[i][0], randomIndices[i][1])
 	}
 
 	avgDijkstra := time.Since(startDijkstra) / time.Duration(iterations)
 	fmt.Println("Average Dijsktra time: ", avgDijkstra)
 
-	var startAStar = time.Now()
-	for i := 0; i < iterations; i++ {
-		AStar(graphNodes, graphEdges, distancesEdges, randomIndices[i][0], randomIndices[i][1])
-	}
+	// var startAStar = time.Now()
+	// for i := 0; i < iterations; i++ {
+	// 	AStar(graphNodes, graphEdges, distancesEdges, randomIndices[i][0], randomIndices[i][1])
+	// }
 
-	avgAstar := time.Since(startAStar) / time.Duration(iterations)
-	fmt.Println("Average AStar time: ", avgAstar)
+	// avgAstar := time.Since(startAStar) / time.Duration(iterations)
+	// fmt.Println("Average AStar time: ", avgAstar)
 
-	var startALTv1 = time.Now()
-	for i := 0; i < iterations; i++ {
-		ALT(graphNodes, graphEdges, distancesEdges, landmarkNodes, LandmarkDistances, randomIndices[i][0], randomIndices[i][1])
-	}
+	// var startALTv1 = time.Now()
+	// for i := 0; i < iterations; i++ {
+	// 	ALT(graphNodes, graphEdges, distancesEdges, landmarkNodes, LandmarkDistances, randomIndices[i][0], randomIndices[i][1])
+	// }
 
-	avgALTv1 := time.Since(startALTv1) / time.Duration(iterations)
-	fmt.Println("Average ALT time: ", avgALTv1)
+	// avgALTv1 := time.Since(startALTv1) / time.Duration(iterations)
+	// fmt.Println("Average ALT time: ", avgALTv1)
 
-	var startALTv2 = time.Now()
-	for i := 0; i < iterations; i++ {
-		ALTv2(graphNodes, graphEdges, distancesEdges, landmarkNodes, LandmarkDistances, randomIndices[i][0], randomIndices[i][1])
-	}
+	// var startALTv2 = time.Now()
+	// for i := 0; i < iterations; i++ {
+	// 	ALTv2(graphNodes, graphEdges, distancesEdges, landmarkNodes, LandmarkDistances, randomIndices[i][0], randomIndices[i][1])
+	// }
 
-	avgALTv2 := time.Since(startALTv2) / time.Duration(iterations)
-	fmt.Println("Average ALTv2 time: ", avgALTv2)
+	// avgALTv2 := time.Since(startALTv2) / time.Duration(iterations)
+	// fmt.Println("Average ALTv2 time: ", avgALTv2)
 
-	fmt.Println("A* speedup percent: ", float64(avgDijkstra-avgAstar)/float64(avgDijkstra)*100)
-	fmt.Println("ALTv1 speedup percent: ", float64(avgDijkstra-avgALTv1)/float64(avgDijkstra)*100)
-	fmt.Println("ALTv2 speedup percent: ", float64(avgDijkstra-avgALTv2)/float64(avgDijkstra)*100)
+	// fmt.Println("A* speedup percent: ", float64(avgDijkstra-avgAstar)/float64(avgDijkstra)*100)
+	// fmt.Println("ALTv1 speedup percent: ", float64(avgDijkstra-avgALTv1)/float64(avgDijkstra)*100)
+	// fmt.Println("ALTv2 speedup percent: ", float64(avgDijkstra-avgALTv2)/float64(avgDijkstra)*100)
 
 	fidgeter.Stop()
 
@@ -155,7 +199,7 @@ func SingleRouter(router string, iterations int) {
 	fidgeter := chin.New()
 	go fidgeter.Start()
 
-	graphNodes, graphEdges, distancesEdges, _, _, landmarkNodes, landmarkDistances := FileReader()
+	graphNodes, _, _, _, sortedEdges, sortedDistances, startIndices, _, _, _ := FileReader()
 
 	var randomIndices = make([][2]int, iterations)
 	for i := 0; i < iterations; i++ {
@@ -169,31 +213,31 @@ func SingleRouter(router string, iterations int) {
 		var startDijkstra = time.Now()
 		for i := 0; i < iterations; i++ {
 			midStart := time.Now()
-			_, dist := Djikstra(graphNodes, graphEdges, distancesEdges, randomIndices[i][0], randomIndices[i][1])
+			_, dist := Djikstra(graphNodes, sortedEdges, sortedDistances, startIndices, randomIndices[i][0], randomIndices[i][1])
 			fmt.Println("Djikstra time Iteration: ", i, time.Since(midStart), "Distance: ", dist[randomIndices[i][1]])
 		}
 
 		fmt.Println("Average Dijsktra time: ", time.Since(startDijkstra)/time.Duration(iterations))
 
 	case "astar":
-		var startAStar = time.Now()
-		for i := 0; i < iterations; i++ {
-			midStart := time.Now()
-			_, dist := AStar(graphNodes, graphEdges, distancesEdges, randomIndices[i][0], randomIndices[i][1])
-			fmt.Println("A* time Iteration: ", i, time.Since(midStart), "Distance: ", dist)
-		}
+		// var startAStar = time.Now()
+		// for i := 0; i < iterations; i++ {
+		// 	midStart := time.Now()
+		// 	_, dist := AStar(graphNodes, graphEdges, distancesEdges, randomIndices[i][0], randomIndices[i][1])
+		// 	fmt.Println("A* time Iteration: ", i, time.Since(midStart), "Distance: ", dist)
+		// }
 
-		fmt.Println("Average AStar time: ", time.Since(startAStar)/time.Duration(iterations))
+		// fmt.Println("Average AStar time: ", time.Since(startAStar)/time.Duration(iterations))
 
 	case "alt":
-		var startALT = time.Now()
-		for i := 0; i < iterations; i++ {
-			midStart := time.Now()
-			_, dist := ALT(graphNodes, graphEdges, distancesEdges, landmarkNodes, landmarkDistances, randomIndices[i][0], randomIndices[i][1])
-			fmt.Println("ALT time Iteration: ", i, time.Since(midStart), "Distance: ", dist)
-		}
+		// var startALT = time.Now()
+		// for i := 0; i < iterations; i++ {
+		// 	midStart := time.Now()
+		// 	_, dist := ALT(graphNodes, graphEdges, distancesEdges, landmarkNodes, landmarkDistances, randomIndices[i][0], randomIndices[i][1])
+		// 	fmt.Println("ALT time Iteration: ", i, time.Since(midStart), "Distance: ", dist)
+		// }
 
-		fmt.Println("Average ALT time: ", time.Since(startALT)/time.Duration(iterations))
+		// fmt.Println("Average ALT time: ", time.Since(startALT)/time.Duration(iterations))
 	}
 	fidgeter.Stop()
 }
