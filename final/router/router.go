@@ -162,13 +162,13 @@ func MultiRouter(iterations int) {
 	avgDijkstra := time.Since(startDijkstra) / time.Duration(iterations)
 	fmt.Println("Average Dijsktra time: ", avgDijkstra)
 
-	// var startAStar = time.Now()
-	// for i := 0; i < iterations; i++ {
-	// 	AStar(graphNodes, graphEdges, distancesEdges, randomIndices[i][0], randomIndices[i][1])
-	// }
+	var startAStar = time.Now()
+	for i := 0; i < iterations; i++ {
+		AStar(graphNodes, sortedEdges, sortedDistances, startIndices, randomIndices[i][0], randomIndices[i][1])
+	}
 
-	// avgAstar := time.Since(startAStar) / time.Duration(iterations)
-	// fmt.Println("Average AStar time: ", avgAstar)
+	avgAstar := time.Since(startAStar) / time.Duration(iterations)
+	fmt.Println("Average AStar time: ", avgAstar)
 
 	// var startALTv1 = time.Now()
 	// for i := 0; i < iterations; i++ {

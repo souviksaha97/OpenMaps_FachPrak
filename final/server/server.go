@@ -47,9 +47,9 @@ func Server() {
 		// Call the Algo function
 		// copier.CopyWithOption(&tempDist, &dist, copier.Option{DeepCopy: true})
 		// copier.Copy(&tempDist, &dist)
-		// var startTimeAStar = time.Now()
-		// shortestPathAStar, _ := router.AlgoAStar(start, end, graphNodes, graphEdges, distancesEdges, grid)
-		// var timeTakenAStar = time.Since(startTimeAStar).Milliseconds()
+		var startTimeAStar = time.Now()
+		shortestPathAStar, _ := router.AlgoAStar(start, end, graphNodes, sortedEdges, sortedDistances, startIndices)
+		var timeTakenAStar = time.Since(startTimeAStar).Milliseconds()
 		// copier.CopyWithOption(&tempDist, &dist, copier.Option{DeepCopy: true})
 		// copier.Copy(&tempDist, &dist)
 		var startTimeDijkstra = time.Now()
@@ -61,17 +61,17 @@ func Server() {
 		// shortestPathALT, _ := router.AlgoALT(start, end, graphNodes, graphEdges, distancesEdges, landmarkNodes, landmarkDistances, grid)
 		// var timeTakenALT = time.Since(startTimeALT).Milliseconds()
 
-		// slog.Info("AStar Time:", timeTakenAStar)
+		slog.Info("AStar Time:", timeTakenAStar)
 		slog.Info("Dijkstra Time:", timeTakenDijkstra)
 		// slog.Info("ALT Time:", timeTakenALT)
 		// slog.Info("Shortest Path:", shortestPath)
 
 		c.JSON(http.StatusOK, gin.H{
-			// "astar_time":          timeTakenAStar,
+			"astar_time":    timeTakenAStar,
 			"dijkstra_time": timeTakenDijkstra,
 			// "alt_time":            timeTakenALT,
-			// "shortest_path_astar": shortestPathAStar,
-			"shortest_path_djik": shortestPathDjikstra,
+			"shortest_path_astar": shortestPathAStar,
+			"shortest_path_djik":  shortestPathDjikstra,
 			// "shortest_path_alt":   shortestPathALT,
 		})
 	})
