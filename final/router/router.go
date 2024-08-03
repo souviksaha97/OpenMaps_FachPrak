@@ -140,13 +140,13 @@ func FileReader() (nodes [][2]float64, edges [][4]int, distances [][4]int, grid 
 }
 
 func MultiRouter(iterations int) {
-	slog.Info("Multi Router started")
+
 	fidgeter := chin.New()
 	go fidgeter.Start()
 
 	// graphNodes, _, _, _, sortedEdges, sortedDistances, startIndices, _, landmarkNodes, landmarkDistances := FileReader()
 	graphNodes, _, _, _, sortedEdges, sortedDistances, startIndices, _, landmarkNodes, landmarkDistances := FileReader()
-
+	slog.Info("Multi Router started")
 	var randomIndices = make([][2]int, iterations)
 	for i := 0; i < iterations; i++ {
 		randomIndices[i][0] = rand.Intn(len(graphNodes))

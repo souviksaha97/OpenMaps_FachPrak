@@ -4,7 +4,8 @@ import (
 	"bufio"
 	"final/generator"
 	"final/router"
-	"final/server"
+	"final/server" // Add this line to import the tester package
+	"final/tester"
 	"fmt"
 	"os"
 	"strconv"
@@ -94,17 +95,17 @@ func main() {
 		router.LandmarksDistanceMaximiser(iterations)
 
 	case "tester":
-		// slog.Info("Running the tester")
-		// if len(os.Args) < 3 {
-		// 	slog.Info("Iterations argument missing")
-		// 	return
-		// }
-		// // iterations, err := strconv.Atoi(os.Args[2])
-		// if err != nil {
-		// 	slog.Info("Invalid iterations argument")
-		// 	return
-		// }
-		// tester.Tester(iterations)
+		slog.Info("Running the tester")
+		if len(os.Args) < 3 {
+			slog.Info("Iterations argument missing")
+			return
+		}
+		iterations, err := strconv.Atoi(os.Args[2])
+		if err != nil {
+			slog.Info("Invalid iterations argument")
+			return
+		}
+		tester.Tester(iterations)
 
 	default:
 		slog.Info("Invalid argument")

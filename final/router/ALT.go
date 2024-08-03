@@ -30,7 +30,7 @@ func ALT(nodes [][2]float64, edges [][2]int, edgeweights []int, startindicesmap 
 		// fmt.Println("Landmark:", landmark)
 	}
 	closestLandmarkArray := landmarkDistances[closestLandmark]
-	fmt.Println("Closest landmark:", closestLandmark)
+	// fmt.Println("Closest landmark:", closestLandmark)
 
 	for data.PQ.Len() > 0 {
 		current := heap.Pop(data.PQ).(*types.QueueItem)
