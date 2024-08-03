@@ -1051,9 +1051,9 @@ func SortAndRemoveDuplicates(edges [][2]int, distances []int, maxNode int) ([][2
 	}
 
 	// Combine edges and distances into a slice of EdgeWithDistance
-	combined := make([]EdgeWithDistance, len(edges))
+	combined := make([]types.EdgeWithDistance, len(edges))
 	for i := range edges {
-		combined[i] = EdgeWithDistance{Edge: edges[i], Distance: distances[i]}
+		combined[i] = types.EdgeWithDistance{Edge: edges[i], Distance: distances[i]}
 	}
 
 	// Sort combined slice by the Edge
