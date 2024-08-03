@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"final/generator"
 	"final/router"
+	"final/server"
 	"fmt"
 	"os"
 	"strconv"
@@ -48,7 +49,7 @@ func main() {
 	switch os.Args[1] {
 	case "server":
 		slog.Info("Running the server")
-		// server.Server()
+		server.Server()
 
 	case "multi":
 		slog.Info("Running the multi")

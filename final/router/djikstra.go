@@ -8,7 +8,7 @@ import (
 )
 
 // Djikstra implements the Dijkstra algorithm
-func Djikstra(nodes [][2]float64, edges [][2]int, edgeweights []int, startindicesmap []int, src, dst int) ([]int, []int) {
+func Djikstra(nodes [][2]float64, edges [][2]int, edgeweights []int, startindicesmap []int, src int, dst int) ([]int, []int) {
 	data := types.NewGraphData(len(nodes), src)
 
 	for data.PQ.Len() > 0 {
