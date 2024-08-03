@@ -145,7 +145,7 @@ func MultiRouter(iterations int) {
 	go fidgeter.Start()
 
 	// graphNodes, _, _, _, sortedEdges, sortedDistances, startIndices, _, landmarkNodes, landmarkDistances := FileReader()
-	graphNodes, _, _, _, sortedEdges, sortedDistances, startIndices, _, _, _ := FileReader()
+	graphNodes, _, _, _, sortedEdges, sortedDistances, startIndices, _, landmarkNodes, landmarkDistances := FileReader()
 
 	var randomIndices = make([][2]int, iterations)
 	for i := 0; i < iterations; i++ {
@@ -169,13 +169,13 @@ func MultiRouter(iterations int) {
 	avgAstar := time.Since(startAStar) / time.Duration(iterations)
 	fmt.Println("Average AStar time: ", avgAstar)
 
-	// var startALTv1 = time.Now()
-	// for i := 0; i < iterations; i++ {
-	// 	ALT(graphNodes, sortedEdges, sortedDistances, startIndices, landmarkNodes, landmarkDistances, randomIndices[i][0], randomIndices[i][1])
-	// }
+	var startALTv1 = time.Now()
+	for i := 0; i < iterations; i++ {
+		ALT(graphNodes, sortedEdges, sortedDistances, startIndices, landmarkNodes, landmarkDistances, randomIndices[i][0], randomIndices[i][1])
+	}
 
-	// avgALTv1 := time.Since(startALTv1) / time.Duration(iterations)
-	// fmt.Println("Average ALT time: ", avgALTv1)
+	avgALTv1 := time.Since(startALTv1) / time.Duration(iterations)
+	fmt.Println("Average ALT time: ", avgALTv1)
 
 	// var startALTv2 = time.Now()
 	// for i := 0; i < iterations; i++ {
@@ -186,7 +186,7 @@ func MultiRouter(iterations int) {
 	// fmt.Println("Average ALTv2 time: ", avgALTv2)
 
 	fmt.Println("A* speedup percent: ", float64(avgDijkstra-avgAstar)/float64(avgDijkstra)*100)
-	// fmt.Println("ALTv1 speedup percent: ", float64(avgDijkstra-avgALTv1)/float64(avgDijkstra)*100)
+	fmt.Println("ALTv1 speedup percent: ", float64(avgDijkstra-avgALTv1)/float64(avgDijkstra)*100)
 	// fmt.Println("ALTv2 speedup percent: ", float64(avgDijkstra-avgALTv2)/float64(avgDijkstra)*100)
 
 	fidgeter.Stop()
