@@ -3,6 +3,7 @@ package server
 import (
 	"fmt"
 	"net/http"
+	"runtime"
 	"time"
 
 	"final/router"
@@ -44,23 +45,31 @@ func Server() {
 		fmt.Printf("Received start point: %+v\n", start)
 		fmt.Printf("Received end point: %+v\n", end)
 
-		var startTimeAStar = time.Now()
-		shortestPathAStar, _ := router.AlgoAStar(start, end, graphNodes, sortedEdges, sortedDistances, startIndices)
-		var timeTakenAStar = time.Since(startTimeAStar).Milliseconds()
+		runtime.GC()
 
 		var startTimeDijkstra = time.Now()
 		shortestPathDjikstra, _ := router.AlgoDijkstra(start, end, graphNodes, sortedEdges, sortedDistances, startIndices)
 		var timeTakenDijkstra = time.Since(startTimeDijkstra).Milliseconds()
+
+		runtime.GC()
+
+		var startTimeAStar = time.Now()
+		shortestPathAStar, _ := router.AlgoAStar(start, end, graphNodes, sortedEdges, sortedDistances, startIndices)
+		var timeTakenAStar = time.Since(startTimeAStar).Milliseconds()
+
+		runtime.GC()
 
 		// copier.Copy(&tempDist, &dist)
 		var startTimeALT = time.Now()
 		shortestPathALT, _ := router.AlgoALT(start, end, graphNodes, sortedEdges, sortedDistances, startIndices, landmarkNodes, landmarkDistances)
 		var timeTakenALT = time.Since(startTimeALT).Milliseconds()
 
+		runtime.GC()
+
 		// fmt.Println(shortestPathALT)
 
-		fmt.Println("AStar Time:", timeTakenAStar)
 		fmt.Println("Dijkstra Time:", timeTakenDijkstra)
+		fmt.Println("AStar Time:", timeTakenAStar)
 		fmt.Println("ALT Time:", timeTakenALT)
 
 		c.JSON(http.StatusOK, gin.H{

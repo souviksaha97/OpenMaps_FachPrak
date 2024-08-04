@@ -31,7 +31,7 @@ func Tester(iterations int) {
 	}
 	slog.Info("Generated random pairs of src and dst")
 
-	range_landmarks := []int{1, 4, 10, 20, 40, 80, 100, 150, 200, 400, 800}
+	range_landmarks := []int{1, 4, 10, 20, 40}
 	// run alt with increasing number of landmarks from 0.001% to 0.1% of total nodes
 	// and calculate the average time taken for each number of landmarks
 	// print the optimal number of landmarks

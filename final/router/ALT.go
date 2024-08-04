@@ -22,14 +22,14 @@ func ALT(nodes [][2]float64, edges [][2]int, edgeweights []int, startindicesmap 
 	// fmt.Println("Distance array", landmarkDistances[landmarks[0]][src])
 
 	heuristic := 0
-	closestLandmark := landmarks[0]
+	closestLandmarkIndex := landmarks[0]
 	for i, landmark := range landmarks {
-		if landmarkDistances[landmark][dst] < landmarkDistances[closestLandmark][dst] {
-			closestLandmark = landmarks[i]
+		if landmarkDistances[landmark][dst] < landmarkDistances[closestLandmarkIndex][dst] {
+			closestLandmarkIndex = landmarks[i]
 		}
 		// fmt.Println("Landmark:", landmark)
 	}
-	closestLandmarkArray := landmarkDistances[closestLandmark]
+	closestLandmarkArray := landmarkDistances[closestLandmarkIndex]
 	// fmt.Println("Closest landmark:", closestLandmark)
 
 	for data.PQ.Len() > 0 {

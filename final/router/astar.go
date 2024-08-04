@@ -7,6 +7,8 @@ import (
 	"math"
 )
 
+const k = 0.001
+
 func AStar(nodes [][2]float64, edges [][2]int, edgeweights []int, startindicesmap []int, src int, dst int) ([]int, int) {
 	data := types.NewGraphData(len(nodes), src)
 	// heuristic := 0
@@ -35,7 +37,7 @@ func AStar(nodes [][2]float64, edges [][2]int, edgeweights []int, startindicesma
 			// fmt.Println("Current Node: ", currentNode, "Destination: ", dst)
 			// fmt.Println("Current Node: ", nodes[currentNode], "Destination: ", nodes[dst])
 			// fmt.Println("Distance Current Node: ", data.Dist[currentNode])
-			heuristic := int(math.Round(0.0001 * 1000.0 * generator.Haversine(nodes[currentNode][0], nodes[currentNode][1], nodes[dst][0], nodes[dst][1])))
+			heuristic := int(math.Round(k * 1000.0 * generator.Haversine(nodes[currentNode][0], nodes[currentNode][1], nodes[dst][0], nodes[dst][1])))
 			newDist := data.Dist[currentNode] + edgeweights[i] + heuristic
 			// fmt.Println("Haversine Distance: ", int(math.Round(1000.0*generator.Haversine(nodes[currentNode][0], nodes[currentNode][1], nodes[dst][0], nodes[dst][1]))))
 

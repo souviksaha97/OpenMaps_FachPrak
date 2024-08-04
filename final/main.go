@@ -8,6 +8,7 @@ import (
 	"final/tester"
 	"fmt"
 	"os"
+	"runtime"
 	"strconv"
 	"strings"
 
@@ -18,6 +19,7 @@ import (
 
 func main() {
 	slog.Info("Starting the program")
+	runtime.GOMAXPROCS(runtime.NumCPU())
 	if !init_main() {
 		generateTime := time.Now()
 		reader := bufio.NewReader(os.Stdin)

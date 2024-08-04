@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"math/rand"
 	"os"
+	"runtime"
 	"time"
 
 	"github.com/adhocore/chin"
@@ -143,6 +144,7 @@ func MultiRouter(iterations int) {
 
 	fidgeter := chin.New()
 	go fidgeter.Start()
+	runtime.GOMAXPROCS(runtime.NumCPU())
 
 	// graphNodes, _, _, _, sortedEdges, sortedDistances, startIndices, _, landmarkNodes, landmarkDistances := FileReader()
 	graphNodes, _, _, _, sortedEdges, sortedDistances, startIndices, _, landmarkNodes, landmarkDistances := FileReader()
@@ -195,6 +197,7 @@ func MultiRouter(iterations int) {
 
 func SingleRouter(router string, iterations int) {
 	slog.Info("Single Router started")
+	runtime.GOMAXPROCS(runtime.NumCPU())
 	fidgeter := chin.New()
 	go fidgeter.Start()
 
