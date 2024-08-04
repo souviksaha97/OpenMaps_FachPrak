@@ -155,6 +155,7 @@ func MultiRouter(iterations int) {
 		randomIndices[i][1] = rand.Intn(len(graphNodes))
 	}
 
+	runtime.GC()
 	var startDijkstra = time.Now()
 	for i := 0; i < iterations; i++ {
 		Djikstra(graphNodes, sortedEdges, sortedDistances, startIndices, randomIndices[i][0], randomIndices[i][1])
@@ -163,6 +164,7 @@ func MultiRouter(iterations int) {
 	avgDijkstra := time.Since(startDijkstra) / time.Duration(iterations)
 	fmt.Println("Average Dijsktra time: ", avgDijkstra)
 
+	runtime.GC()
 	var startAStar = time.Now()
 	for i := 0; i < iterations; i++ {
 		AStar(graphNodes, sortedEdges, sortedDistances, startIndices, randomIndices[i][0], randomIndices[i][1])
@@ -171,6 +173,7 @@ func MultiRouter(iterations int) {
 	avgAstar := time.Since(startAStar) / time.Duration(iterations)
 	fmt.Println("Average AStar time: ", avgAstar)
 
+	runtime.GC()
 	var startALTv1 = time.Now()
 	for i := 0; i < iterations; i++ {
 		ALT(graphNodes, sortedEdges, sortedDistances, startIndices, landmarkNodes, landmarkDistances, randomIndices[i][0], randomIndices[i][1])
@@ -250,3 +253,66 @@ func SingleRouter(router string, iterations int) {
 	}
 	fidgeter.Stop()
 }
+
+// results := make(chan types.Result, 3)
+// 	var wg sync.WaitGroup
+
+// 	// Run Dijkstra in a separate goroutine
+// 	wg.Add(1)
+// 	go func() {
+// 		defer wg.Done()
+// 		var totalDijkstraTime time.Duration
+// 		for i := 0; i < iterations; i++ {
+// 			startTime := time.Now()
+// 			_, _ = Djikstra(graphNodes, sortedEdges, sortedDistances, startIndices, randomIndices[i][0], randomIndices[i][1])
+// 			totalDijkstraTime += time.Since(startTime)
+// 		}
+// 		avgDijkstra := totalDijkstraTime.Milliseconds() / int64(iterations)
+// 		results <- types.Result{Algorithm: "Dijkstra", ShortestPath: []types.Point{}, TimeTaken: avgDijkstra}
+// 	}()
+
+// 	wg.Add(1)
+// 	go func() {
+// 		defer wg.Done()
+// 		var totalAStarTime time.Duration
+// 		for i := 0; i < iterations; i++ {
+// 			startTime := time.Now()
+// 			_, _ = AStar(graphNodes, sortedEdges, sortedDistances, startIndices, randomIndices[i][0], randomIndices[i][1])
+// 			totalAStarTime += time.Since(startTime)
+// 		}
+// 		avgAStar := totalAStarTime.Milliseconds() / int64(iterations)
+// 		results <- types.Result{Algorithm: "AStar", ShortestPath: []types.Point{}, TimeTaken: avgAStar}
+// 	}()
+
+// 	wg.Add(1)
+// 	go func() {
+// 		defer wg.Done()
+// 		var totalALTTime time.Duration
+// 		for i := 0; i < iterations; i++ {
+// 			startTime := time.Now()
+// 			_, _ = ALT(graphNodes, sortedEdges, sortedDistances, startIndices, landmarkNodes, landmarkDistances, randomIndices[i][0], randomIndices[i][1])
+// 			totalALTTime += time.Since(startTime)
+// 		}
+// 		avgALT := totalALTTime.Milliseconds() / int64(iterations)
+// 		results <- types.Result{Algorithm: "ALT", ShortestPath: []types.Point{}, TimeTaken: avgALT}
+// 	}()
+
+// 	// Close the results channel when all goroutines are done
+// 	go func() {
+// 		wg.Wait()
+// 		close(results)
+// 	}()
+
+// 	var avgDijkstra, avgAstar, avgALTv1 time.Duration
+
+// 	// Collect results
+// 	for result := range results {
+// 		switch result.Algorithm {
+// 		case "Dijkstra":
+// 			avgDijkstra = time.Duration(result.TimeTaken)
+// 		case "AStar":
+// 			avgAstar = time.Duration(result.TimeTaken)
+// 		case "ALT":
+// 			avgALTv1 = time.Duration(result.TimeTaken)
+// 		}
+// 	}

@@ -4,7 +4,6 @@ import (
 	"container/heap"
 	"final/generator"
 	"final/types"
-	"fmt"
 	"math"
 	"math/rand"
 
@@ -42,7 +41,7 @@ func ALT(nodes [][2]float64, edges [][2]int, edgeweights []int, startindicesmap 
 		data.Visited[currentNode] = true
 
 		if currentNode == dst {
-			fmt.Println("Found")
+			// fmt.Println("Found")
 			break
 		}
 

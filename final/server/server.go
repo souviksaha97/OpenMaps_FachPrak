@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/http"
 	"runtime"
+	"sync"
 	"time"
 
 	"final/router"
@@ -46,39 +47,85 @@ func Server() {
 		fmt.Printf("Received end point: %+v\n", end)
 
 		runtime.GC()
+		results := make(chan types.Result, 3)
+		var wg sync.WaitGroup
 
-		var startTimeDijkstra = time.Now()
-		shortestPathDjikstra, _ := router.AlgoDijkstra(start, end, graphNodes, sortedEdges, sortedDistances, startIndices)
-		var timeTakenDijkstra = time.Since(startTimeDijkstra).Milliseconds()
+		// Run Dijkstra in a separate goroutine
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			startTime := time.Now()
+			shortestPath, _ := router.AlgoDijkstra(start, end, graphNodes, sortedEdges, sortedDistances, startIndices)
+			timeTaken := time.Since(startTime).Milliseconds()
+			runtime.GC()
+			// results <- types.Result{Algorithm="Dijkstra", shoshortestPath, timeTaken}
+			results <- types.Result{
+				Algorithm:    "Dijkstra",
+				ShortestPath: shortestPath,
+				TimeTaken:    timeTaken,
+			}
+		}()
 
-		runtime.GC()
+		// Run A* in a separate goroutine
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			startTime := time.Now()
+			shortestPath, _ := router.AlgoAStar(start, end, graphNodes, sortedEdges, sortedDistances, startIndices)
+			timeTaken := time.Since(startTime).Milliseconds()
+			runtime.GC()
+			results <- types.Result{
+				Algorithm:    "AStar",
+				ShortestPath: shortestPath,
+				TimeTaken:    timeTaken,
+			}
+		}()
 
-		var startTimeAStar = time.Now()
-		shortestPathAStar, _ := router.AlgoAStar(start, end, graphNodes, sortedEdges, sortedDistances, startIndices)
-		var timeTakenAStar = time.Since(startTimeAStar).Milliseconds()
+		// Run ALT in a separate goroutine
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			startTime := time.Now()
+			shortestPath, _ := router.AlgoALT(start, end, graphNodes, sortedEdges, sortedDistances, startIndices, landmarkNodes, landmarkDistances)
+			timeTaken := time.Since(startTime).Milliseconds()
+			runtime.GC()
+			results <- types.Result{
+				Algorithm:    "ALT",
+				ShortestPath: shortestPath,
+				TimeTaken:    timeTaken,
+			}
+		}()
 
-		runtime.GC()
+		// Close the results channel when all goroutines are done
+		go func() {
+			wg.Wait()
+			close(results)
+		}()
 
-		// copier.Copy(&tempDist, &dist)
-		var startTimeALT = time.Now()
-		shortestPathALT, _ := router.AlgoALT(start, end, graphNodes, sortedEdges, sortedDistances, startIndices, landmarkNodes, landmarkDistances)
-		var timeTakenALT = time.Since(startTimeALT).Milliseconds()
+		dijkstraResult := types.Result{}
+		astarResult := types.Result{}
+		altResult := types.Result{}
 
-		runtime.GC()
+		// Collect results
+		for result := range results {
+			switch result.Algorithm {
+			case "Dijkstra":
+				dijkstraResult = result
+			case "AStar":
+				astarResult = result
+			case "ALT":
+				altResult = result
+			}
+		}
 
-		// fmt.Println(shortestPathALT)
-
-		fmt.Println("Dijkstra Time:", timeTakenDijkstra)
-		fmt.Println("AStar Time:", timeTakenAStar)
-		fmt.Println("ALT Time:", timeTakenALT)
-
+		// Respond with the results
 		c.JSON(http.StatusOK, gin.H{
-			"astar_time":          timeTakenAStar,
-			"dijkstra_time":       timeTakenDijkstra,
-			"alt_time":            timeTakenALT,
-			"shortest_path_astar": shortestPathAStar,
-			"shortest_path_djik":  shortestPathDjikstra,
-			"shortest_path_alt":   shortestPathALT,
+			"astar_time":          astarResult.TimeTaken,
+			"dijkstra_time":       dijkstraResult.TimeTaken,
+			"alt_time":            altResult.TimeTaken,
+			"shortest_path_astar": astarResult.ShortestPath,
+			"shortest_path_djik":  dijkstraResult.ShortestPath,
+			"shortest_path_alt":   altResult.ShortestPath,
 		})
 	})
 

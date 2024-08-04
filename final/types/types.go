@@ -95,6 +95,12 @@ type EdgeWithDistance struct {
 	Distance int
 }
 
+type Result struct {
+	Algorithm    string
+	ShortestPath []Point
+	TimeTaken    int64
+}
+
 // NewGraphData initializes and returns GraphData
 func NewGraphData(numNodes int, src int) *GraphData {
 	dist := make([]int, numNodes)
