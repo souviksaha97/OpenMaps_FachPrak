@@ -1,13 +1,11 @@
 package router
 
 import (
-	"container/heap"
 	"final/generator"
 	"final/types"
 	"fmt"
 	"math"
 	"math/rand"
-	"time"
 
 	"github.com/adhocore/chin"
 	"github.com/gookit/slog"
@@ -22,18 +20,18 @@ func ALT(nodes [][2]float64, edges [][2]int, edgeweights []int, startindicesmap 
 	data := types.NewGraphData(len(nodes), src)
 	// fmt.Println("Distance array", landmarkDistances[landmarks[0]][src])
 
-	heuristic := 0
+	// heuristic := 0
 	closestLandmarkIndex := landmarks[0]
 	for i, landmark := range landmarks {
+		fmt.Println("Landmark:", i, landmark)
 		if landmarkDistances[landmark][dst] < landmarkDistances[closestLandmarkIndex][dst] {
-			closestLandmarkIndex = landmarks[i]
+			closestLandmarkIndex = landmark
 		}
-		// fmt.Println("Landmark:", landmark)
 	}
-	closestLandmarkArray := landmarkDistances[closestLandmarkIndex]
+	// closestLandmarkArray := landmarkDistances[closestLandmarkIndex]
 	// fmt.Println("Closest landmark:", closestLandmark)
 
-	timeStart := time.Now()
+	/*timeStart := time.Now()
 	for data.PQ.Len() > 0 {
 		current := heap.Pop(data.PQ).(*types.QueueItem)
 		currentNode := current.Node
@@ -66,7 +64,7 @@ func ALT(nodes [][2]float64, edges [][2]int, edgeweights []int, startindicesmap 
 		}
 	}
 
-	fmt.Println("Time taken for ALT: ", time.Since(timeStart))
+	fmt.Println("Time taken for ALT: ", time.Since(timeStart))*/
 
 	path := []int{}
 	if dst != -1 && (data.Prev[dst] != -1 || src == dst) {
@@ -333,10 +331,11 @@ func landMarksDistanceFinder() {
 	graphNodes, _, _, _, sorted_edges, sorted_distances, start_indices, _, landmarkNodes, _ := FileReader()
 	completeLandmarksMap := make(map[int][]int)
 	for i, landmark := range landmarkNodes {
-		slog.Debug("Landmark:", i)
+		slog.Info("Landmark:", i, landmark)
 		// _, dist := Djikstra(graphNodes, graphEdges, distancesEdges, landmark, -1)
 		_, dist := Djikstra(graphNodes, sorted_edges, sorted_distances, start_indices, landmark, -1)
 		completeLandmarksMap[landmark] = dist
+		// fmt.Println("Distance from landmark", landmark, ":", dist)
 	}
 	generator.WriteToJSONFile("landmarkDistances.json", completeLandmarksMap)
 }

@@ -12,7 +12,6 @@ import (
 // Djikstra implements the Dijkstra algorithm
 func Djikstra(nodes [][2]float64, edges [][2]int, edgeweights []int, startindicesmap []int, src int, dst int) ([]int, []int) {
 	data := types.NewGraphData(len(nodes), src)
-	found := false
 	timeStart := time.Now()
 	for data.PQ.Len() > 0 {
 		current := heap.Pop(data.PQ).(*types.QueueItem)
@@ -24,7 +23,6 @@ func Djikstra(nodes [][2]float64, edges [][2]int, edgeweights []int, startindice
 		data.Visited[currentNode] = true
 
 		if currentNode == dst {
-			found = true
 			break
 		}
 
@@ -46,15 +44,10 @@ func Djikstra(nodes [][2]float64, edges [][2]int, edgeweights []int, startindice
 	fmt.Println("Time taken for Djikstra: ", time.Since(timeStart))
 
 	path := []int{}
-	if found {
-		for at := dst; at != src; at = data.Prev[at] {
+	if dst != -1 && (data.Prev[dst] != -1 || src == dst) {
+		for at := dst; at != -1; at = data.Prev[at] {
 			path = append([]int{at}, path...)
 		}
-		path = append([]int{src}, path...)
-	} else {
-		path = append([]int{dst}, path...)
-		path = append([]int{src}, path...)
-		return path, []int{0}
 	}
 
 	return path, data.Dist
