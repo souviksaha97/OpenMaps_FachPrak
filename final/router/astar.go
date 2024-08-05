@@ -19,7 +19,6 @@ func AStar(nodes [][2]float64, edges [][2]int, edgeweights []int, startindicesma
 	for data.PQ.Len() > 0 {
 		current := heap.Pop(data.PQ).(*types.QueueItem)
 		currentNode := current.Node
-
 		if data.Visited[currentNode] {
 			continue
 		}
@@ -42,7 +41,7 @@ func AStar(nodes [][2]float64, edges [][2]int, edgeweights []int, startindicesma
 			// fmt.Println("Current Node: ", nodes[currentNode], "Destination: ", nodes[dst])
 			// fmt.Println("Distance Current Node: ", data.Dist[currentNode])
 			timeStart := time.Now()
-			heuristic := int(math.Round(k * 1000.0 * generator.Haversine(nodes[currentNode][0], nodes[currentNode][1], nodes[dst][0], nodes[dst][1])))
+			heuristic := int(1000.0 * generator.Haversine(nodes[currentNode][0], nodes[currentNode][1], nodes[dst][0], nodes[dst][1]))
 			avgHaversineTime += time.Since(timeStart)
 			HaverSineCount++
 			newDist := data.Dist[currentNode] + edgeweights[i] + heuristic

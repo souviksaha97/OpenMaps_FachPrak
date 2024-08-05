@@ -57,7 +57,6 @@ func Server() {
 			startTime := time.Now()
 			shortestPath, _ := router.AlgoDijkstra(start, end, graphNodes, sortedEdges, sortedDistances, startIndices)
 			timeTaken := time.Since(startTime).Milliseconds()
-			runtime.GC()
 			// results <- types.Result{Algorithm="Dijkstra", shoshortestPath, timeTaken}
 			results <- types.Result{
 				Algorithm:    "Dijkstra",
@@ -73,7 +72,6 @@ func Server() {
 			startTime := time.Now()
 			shortestPath, _ := router.AlgoAStar(start, end, graphNodes, sortedEdges, sortedDistances, startIndices)
 			timeTaken := time.Since(startTime).Milliseconds()
-			runtime.GC()
 			results <- types.Result{
 				Algorithm:    "AStar",
 				ShortestPath: shortestPath,
@@ -88,7 +86,6 @@ func Server() {
 			startTime := time.Now()
 			shortestPath, _ := router.AlgoALT(start, end, graphNodes, sortedEdges, sortedDistances, startIndices, landmarkNodes, landmarkDistances)
 			timeTaken := time.Since(startTime).Milliseconds()
-			runtime.GC()
 			results <- types.Result{
 				Algorithm:    "ALT",
 				ShortestPath: shortestPath,
@@ -100,6 +97,7 @@ func Server() {
 		go func() {
 			wg.Wait()
 			close(results)
+			runtime.GC()
 		}()
 
 		dijkstraResult := types.Result{}

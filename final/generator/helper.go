@@ -802,135 +802,6 @@ func Haversine(lat1, lon1, lat2, lon2 float64) float64 {
 	return math.Abs(distance)
 }
 
-func findTopLeft(u int, graphpoints [pointcount][2]float64, graphEdges *[pointcount][4]int, distancesEdges *[pointcount][4]int, pointIndexes []int) bool {
-	comparePoint := graphpoints[u]
-
-	closestDist := 3000.0
-	smallestIndex := -1
-	searchpointLat := comparePoint[0]
-	searchPointLon := comparePoint[1]
-	for x := range pointIndexes {
-		point := graphpoints[pointIndexes[x]]
-
-		if (*graphEdges)[pointIndexes[x]][3] == -1 {
-			if searchpointLat > point[0] && searchPointLon < point[1] {
-				dist := Haversine(searchpointLat, searchPointLon, point[0], point[1])
-				if dist < closestDist {
-					closestDist = dist
-					smallestIndex = x
-				}
-			}
-
-		}
-	}
-	if smallestIndex > -1 {
-
-		(*graphEdges)[u][0] = pointIndexes[smallestIndex]
-		(*graphEdges)[pointIndexes[smallestIndex]][3] = u
-		(*distancesEdges)[u][0] = int(closestDist)
-		(*distancesEdges)[pointIndexes[smallestIndex]][3] = int(closestDist)
-		return true
-	}
-
-	return false
-}
-func findTopRight(u int, graphpoints [pointcount][2]float64, graphEdges *[pointcount][4]int, distancesEdges *[pointcount][4]int, pointIndexes []int) bool {
-	comparePoint := graphpoints[u]
-
-	closestDist := 3000.0
-	smallestIndex := -1
-	searchpointLat := comparePoint[0]
-	searchPointLon := comparePoint[1]
-	for x := range pointIndexes {
-		point := graphpoints[pointIndexes[x]]
-
-		if (*graphEdges)[pointIndexes[x]][2] == -1 {
-			if searchpointLat > point[0] && searchPointLon > point[1] {
-				dist := Haversine(searchpointLat, searchPointLon, point[0], point[1])
-				if dist < closestDist {
-					closestDist = dist
-					smallestIndex = x
-				}
-			}
-
-		}
-	}
-	if smallestIndex > -1 {
-		(*graphEdges)[u][1] = pointIndexes[smallestIndex]
-		(*graphEdges)[pointIndexes[smallestIndex]][2] = u
-		(*distancesEdges)[u][1] = int(closestDist)
-		(*distancesEdges)[pointIndexes[smallestIndex]][2] = int(closestDist)
-		return true
-
-	}
-	return false
-
-}
-func findBottomLeft(u int, graphpoints [pointcount][2]float64, graphEdges *[pointcount][4]int, distancesEdges *[pointcount][4]int, pointIndexes []int) bool {
-	comparePoint := graphpoints[u]
-
-	closestDist := 3000.0
-	smallestIndex := -1
-	searchpointLat := comparePoint[0]
-	searchPointLon := comparePoint[1]
-	for x := range pointIndexes {
-		point := graphpoints[pointIndexes[x]]
-
-		if (*graphEdges)[pointIndexes[x]][1] == -1 {
-			if searchpointLat < point[0] && searchPointLon < point[1] {
-				dist := Haversine(searchpointLat, searchPointLon, point[0], point[1])
-				if dist < closestDist {
-					closestDist = dist
-					smallestIndex = x
-				}
-			}
-
-		}
-	}
-	if smallestIndex > -1 {
-		(*graphEdges)[u][2] = pointIndexes[smallestIndex]
-		(*graphEdges)[pointIndexes[smallestIndex]][1] = u
-		(*distancesEdges)[u][2] = int(closestDist)
-		(*distancesEdges)[pointIndexes[smallestIndex]][1] = int(closestDist)
-		return true
-
-	}
-	return false
-
-}
-func findBottomRight(u int, graphpoints [pointcount][2]float64, graphEdges *[pointcount][4]int, distancesEdges *[pointcount][4]int, pointIndexes []int) bool {
-	comparePoint := graphpoints[u]
-
-	closestDist := 3000.0
-	smallestIndex := -1
-	searchpointLat := comparePoint[0]
-	searchPointLon := comparePoint[1]
-	for x := range pointIndexes {
-		point := graphpoints[pointIndexes[x]]
-
-		if (*graphEdges)[pointIndexes[x]][0] == -1 {
-			if searchpointLat < point[0] && searchPointLon > point[1] {
-				dist := Haversine(searchpointLat, searchPointLon, point[0], point[1])
-				if dist < closestDist {
-					closestDist = dist
-					smallestIndex = x
-				}
-			}
-
-		}
-	}
-	if smallestIndex > -1 {
-
-		(*graphEdges)[u][3] = pointIndexes[smallestIndex]
-		(*graphEdges)[pointIndexes[smallestIndex]][0] = u
-		(*distancesEdges)[u][3] = int(closestDist)
-		(*distancesEdges)[pointIndexes[smallestIndex]][0] = int(closestDist)
-		return true
-	}
-	return false
-
-}
-
 func Contains(slice []int, key int) bool {
 	for _, element := range slice {
 		if element == key {
@@ -1000,7 +871,7 @@ func Wraplong(long float64) float64 {
 func FindNearest(comparePoint [3]float64, pointIndexes [][3]float64, fall int, wraparound bool) (bool, [3]float64, int) {
 	const epsilon = 1e-9
 
-	closestDist := 30000
+	closestDist := 300
 
 	smallestIndex := comparePoint
 	searchpointLat := comparePoint[0]
@@ -1038,7 +909,7 @@ func FindNearest(comparePoint [3]float64, pointIndexes [][3]float64, fall int, w
 			continue
 		}
 
-		dist := int(math.Round(1000.0 * Haversine(searchpointLat, searchPointLon, pointLat, pointLon)))
+		dist := int(Haversine(searchpointLat, searchPointLon, pointLat, pointLon))
 		if dist < closestDist {
 			closestDist = dist
 			smallestIndex = point
