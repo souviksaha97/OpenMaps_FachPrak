@@ -24,8 +24,7 @@ func ALT(nodes [][2]float64, edges [][2]int, edgeweights []int, startindicesmap 
 
 	heuristic := 0
 	closestLandmarkIndex := landmarks[0]
-	for i, landmark := range landmarks {
-		fmt.Println("Landmark:", i, landmark)
+	for _, landmark := range landmarks {
 		if landmarkDistances[landmark][dst] < landmarkDistances[closestLandmarkIndex][dst] {
 			closestLandmarkIndex = landmark
 		}
