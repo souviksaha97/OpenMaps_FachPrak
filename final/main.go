@@ -50,6 +50,10 @@ func main() {
 	}
 
 	switch os.Args[1] {
+	case "graph":
+		slog.Info("Running the generator")
+		generator.Generator()
+
 	case "server":
 		slog.Info("Running the server")
 		server.Server()
@@ -121,6 +125,7 @@ func init_main() bool {
 		f := logger.Formatter.(*slog.TextFormatter)
 		f.EnableColor = true
 	})
+	flag := true
 	slog.Info("Initializing the program")
 	basePath := "objects/"
 	filesList := []string{"graphEdges.json", "graphNodes.json", "grid.json",
@@ -129,10 +134,28 @@ func init_main() bool {
 	for _, file := range filesList {
 		if _, err := os.Stat(basePath + file); os.IsNotExist(err) {
 			slog.Info("File: " + file + " does not exist")
-			return false
+			touch(basePath + file)
+			flag = false
 		} else {
 			slog.Debug("File: " + file + " exists")
 		}
 	}
-	return true
+	return flag
+}
+
+func touch(filename string) error {
+	// Open the file in append mode, create if it doesn't exist, for writing
+	f, err := os.OpenFile(filename, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+
+	// Update the file timestamps to the current time
+	currentTime := time.Now().Local()
+	if err := os.Chtimes(filename, currentTime, currentTime); err != nil {
+		return err
+	}
+
+	return nil
 }
