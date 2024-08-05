@@ -14,7 +14,7 @@ import (
 	"final/types"
 )
 
-func getAllNeighbourCellss(grid [][][][3]float64, x int, y int, latitude float64, radius int) [][3]float64 {
+func getAllNeighbourCellss(grid [][][][3]float64, x int, y int, latitude float64, radius int) ([][3]float64, bool) {
 	var neighbors [][3]float64
 
 	/*startlat, startlon := findLatLongInGrid(len(grid), len(grid[0]), x, y)
@@ -41,6 +41,7 @@ func getAllNeighbourCellss(grid [][][][3]float64, x int, y int, latitude float64
 
 	}
 	counter := 0
+	treatthemspecial := false
 	for dx := -radius; dx <= radius; dx++ {
 		for dy := -radius; dy <= radius; dy++ {
 			//if dx == radius || dy == radius || dx == -radius || dy == -radius {
@@ -48,16 +49,19 @@ func getAllNeighbourCellss(grid [][][][3]float64, x int, y int, latitude float64
 			aplus := dx + x
 			bplus := dy + y
 			if aplus >= len(grid) {
-				break
+
+				continue
 			}
 			if aplus <= -1 {
-				break
+				continue
 			}
 			if bplus >= len(grid[x]) {
-				break
+				treatthemspecial = true
+				bplus = bplus - len(grid[x])
 			}
 			if bplus <= -1 {
-				break
+				treatthemspecial = true
+				bplus = bplus + len(grid[x])
 			}
 			//add points to return
 			counter++
@@ -67,7 +71,7 @@ func getAllNeighbourCellss(grid [][][][3]float64, x int, y int, latitude float64
 		}
 	}
 	//fmt.Println("nachbarlänge", counter)
-	return neighbors
+	return neighbors, treatthemspecial
 }
 
 func AddEdge(longranges *[][]types.Edge, edge types.Edge) {
@@ -969,8 +973,8 @@ func Max(x []int) int {
 	return max
 }
 
-func nearestHelper(k [3]float64, points [][3]float64, edges *[][2]int, distances *[]int, idx *int64, mu *sync.Mutex, fall int) [3]float64 {
-	found, index, dist := FindNearest(k, points, fall)
+func nearestHelper(k [3]float64, points [][3]float64, edges *[][2]int, distances *[]int, idx *int64, mu *sync.Mutex, fall int, wraparound bool) [3]float64 {
+	found, index, dist := FindNearest(k, points, fall, wraparound)
 	//fmt.Println("Job", len(points), k, idx, found, index)
 	if found {
 		mu.Lock()
@@ -985,17 +989,32 @@ func nearestHelper(k [3]float64, points [][3]float64, edges *[][2]int, distances
 		return index
 	}
 }
+func Wraplong(long float64) float64 {
+	if long > 180.0 {
+		return long - 180.0
+	} else {
+		return long + 180.0
+	}
+}
 
-func FindNearest(comparePoint [3]float64, pointIndexes [][3]float64, fall int) (bool, [3]float64, int) {
+func FindNearest(comparePoint [3]float64, pointIndexes [][3]float64, fall int, wraparound bool) (bool, [3]float64, int) {
 	const epsilon = 1e-9
 
-	closestDist := 300000
-	u := comparePoint
+	closestDist := 30000
+
 	smallestIndex := comparePoint
 	searchpointLat := comparePoint[0]
 	searchPointLon := comparePoint[1]
+	if wraparound {
+		searchPointLon = Wraplong(searchPointLon)
+	}
 
 	for _, point := range pointIndexes {
+		pointLat := point[0]
+		pointLon := point[1]
+		if wraparound {
+			pointLon = Wraplong(pointLon)
+		}
 		if AlmostEqual(point, comparePoint, epsilon) {
 			continue
 		}
@@ -1003,23 +1022,23 @@ func FindNearest(comparePoint [3]float64, pointIndexes [][3]float64, fall int) (
 		switch fall {
 		case 1:
 			// Northeast: point should be above and to the right of u
-			valid = point[0] > u[0] && point[1] < u[1]
+			valid = pointLat > searchpointLat && pointLon < searchPointLon
 		case 2:
 			// Southeast: point should be above and to the left of u
-			valid = point[0] > u[0] && point[1] > u[1]
+			valid = pointLat > searchpointLat && pointLon > searchPointLon
 		case 3:
 			// Southwest: point should be below and to the left of u
-			valid = point[0] < u[0] && point[1] < u[1]
+			valid = pointLat < searchpointLat && pointLon < searchPointLon
 		case 4:
 			// Northwest: point should be below and to the right of u
-			valid = point[0] < u[0] && point[1] > u[1]
+			valid = pointLat < searchpointLat && pointLon > searchPointLon
 		}
 
 		if !valid {
 			continue
 		}
 
-		dist := int(math.Round(1000.0 * Haversine(searchpointLat, searchPointLon, point[0], point[1])))
+		dist := int(math.Round(1000.0 * Haversine(searchpointLat, searchPointLon, pointLat, pointLon)))
 		if dist < closestDist {
 			closestDist = dist
 			smallestIndex = point
@@ -1097,11 +1116,12 @@ func Worker(id int, jobs <-chan types.Job, edges *[][2]int, distances *[]int, id
 		// badcounter := 0
 		points := j.Points
 		neighbours := j.Neighbours
+		wraparound := j.WrapAround
 		for _, u := range points {
-			a := nearestHelper(u, neighbours, edges, distances, idx, mu, 1)
-			b := nearestHelper(u, neighbours, edges, distances, idx, mu, 2)
-			c := nearestHelper(u, neighbours, edges, distances, idx, mu, 3)
-			d := nearestHelper(u, neighbours, edges, distances, idx, mu, 4)
+			a := nearestHelper(u, neighbours, edges, distances, idx, mu, 1, wraparound)
+			b := nearestHelper(u, neighbours, edges, distances, idx, mu, 2, wraparound)
+			c := nearestHelper(u, neighbours, edges, distances, idx, mu, 3, wraparound)
+			d := nearestHelper(u, neighbours, edges, distances, idx, mu, 4, wraparound)
 			if a == b && b == c && c == d && a != u {
 				fmt.Println(u, a, b, c, d)
 			}

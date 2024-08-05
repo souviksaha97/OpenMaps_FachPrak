@@ -18,8 +18,7 @@ import (
 	"final/types"
 )
 
-// const PBF_FILE_PATH = "/home/sahask/osm_data/planet-coastlines.osm.pbf"
-const PBF_FILE_PATH = "/home/fsociety/Documents/Uni-Stuttgart/SS2024/OpenMaps_FachPrak/osm_data/planet-coastlines.osm.pbf"
+const PBF_FILE_PATH = "/home/sahask/osm_data/planet-coastlines.osm.pbf"
 
 const pointcount = 4000000
 const longBincount = 200000
@@ -220,14 +219,14 @@ func Generator() {
 			if len(points) == 0 {
 				continue
 			}
-			p := getAllNeighbourCellss(grid, s, t, points[0][0], 1)
+			p, wraparound := getAllNeighbourCellss(grid, s, t, points[0][0], 1)
 
 			atomic.AddInt64(&counterNeighbour, int64(len(points))) // Increment the counter for each k
 			if atomic.LoadInt64(&counterNeighbour)%10000 == 0 {
 				fmt.Println("Processed 10k points", atomic.LoadInt64(&counterNeighbour))
 			}
 
-			jobs <- types.Job{Points: points, Neighbours: p} // Send job to workers
+			jobs <- types.Job{Points: points, Neighbours: p, WrapAround: wraparound} // Send job to workers
 		}
 	}
 

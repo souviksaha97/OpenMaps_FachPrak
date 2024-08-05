@@ -88,6 +88,7 @@ type GraphData struct {
 type Job struct {
 	Points     [][3]float64
 	Neighbours [][3]float64
+	WrapAround bool
 }
 
 type EdgeWithDistance struct {

@@ -4,14 +4,18 @@ import (
 	"container/heap"
 	"final/generator"
 	"final/types"
+	"fmt"
 	"math"
+	"time"
 )
 
-const k = 0.001
+const k = 0
 
 func AStar(nodes [][2]float64, edges [][2]int, edgeweights []int, startindicesmap []int, src int, dst int) ([]int, int) {
 	data := types.NewGraphData(len(nodes), src)
 	// heuristic := 0
+	avgHaversineTime := time.Duration(0)
+	HaverSineCount := 0
 	for data.PQ.Len() > 0 {
 		current := heap.Pop(data.PQ).(*types.QueueItem)
 		currentNode := current.Node
@@ -37,7 +41,10 @@ func AStar(nodes [][2]float64, edges [][2]int, edgeweights []int, startindicesma
 			// fmt.Println("Current Node: ", currentNode, "Destination: ", dst)
 			// fmt.Println("Current Node: ", nodes[currentNode], "Destination: ", nodes[dst])
 			// fmt.Println("Distance Current Node: ", data.Dist[currentNode])
+			timeStart := time.Now()
 			heuristic := int(math.Round(k * 1000.0 * generator.Haversine(nodes[currentNode][0], nodes[currentNode][1], nodes[dst][0], nodes[dst][1])))
+			avgHaversineTime += time.Since(timeStart)
+			HaverSineCount++
 			newDist := data.Dist[currentNode] + edgeweights[i] + heuristic
 			// fmt.Println("Haversine Distance: ", int(math.Round(1000.0*generator.Haversine(nodes[currentNode][0], nodes[currentNode][1], nodes[dst][0], nodes[dst][1]))))
 
@@ -56,6 +63,9 @@ func AStar(nodes [][2]float64, edges [][2]int, edgeweights []int, startindicesma
 			path = append([]int{at}, path...)
 		}
 	}
+	fmt.Println("Average Haversine Time: ", avgHaversineTime/time.Duration(HaverSineCount))
+	fmt.Println("Haversine Time : ", avgHaversineTime)
+	fmt.Println("Haversine Count: ", HaverSineCount)
 
 	return path, data.Dist[dst]
 }
