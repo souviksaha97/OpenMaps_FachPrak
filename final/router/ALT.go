@@ -4,8 +4,10 @@ import (
 	"container/heap"
 	"final/generator"
 	"final/types"
+	"fmt"
 	"math"
 	"math/rand"
+	"time"
 
 	"github.com/adhocore/chin"
 	"github.com/gookit/slog"
@@ -31,6 +33,7 @@ func ALT(nodes [][2]float64, edges [][2]int, edgeweights []int, startindicesmap 
 	closestLandmarkArray := landmarkDistances[closestLandmarkIndex]
 	// fmt.Println("Closest landmark:", closestLandmark)
 
+	timeStart := time.Now()
 	for data.PQ.Len() > 0 {
 		current := heap.Pop(data.PQ).(*types.QueueItem)
 		currentNode := current.Node
@@ -62,6 +65,8 @@ func ALT(nodes [][2]float64, edges [][2]int, edgeweights []int, startindicesmap 
 			}
 		}
 	}
+
+	fmt.Println("Time taken for ALT: ", time.Since(timeStart))
 
 	path := []int{}
 	if dst != -1 && (data.Prev[dst] != -1 || src == dst) {
@@ -242,13 +247,13 @@ func LandmarksDistanceMaximiser(numLandmarks int) {
 
 	landmarksNodes := make([][2]float64, len(landmarks))
 
-	generator.WriteToJSONFile("objects/landmarkNodes.json", landmarks)
+	generator.WriteToJSONFile("landmarkNodes.json", landmarks)
 
 	for i, landmark := range landmarks {
 		landmarksNodes[i][0] = nodes[landmark][0]
 		landmarksNodes[i][1] = nodes[landmark][1]
 	}
-	generator.WriteToJSONFile("objects/landmarks.json", landmarksNodes)
+	generator.WriteToJSONFile("landmarks.json", landmarksNodes)
 
 	fidgetor := chin.New()
 	go fidgetor.Start()
@@ -333,5 +338,5 @@ func landMarksDistanceFinder() {
 		_, dist := Djikstra(graphNodes, sorted_edges, sorted_distances, start_indices, landmark, -1)
 		completeLandmarksMap[landmark] = dist
 	}
-	generator.WriteToJSONFile("objects/landmarkDistances.json", completeLandmarksMap)
+	generator.WriteToJSONFile("landmarkDistances.json", completeLandmarksMap)
 }

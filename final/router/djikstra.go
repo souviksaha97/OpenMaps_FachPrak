@@ -4,13 +4,16 @@ import (
 	"container/heap"
 	"final/generator"
 	"final/types"
+	"fmt"
 	"math"
+	"time"
 )
 
 // Djikstra implements the Dijkstra algorithm
 func Djikstra(nodes [][2]float64, edges [][2]int, edgeweights []int, startindicesmap []int, src int, dst int) ([]int, []int) {
 	data := types.NewGraphData(len(nodes), src)
 	found := false
+	timeStart := time.Now()
 	for data.PQ.Len() > 0 {
 		current := heap.Pop(data.PQ).(*types.QueueItem)
 		currentNode := current.Node
@@ -40,6 +43,7 @@ func Djikstra(nodes [][2]float64, edges [][2]int, edgeweights []int, startindice
 			}
 		}
 	}
+	fmt.Println("Time taken for Djikstra: ", time.Since(timeStart))
 
 	path := []int{}
 	if found {

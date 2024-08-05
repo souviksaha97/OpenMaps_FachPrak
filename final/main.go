@@ -129,8 +129,8 @@ func init_main() bool {
 	slog.Info("Initializing the program")
 	basePath := "objects/"
 	filesList := []string{"graphEdges.json", "graphNodes.json", "grid.json",
-		"distancesEdges.json", "sortedEdges.json", "sortedDistances.json", "startIndices.json"}
-	// "landmarks.json", "landmarkNodes.json", "landmarkDistances.json"}
+		"distancesEdges.json", "sortedEdges.json", "sortedDistances.json", "startIndices.json",
+		"landmarks.json", "landmarkNodes.json", "landmarkDistances.json"}
 	for _, file := range filesList {
 		if _, err := os.Stat(basePath + file); os.IsNotExist(err) {
 			slog.Info("File: " + file + " does not exist")

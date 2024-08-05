@@ -871,7 +871,7 @@ func Wraplong(long float64) float64 {
 func FindNearest(comparePoint [3]float64, pointIndexes [][3]float64, fall int, wraparound bool) (bool, [3]float64, int) {
 	const epsilon = 1e-9
 
-	closestDist := 300
+	closestDist := 30
 
 	smallestIndex := comparePoint
 	searchpointLat := comparePoint[0]
