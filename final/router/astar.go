@@ -4,7 +4,6 @@ import (
 	"container/heap"
 	"final/generator"
 	"final/types"
-	"fmt"
 	"math"
 	"time"
 )
@@ -57,7 +56,7 @@ func AStar(nodes [][2]float64, edges [][2]int, edgeweights []int, startindicesma
 		}
 	}
 
-	fmt.Println("Time taken for AStar: ", time.Since(timeStart))
+	// fmt.Println("Time taken for AStar: ", time.Since(timeStart))
 	path := []int{}
 	if dst != -1 && (data.Prev[dst] != -1 || src == dst) {
 		for at := dst; at != -1; at = data.Prev[at] {

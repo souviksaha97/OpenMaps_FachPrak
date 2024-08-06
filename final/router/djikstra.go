@@ -4,7 +4,6 @@ import (
 	"container/heap"
 	"final/generator"
 	"final/types"
-	"fmt"
 	"math"
 	"time"
 )
@@ -41,7 +40,7 @@ func Djikstra(nodes [][2]float64, edges [][2]int, edgeweights []int, startindice
 			}
 		}
 	}
-	fmt.Println("Time taken for Djikstra: ", time.Since(timeStart))
+	// fmt.Println("Time taken for Djikstra: ", time.Since(timeStart))
 
 	path := []int{}
 	if dst != -1 && (data.Prev[dst] != -1 || src == dst) {

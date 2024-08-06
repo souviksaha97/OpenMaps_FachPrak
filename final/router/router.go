@@ -158,7 +158,10 @@ func MultiRouter(iterations int) {
 	runtime.GC()
 	var startDijkstra = time.Now()
 	for i := 0; i < iterations; i++ {
-		Djikstra(graphNodes, sortedEdges, sortedDistances, startIndices, randomIndices[i][0], randomIndices[i][1])
+		path, dist := Djikstra(graphNodes, sortedEdges, sortedDistances, startIndices, randomIndices[i][0], randomIndices[i][1])
+		if dist[randomIndices[i][1]] <= 0 && len(path) == 0 {
+			panic("Djikstra failed")
+		}
 	}
 
 	avgDijkstra := time.Since(startDijkstra) / time.Duration(iterations)
@@ -167,7 +170,10 @@ func MultiRouter(iterations int) {
 	runtime.GC()
 	var startAStar = time.Now()
 	for i := 0; i < iterations; i++ {
-		AStar(graphNodes, sortedEdges, sortedDistances, startIndices, randomIndices[i][0], randomIndices[i][1])
+		path, dist := AStar(graphNodes, sortedEdges, sortedDistances, startIndices, randomIndices[i][0], randomIndices[i][1])
+		if dist <= 0 && len(path) == 0 {
+			panic("A* failed")
+		}
 	}
 
 	avgAstar := time.Since(startAStar) / time.Duration(iterations)
@@ -176,7 +182,10 @@ func MultiRouter(iterations int) {
 	runtime.GC()
 	var startALTv1 = time.Now()
 	for i := 0; i < iterations; i++ {
-		ALT(graphNodes, sortedEdges, sortedDistances, startIndices, landmarkNodes, landmarkDistances, randomIndices[i][0], randomIndices[i][1])
+		path, dist := ALT(graphNodes, sortedEdges, sortedDistances, startIndices, landmarkNodes, landmarkDistances, randomIndices[i][0], randomIndices[i][1])
+		if dist <= 0 && len(path) == 0 {
+			panic("ALT failed")
+		}
 	}
 
 	avgALTv1 := time.Since(startALTv1) / time.Duration(iterations)

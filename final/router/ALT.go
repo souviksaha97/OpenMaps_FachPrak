@@ -4,7 +4,6 @@ import (
 	"container/heap"
 	"final/generator"
 	"final/types"
-	"fmt"
 	"math"
 	"math/rand"
 	"time"
@@ -30,7 +29,7 @@ func ALT(nodes [][2]float64, edges [][2]int, edgeweights []int, startindicesmap 
 		}
 	}
 	closestLandmarkArray := landmarkDistances[closestLandmarkIndex]
-	fmt.Println("Closest landmark:", closestLandmarkIndex)
+	// fmt.Println("Closest landmark:", closestLandmarkIndex)
 
 	timeStart := time.Now()
 	for data.PQ.Len() > 0 {
@@ -65,7 +64,7 @@ func ALT(nodes [][2]float64, edges [][2]int, edgeweights []int, startindicesmap 
 		}
 	}
 
-	fmt.Println("Time taken for ALT: ", time.Since(timeStart))
+	// fmt.Println("Time taken for ALT: ", time.Since(timeStart))
 
 	path := []int{}
 	if dst != -1 && (data.Prev[dst] != -1 || src == dst) {
