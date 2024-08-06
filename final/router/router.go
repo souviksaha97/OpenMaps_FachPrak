@@ -256,7 +256,19 @@ func SingleRouter(router string, iterations int) {
 		}
 
 		fmt.Println("Average ALT time: ", time.Since(startALT)/time.Duration(iterations))
+
+	case "alt-v2":
+		var startALTv2 = time.Now()
+		for i := 0; i < iterations; i++ {
+			path, dist := ALTv2(graphNodes, sortedEdges, sortedDistances, landmarkNodes, landmarkDistances, randomIndices[i][0], randomIndices[i][1])
+			if dist <= 0 || len(path) == 0 {
+				panic("ALTv2 failed")
+			}
+		}
+
+		fmt.Println("Average ALTv2 time: ", time.Since(startALTv2)/time.Duration(iterations))
 	}
+
 	fidgeter.Stop()
 }
 

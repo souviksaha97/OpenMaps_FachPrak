@@ -49,7 +49,7 @@ func Tester(iterations int) {
 		slog.Info("Running ALT")
 		for _, pair := range srcDstPairs {
 			iterTime := time.Now()
-			router.ALT(graphNodes, sortedEdges, sortedDistances, startIndices, landmarkNodes, landmarkDistances, pair[0], pair[1])
+			router.ALTv2(graphNodes, sortedEdges, sortedDistances, startIndices, landmarkNodes, landmarkDistances, pair[0], pair[1])
 			totalTime += time.Since(iterTime)
 		}
 		averageTime := totalTime / time.Duration(len(srcDstPairs))
