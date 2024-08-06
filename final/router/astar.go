@@ -5,7 +5,6 @@ import (
 	"final/generator"
 	"final/types"
 	"math"
-	"time"
 )
 
 const k = 0
@@ -15,7 +14,6 @@ func AStar(nodes [][2]float64, edges [][2]int, edgeweights []int, startindicesma
 	// heuristic := 0
 	// avgHaversineTime := time.Duration(0)
 	// HaverSineCount := 0
-	timeStart := time.Now()
 	for data.PQ.Len() > 0 {
 		current := heap.Pop(data.PQ).(*types.QueueItem)
 		currentNode := current.Node

@@ -5,13 +5,11 @@ import (
 	"final/generator"
 	"final/types"
 	"math"
-	"time"
 )
 
 // Djikstra implements the Dijkstra algorithm
 func Djikstra(nodes [][2]float64, edges [][2]int, edgeweights []int, startindicesmap []int, src int, dst int) ([]int, []int) {
 	data := types.NewGraphData(len(nodes), src)
-	timeStart := time.Now()
 	for data.PQ.Len() > 0 {
 		current := heap.Pop(data.PQ).(*types.QueueItem)
 		currentNode := current.Node

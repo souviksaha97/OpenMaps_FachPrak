@@ -6,7 +6,6 @@ import (
 	"final/types"
 	"math"
 	"math/rand"
-	"time"
 
 	"github.com/adhocore/chin"
 	"github.com/gookit/slog"
@@ -31,7 +30,6 @@ func ALT(nodes [][2]float64, edges [][2]int, edgeweights []int, startindicesmap 
 	closestLandmarkArray := landmarkDistances[closestLandmarkIndex]
 	// fmt.Println("Closest landmark:", closestLandmarkIndex)
 
-	timeStart := time.Now()
 	for data.PQ.Len() > 0 {
 		current := heap.Pop(data.PQ).(*types.QueueItem)
 		currentNode := current.Node
