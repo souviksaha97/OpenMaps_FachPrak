@@ -301,7 +301,7 @@ func landMarksDistanceFinder() {
 	// graphNodes, graphEdges, distancesEdges, _, _, landmarkNodes, _ := FileReader()
 	graphNodes, _, _, _, sorted_edges, sorted_distances, start_indices, _, landmarkNodes, _, _ := FileReader()
 	completeLandmarksMap := make(map[int][]int)
-	maxMinLandmarksDistanceMap := make([][]int, len(graphNodes))
+	maxMinLandmarksDistanceMap := make(map[int][]int, len(graphNodes))
 	for i, landmark := range landmarkNodes {
 
 		slog.Info("Landmark:", i, landmark)
