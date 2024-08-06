@@ -159,7 +159,7 @@ func MultiRouter(iterations int) {
 	var startDijkstra = time.Now()
 	for i := 0; i < iterations; i++ {
 		path, dist := Djikstra(graphNodes, sortedEdges, sortedDistances, startIndices, randomIndices[i][0], randomIndices[i][1])
-		if dist[randomIndices[i][1]] <= 0 && len(path) == 0 {
+		if dist[randomIndices[i][1]] <= 0 || len(path) == 0 {
 			panic("Djikstra failed")
 		}
 	}
@@ -171,7 +171,7 @@ func MultiRouter(iterations int) {
 	var startAStar = time.Now()
 	for i := 0; i < iterations; i++ {
 		path, dist := AStar(graphNodes, sortedEdges, sortedDistances, startIndices, randomIndices[i][0], randomIndices[i][1])
-		if dist <= 0 && len(path) == 0 {
+		if dist <= 0 || len(path) == 0 {
 			panic("A* failed")
 		}
 	}
@@ -183,7 +183,7 @@ func MultiRouter(iterations int) {
 	var startALTv1 = time.Now()
 	for i := 0; i < iterations; i++ {
 		path, dist := ALT(graphNodes, sortedEdges, sortedDistances, startIndices, landmarkNodes, landmarkDistances, randomIndices[i][0], randomIndices[i][1])
-		if dist <= 0 && len(path) == 0 {
+		if dist <= 0 || len(path) == 0 {
 			panic("ALT failed")
 		}
 	}
@@ -226,12 +226,10 @@ func SingleRouter(router string, iterations int) {
 		slog.Info("Running Djikstra")
 		var startDijkstra = time.Now()
 		for i := 0; i < iterations; i++ {
-			midStart := time.Now()
 			path, dist := Djikstra(graphNodes, sortedEdges, sortedDistances, startIndices, randomIndices[i][0], randomIndices[i][1])
-			fmt.Println("Djikstra time Iteration: ", i, time.Since(midStart), "Distance: ", dist[randomIndices[i][1]])
-			fmt.Println("Path: ", path[0], path[len(path)-1])
-			fmt.Println("Path: ", path)
-			fmt.Println("src: ", randomIndices[i][0], "dst: ", randomIndices[i][1])
+			if dist[randomIndices[i][1]] <= 0 || len(path) == 0 {
+				panic("Djikstra failed")
+			}
 		}
 
 		fmt.Println("Average Dijsktra time: ", time.Since(startDijkstra)/time.Duration(iterations))
@@ -240,11 +238,10 @@ func SingleRouter(router string, iterations int) {
 		var startAStar = time.Now()
 		for i := 0; i < iterations; i++ {
 			// midStart := time.Now()
-			AStar(graphNodes, sortedEdges, sortedDistances, startIndices, randomIndices[i][0], randomIndices[i][1])
-			// fmt.Println("A* time Iteration: ", i, time.Since(midStart))
-			// fmt.Println("Path: ", path[0], path[len(path)-1])
-			// fmt.Println("Path: ", path)
-			// fmt.Println("src: ", randomIndices[i][0], "dst: ", randomIndices[i][1])
+			path, dist := AStar(graphNodes, sortedEdges, sortedDistances, startIndices, randomIndices[i][0], randomIndices[i][1])
+			if dist <= 0 || len(path) == 0 {
+				panic("A* failed")
+			}
 		}
 
 		fmt.Println("Average AStar time: ", time.Since(startAStar)/time.Duration(iterations))
@@ -252,10 +249,10 @@ func SingleRouter(router string, iterations int) {
 	case "alt":
 		var startALT = time.Now()
 		for i := 0; i < iterations; i++ {
-			midStart := time.Now()
 			path, dist := ALT(graphNodes, sortedEdges, sortedDistances, startIndices, landmarkNodes, landmarkDistances, randomIndices[i][0], randomIndices[i][1])
-			fmt.Println("ALT time Iteration: ", i, time.Since(midStart), "Distance: ", dist)
-			fmt.Println("Path: ", path[0], path[len(path)-1])
+			if dist <= 0 || len(path) == 0 {
+				panic("ALT failed")
+			}
 		}
 
 		fmt.Println("Average ALT time: ", time.Since(startALT)/time.Duration(iterations))
