@@ -260,7 +260,7 @@ func SingleRouter(router string, iterations int) {
 	case "alt-v2":
 		var startALTv2 = time.Now()
 		for i := 0; i < iterations; i++ {
-			path, dist := ALTv2(graphNodes, sortedEdges, sortedDistances, landmarkNodes, landmarkDistances, randomIndices[i][0], randomIndices[i][1])
+			path, dist := ALTv2(graphNodes, sortedEdges, sortedDistances, startIndices, landmarkNodes, landmarkDistances, randomIndices[i][0], randomIndices[i][1])
 			if dist <= 0 || len(path) == 0 {
 				panic("ALTv2 failed")
 			}
