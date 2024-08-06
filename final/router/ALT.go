@@ -24,6 +24,7 @@ func ALT(nodes [][2]float64, edges [][2]int, edgeweights []int,
 	data := types.NewGraphData(len(nodes), src)
 	// fmt.Println("Distance array", landmarkDistances[landmarks[0]][src])
 	// fmt.Println("Closest landmark:", closestLandmarkIndex)
+	closestLandmarkFromDst := sortedLandmarks[dst][0]
 	farthestLandmarkFromDst := sortedLandmarks[dst][1]
 
 	for data.PQ.Len() > 0 {
@@ -49,9 +50,12 @@ func ALT(nodes [][2]float64, edges [][2]int, edgeweights []int,
 			}
 			// fmt.Println("Neighbor: ", nodes[neighbor])
 			farthestLandmarkFromSrc := sortedLandmarks[currentNode][1]
+			closestLandmarkFromSrc := sortedLandmarks[currentNode][0]
 			heuristic1 := generator.Abs(landmarkDistances[farthestLandmarkFromDst][currentNode] - landmarkDistances[farthestLandmarkFromDst][dst])
 			heuristic2 := generator.Abs(landmarkDistances[farthestLandmarkFromSrc][currentNode] - landmarkDistances[farthestLandmarkFromSrc][dst])
-			newDist := data.Dist[currentNode] + edgeweights[i] + generator.Max([]int{heuristic1, heuristic2})
+			heuristic3 := generator.Abs(landmarkDistances[closestLandmarkFromDst][currentNode] - landmarkDistances[closestLandmarkFromDst][dst])
+			heuristic4 := generator.Abs(landmarkDistances[closestLandmarkFromSrc][currentNode] - landmarkDistances[closestLandmarkFromSrc][dst])
+			newDist := data.Dist[currentNode] + edgeweights[i] + generator.Max([]int{heuristic1, heuristic2, heuristic3, heuristic4})
 			if newDist < data.Dist[neighbor] {
 				data.Dist[neighbor] = newDist
 				data.Prev[neighbor] = currentNode
