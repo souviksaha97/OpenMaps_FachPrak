@@ -19,7 +19,7 @@ func Tester(iterations int) {
 	// read the files
 	fidgeter := chin.New()
 	go fidgeter.Start()
-	graphNodes, _, _, _, _, _, _, _, _, _ := router.FileReader()
+	graphNodes, _, _, _, _, _, _, _, _, _, _ := router.FileReader()
 	timingMap := make(map[int]time.Duration)
 
 	// generate iteration random pairs of src and dst
@@ -44,12 +44,12 @@ func Tester(iterations int) {
 		slog.Info("Number of landmarks: ", numLandmarks)
 		router.LandmarksDistanceMaximiser(numLandmarks)
 		slog.Info("Landmarks distance maximiser finished")
-		graphNodes, _, _, _, sortedEdges, sortedDistances, startIndices, _, landmarkNodes, landmarkDistances := router.FileReader()
+		graphNodes, _, _, _, sortedEdges, sortedDistances, startIndices, _, landmarkNodes, landmarkDistances, sortedLandmarks := router.FileReader()
 		var totalTime time.Duration
 		slog.Info("Running ALT")
 		for _, pair := range srcDstPairs {
 			iterTime := time.Now()
-			router.ALTv2(graphNodes, sortedEdges, sortedDistances, startIndices, landmarkNodes, landmarkDistances, pair[0], pair[1])
+			router.ALT(graphNodes, sortedEdges, sortedDistances, startIndices, landmarkNodes, landmarkDistances, sortedLandmarks, pair[0], pair[1])
 			totalTime += time.Since(iterTime)
 		}
 		averageTime := totalTime / time.Duration(len(srcDstPairs))
