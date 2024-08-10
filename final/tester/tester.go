@@ -31,10 +31,8 @@ func Tester(iterations int) {
 	}
 	slog.Info("Generated random pairs of src and dst")
 
-	range_landmarks := []int{1, 4, 10, 20, 40}
-	// run alt with increasing number of landmarks from 0.001% to 0.1% of total nodes
-	// and calculate the average time taken for each number of landmarks
-	// print the optimal number of landmarks
+	range_landmarks := []int{2, 4, 8, 16, 32, 64, 128, 256}
+
 	optimalLandmarks := 0
 	optimalTime := math.MaxInt64
 	for _, i := range range_landmarks {
@@ -42,7 +40,7 @@ func Tester(iterations int) {
 		numLandmarks := i
 		slog.Info("___________________________________________________________________________")
 		slog.Info("Number of landmarks: ", numLandmarks)
-		router.LandmarksDistanceMaximiser(numLandmarks)
+		router.LandmarksDistanceMaximiser()
 		slog.Info("Landmarks distance maximiser finished")
 		graphNodes, _, _, _, sortedEdges, sortedDistances, startIndices, _, landmarkNodes, landmarkDistances, sortedLandmarks := router.FileReader()
 		var totalTime time.Duration

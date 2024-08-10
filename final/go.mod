@@ -1,8 +1,11 @@
 module final
 
-go 1.22.5
+go 1.23
 
-require github.com/paulmach/osm v0.8.0
+require (
+	github.com/gin-gonic/gin v1.10.0
+	github.com/paulmach/osm v0.8.0
+)
 
 require (
 	github.com/bytedance/sonic v1.11.6 // indirect
@@ -12,7 +15,6 @@ require (
 	github.com/datadog/czlib v0.0.0-20160811164712-4bc9a24e37f2 // indirect
 	github.com/gabriel-vasile/mimetype v1.4.3 // indirect
 	github.com/gin-contrib/sse v0.1.0 // indirect
-	github.com/gin-gonic/gin v1.10.0 // indirect
 	github.com/go-playground/locales v0.14.1 // indirect
 	github.com/go-playground/universal-translator v0.18.1 // indirect
 	github.com/go-playground/validator/v10 v10.20.0 // indirect
@@ -45,7 +47,6 @@ require (
 
 require (
 	github.com/adhocore/chin v1.1.0
-	github.com/divan/num2words v0.0.0-20170904212200-57dba452f942
 	github.com/gin-contrib/cors v1.7.2
 	github.com/gookit/slog v0.5.6
 	github.com/paulmach/orb v0.11.1 // indirect

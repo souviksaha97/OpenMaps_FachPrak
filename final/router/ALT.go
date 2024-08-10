@@ -6,7 +6,7 @@ import (
 	"final/types"
 	"fmt"
 	"math"
-	"math/rand"
+	// "math/rand"
 
 	"github.com/adhocore/chin"
 	"github.com/gookit/slog"
@@ -24,9 +24,10 @@ func ALT(nodes [][2]float64, edges [][2]int, edgeweights []int,
 	data := types.NewGraphData(len(nodes), src)
 	// fmt.Println("Distance array", landmarkDistances[landmarks[0]][src])
 	// fmt.Println("Closest landmark:", closestLandmarkIndex)
-	closestLandmarkFromDst := sortedLandmarks[dst][0]
+	// LandmarkFromDst := sortedLandmarks[dst][1]
 	farthestLandmarkFromDst := sortedLandmarks[dst][1]
-
+	// closestLandmarkFromDst := sortedLandmarks[dst][0]
+	// avgTime := time.Duration(0)
 	for data.PQ.Len() > 0 {
 		current := heap.Pop(data.PQ).(*types.QueueItem)
 		currentNode := current.Node
@@ -49,13 +50,22 @@ func ALT(nodes [][2]float64, edges [][2]int, edgeweights []int,
 				continue
 			}
 			// fmt.Println("Neighbor: ", nodes[neighbor])
+			
+			// closestLandmarkFromSrc := sortedLandmarks[currentNode][0]
 			farthestLandmarkFromSrc := sortedLandmarks[currentNode][1]
-			closestLandmarkFromSrc := sortedLandmarks[currentNode][0]
-			heuristic1 := generator.Abs(landmarkDistances[farthestLandmarkFromDst][currentNode] - landmarkDistances[farthestLandmarkFromDst][dst])
-			heuristic2 := generator.Abs(landmarkDistances[farthestLandmarkFromSrc][currentNode] - landmarkDistances[farthestLandmarkFromSrc][dst])
-			heuristic3 := generator.Abs(landmarkDistances[closestLandmarkFromDst][currentNode] - landmarkDistances[closestLandmarkFromDst][dst])
-			heuristic4 := generator.Abs(landmarkDistances[closestLandmarkFromSrc][currentNode] - landmarkDistances[closestLandmarkFromSrc][dst])
-			newDist := data.Dist[currentNode] + edgeweights[i] + generator.Max([]int{heuristic1, heuristic2, heuristic3, heuristic4})
+
+
+			// startTime := time.Now()	
+			// heuristic1 := generator.Abs(landmarkDistances[farthestLandmarkFromDst][currentNode] - landmarkDistances[farthestLandmarkFromDst][dst])
+			// heuristic2 := generator.Abs(landmarkDistances[farthestLandmarkFromSrc][currentNode] - landmarkDistances[farthestLandmarkFromSrc][dst])
+			heuristic1 := generator.Abs(landmarkDistances[farthestLandmarkFromSrc][currentNode] - landmarkDistances[farthestLandmarkFromSrc][dst])
+			// heuristic4 := generator.Abs(landmarkDistances[closestLandmarkFromSrc][currentNode] - landmarkDistances[closestLandmarkFromSrc][dst])
+			// avgTime += time.Since(startTime)
+			// counter++
+			// heuristic1 := generator.Abs(landmarkDistances[closestLandmarkFromDst][currentNode] - landmarkDistances[closestLandmarkFromDst][dst])
+			// heuristic2 := generator.Abs(landmarkDistances[closestLandmarkFromSrc][currentNode] - landmarkDistances[closestLandmarkFromSrc][dst])
+			heuristic2 := generator.Abs(landmarkDistances[farthestLandmarkFromDst][currentNode] - landmarkDistances[farthestLandmarkFromDst][dst])
+			newDist := data.Dist[currentNode] + edgeweights[i] + generator.Max([]int{heuristic1, heuristic2		})
 			if newDist < data.Dist[neighbor] {
 				data.Dist[neighbor] = newDist
 				data.Prev[neighbor] = currentNode
@@ -64,7 +74,9 @@ func ALT(nodes [][2]float64, edges [][2]int, edgeweights []int,
 		}
 	}
 
-	// fmt.Println("Time taken for ALT: ", time.Since(timeStart))
+	// fmt.Println("Time taken for heuristics", avgTime/time.Duration(counter))
+	// fmt.Println("Total heuristics", counter)
+	// fmt.Println("Avg time", avgTime)
 
 	path := []int{}
 	if dst != -1 && (data.Prev[dst] != -1 || src == dst) {
@@ -75,6 +87,8 @@ func ALT(nodes [][2]float64, edges [][2]int, edgeweights []int,
 
 	return path, data.Dist[dst]
 }
+
+
 
 // Nodes, Edges, Distances, Landmarks, LandmarkDistances, src, dst
 func ALTv2(nodes [][2]float64, edges [][2]int, edgeweights []int,
@@ -180,90 +194,63 @@ func AlgoALT(Start types.Point, End types.Point, graphNodes [][2]float64, graphE
 	return shortestPath, dist
 }
 
-func LandmarksDistanceMaximiser(numLandmarks int) {
+func LandmarksDistanceMaximiser() {
 	// nodes, edges, distances, _, _, _, _ := FileReader()
-	nodes, _, _, _, _, _, _, _, _, _, _ := FileReader()
-	longSearch := false
+	nodes, _, _, _, sorted_edges, sorted_distances, start_indices, _, _, _, _ := FileReader()
 
-	maxDistance := 0.0
-	if longSearch {
-		for i := 0; i < len(nodes); i++ {
-			for j := i + 1; j < len(nodes); j++ {
-				distance := generator.Haversine(nodes[i][0], nodes[i][1], nodes[j][0], nodes[j][1])
-				if distance > maxDistance {
-					maxDistance = distance
-				}
-			}
-		}
-	} else {
-		// circumference of earth in km
-		maxDistance = 6350.0
-	}
-
-	slog.Debug("Max distance: ", maxDistance)
-	if numLandmarks == 0 {
-		numLandmarks = numLandmarksConst
-	}
-
-	landmarks := make([]int, numLandmarks)
-	for {
-		res := chooseLandmarks(nodes, numLandmarks, int(maxDistance))
+	
+	landmarks := closestIndices(nodes)
+	fmt.Println("Closest indices", landmarks)
+	// landmarks := make([]int, len(res))
 		// res := chooseLandmarksV2(nodes, edges, distances, numLandmarks, int(maxDistance))
-		if res == nil {
-			maxDistance = maxDistance * 0.9
-			slog.Debug("Trying with smaller distance: ", maxDistance)
-		} else {
-			landmarks = res
-			break
-		}
-	}
-
 	landmarksNodes := make([][2]float64, len(landmarks))
 
-	generator.WriteToJSONFile("landmarkNodes.json", landmarks)
+	
 
 	for i, landmark := range landmarks {
 		landmarksNodes[i][0] = nodes[landmark][0]
 		landmarksNodes[i][1] = nodes[landmark][1]
+		slog.Info("Landmark", i, ":", landmarksNodes[i])
 	}
-	generator.WriteToJSONFile("landmarks.json", landmarksNodes)
+	
 
 	fidgetor := chin.New()
 	go fidgetor.Start()
-	landMarksDistanceFinder()
-	fidgetor.Stop()
-}
 
-func chooseLandmarks(nodes [][2]float64, numLandmarks int, minDistance int) []int {
-	landmarks := make([]int, numLandmarks)
-	landmarkCounter := 0
-	validityCounter := 0
-	for landmarkCounter < numLandmarks && validityCounter < 1000 {
-		randomPoint := rand.Intn(len(nodes))
-		suitablePoint := true
-		if !generator.Contains(landmarks, randomPoint) {
-			for _, landmark := range landmarks {
-				if generator.Haversine(nodes[randomPoint][0], nodes[randomPoint][1], nodes[landmark][0], nodes[landmark][1]) < float64(minDistance) {
-					suitablePoint = false
-					validityCounter++
-					break
-				}
-			}
-			if suitablePoint {
-				landmarks[landmarkCounter] = randomPoint
-				landmarkCounter++
-				validityCounter = 0
-				slog.Debug("Landmark", landmarkCounter, ":", randomPoint)
-			}
+	completeLandmarksMap := make(map[int][]int)
+	maxMinLandmarksDistanceMap := make(map[int][]int, len(nodes))
+	for i, landmark := range landmarks {
 
+		slog.Info("Landmark:", i, landmark)
+		// _, dist := Djikstra(nodes, graphEdges, distancesEdges, landmark, -1)
+		_, dist := Djikstra(nodes, sorted_edges, sorted_distances, start_indices, landmark, -1)
+		completeLandmarksMap[landmark] = dist
+		// fmt.Println("Distance from landmark", landmark, ":", dist)
+	}
+
+	for i := 0; i < len(nodes); i++ {
+		minDistance := math.MaxInt64
+		maxDistance := 0
+		minIndex := 0
+		maxIndex := 0
+		for landmark, dist := range completeLandmarksMap {
+			if dist[i] < minDistance {
+				minDistance = dist[i]
+				minIndex = landmark
+			}
+			if dist[i] > maxDistance {
+				maxDistance = dist[i]
+				maxIndex = landmark
+			}
 		}
+		maxMinLandmarksDistanceMap[i] = []int{minIndex, maxIndex}
 	}
 
-	if validityCounter >= 1000 {
-		slog.Debug("Could not find suitable landmarks")
-		return nil
-	}
-	return landmarks
+	generator.WriteToJSONFile("landmarks.json", landmarksNodes)
+	generator.WriteToJSONFile("landmarkNodes.json", landmarks)
+	generator.WriteToJSONFile("landmarkDistances.json", completeLandmarksMap)
+	generator.WriteToJSONFile("sortedLandmarks.json", maxMinLandmarksDistanceMap)
+	fidgetor.Stop()
 }
 
 // func chooseLandmarksV2(nodes [][2]float64, edges [][4]int, distances [][4]int, numLandmarks int, minDistance int) []int {
@@ -308,7 +295,7 @@ func landMarksDistanceFinder() {
 	maxMinLandmarksDistanceMap := make(map[int][]int, len(graphNodes))
 	for i, landmark := range landmarkNodes {
 
-		slog.Info("Landmark:", i, landmark)
+		slog.Debug("Landmark:", i, landmark)
 		// _, dist := Djikstra(graphNodes, graphEdges, distancesEdges, landmark, -1)
 		_, dist := Djikstra(graphNodes, sorted_edges, sorted_distances, start_indices, landmark, -1)
 		completeLandmarksMap[landmark] = dist
@@ -335,4 +322,41 @@ func landMarksDistanceFinder() {
 
 	generator.WriteToJSONFile("landmarkDistances.json", completeLandmarksMap)
 	generator.WriteToJSONFile("sortedLandmarks.json", maxMinLandmarksDistanceMap)
+}
+
+
+func closestIndices(nodes [][2]float64) (indices []int){
+	pointsArray := [][2]float64{
+		{-60.0, -170.0},
+		{10.0, -170.0},
+		{80.0, -170.0},
+		{80.0, 0.0},
+		{80.0, 170.0},
+		{10.0, 170.0},
+		{-60.0, 170.0},
+		{-60.0, 0.0},
+	}
+	
+
+	set_indices := make([]int, len(pointsArray))
+
+	
+	for i, point := range pointsArray{
+		nearestnode := [2]float64{point[0], point[1]}
+		nearestpointIndex := -1
+		distpoint := math.MaxFloat64
+
+		for k, node := range nodes {
+			dist := generator.Haversine(node[0], node[1], nearestnode[0], nearestnode[1])
+			if dist < distpoint {
+				nearestpointIndex = k
+				distpoint = dist
+			}
+		}
+
+		set_indices[i] = nearestpointIndex
+	}
+
+	return set_indices
+
 }
