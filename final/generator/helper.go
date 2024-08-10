@@ -820,6 +820,24 @@ func FindIndex(slice []int, value int) int {
     return -1
 }
 
+func Linspace(start, end float64, n int) []float64 {
+    if n <= 0 {
+        return []float64{}
+    }
+    if n == 1 {
+        return []float64{start}
+    }
+
+    step := (end - start) / float64(n-1)
+    result := make([]float64, n)
+
+    for i := 0; i < n; i++ {
+        result[i] = start + step*float64(i)
+    }
+
+    return result
+}
+
 func WriteToJSONFile(filename string, data interface{}) error {
 	// Marshal the data to JSON
 	jsonData, err := json.Marshal(data) // Pretty print the JSON

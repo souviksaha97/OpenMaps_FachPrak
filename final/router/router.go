@@ -181,7 +181,7 @@ func MultiRouter(iterations int) {
 	var startDijkstra = time.Now()
 	for i := 0; i < iterations; i++ {
 		path, dist := Djikstra(graphNodes, sortedEdges, sortedDistances, startIndices, randomIndices[i][0], randomIndices[i][1])
-		if dist[randomIndices[i][1]] <= 0 || len(path) == 0 {
+		if (dist[randomIndices[i][1]] <= 0 || len(path) == 0)  && (randomIndices[i][0] != randomIndices[i][1]) {
 			panic("Djikstra failed")
 		}
 	}

@@ -89,10 +89,6 @@ func main() {
 
 	case "alt-pre":
 		slog.Info("Running the alt-pre")
-		router.LandmarksDistanceMaximiser()
-
-	case "tester":
-		slog.Info("Running the tester")
 		if len(os.Args) < 3 {
 			slog.Info("Iterations argument missing")
 			return
@@ -102,7 +98,21 @@ func main() {
 			slog.Info("Invalid iterations argument")
 			return
 		}
-		tester.Tester(iterations)
+		router.LandmarksDistanceMaximiser(iterations)
+
+	case "tester":
+		slog.Info("Running the tester")
+		if len(os.Args) < 4 {
+			slog.Info("Iterations argument missing")
+			return
+		}
+		iterations, err := strconv.Atoi(os.Args[2])
+		points, err := strconv.Atoi(os.Args[3])
+		if err != nil {
+			slog.Info("Invalid iterations argument")
+			return
+		}
+		tester.Tester(iterations, points)
 
 	default:
 		slog.Info("Invalid argument")

@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"math"
 	// "math/rand"
-	"time"
+	// "time"
 	"github.com/adhocore/chin"
 	"github.com/gookit/slog"
 	// "runtime"		
@@ -21,7 +21,6 @@ func ALT(nodes [][2]float64, edges [][2]int, edgeweights []int,
 
 	// Initialize GraphData
 	data := types.NewGraphData(len(nodes), src)
-	heuristicTime := time.Duration(0)
 	// fmt.Println("Distance array", landmarkDistances[landmarks[0]][src])
 		
 	for data.PQ.Len() > 0 {
@@ -66,7 +65,6 @@ func ALT(nodes [][2]float64, edges [][2]int, edgeweights []int,
 		}
 	}
 
-	fmt.Println("Time taken for ALT: ", heuristicTime)
 
 	path := []int{}
 	if dst != -1 && (data.Prev[dst] != -1 || src == dst) {
@@ -113,12 +111,12 @@ func AlgoALT(Start types.Point, End types.Point, graphNodes [][2]float64, graphE
 	return shortestPath, dist
 }
 
-func LandmarksDistanceMaximiser() {
+func LandmarksDistanceMaximiser(points int) {
 	// nodes, edges, distances, _, _, _, _ := FileReader()
 	nodes, _, _, _, sorted_edges, sorted_distances, start_indices, _, _, _, _, _ := FileReader()
 
 	
-	landmarks := closestIndices(nodes)
+	landmarks := closestIndices(nodes, points)
 	fmt.Println("Closest indices", landmarks)
 	// landmarks := make([]int, len(res))
 		// res := chooseLandmarksV2(nodes, edges, distances, numLandmarks, int(maxDistance))
@@ -170,24 +168,25 @@ func LandmarksDistanceMaximiser() {
 
 	for i := 0; i < len(landmarks); i++ {
 		for j := i+1; j < len(landmarks); j++ {
-			farthestIndex := 0
-			farthestDistance := 0
+			heuristicIndex := 0
+			// farthestDistance := 0
+			maxHeuristic := 0
 			for k, selectedLandmark := range landmarks {
 				if selectedLandmark == landmarks[i] || selectedLandmark == landmarks[j] {
 					continue
 				}
 				
-				distance := completeLandmarksMap[selectedLandmark][landmarks[i]] + completeLandmarksMap[selectedLandmark][landmarks[j]]
-				if distance > farthestDistance {
-					farthestDistance = distance
-					farthestIndex = k
+				heuristic := generator.Abs(completeLandmarksMap[selectedLandmark][landmarks[i]]-completeLandmarksMap[selectedLandmark][landmarks[j]])
+				if heuristic > maxHeuristic {
+					maxHeuristic = heuristic
+					heuristicIndex = k
 				}
 			}
-			slog.Info("Landmark", landmarks[i], ":", landmarks[j], ":", farthestIndex)
+			slog.Info("Landmark", landmarks[i], ":", landmarks[j], ":", heuristicIndex)
 
 			// slog.Info("Landmark Node", landmarks[i], ":", nodes[landmarks[i]], "Landmark Node", landmarks[j], ":", nodes[landmarks[j], "Farthest Node", farthestIndex, "Distance", farthestDistance)
-			landmarkPairDistances[i][j] = farthestIndex
-			landmarkPairDistances[j][i] = farthestIndex
+			landmarkPairDistances[i][j] = heuristicIndex
+			landmarkPairDistances[j][i] = heuristicIndex
 		}
 	}
 
@@ -229,37 +228,48 @@ func LandmarksDistanceMaximiser() {
 // 	}
 // }
 
-func closestIndices(nodes [][2]float64) (indices []int){
-	pointsArray := [][2]float64{
-		{-60.0, -170.0},
-		{10.0, -170.0},
-		{80.0, -170.0},
-		{80.0, 0.0},
-		{80.0, 170.0},
-		{10.0, 170.0},
-		{-60.0, 170.0},
-		{-60.0, 0.0},
+func closestIndices(nodes [][2]float64, points int) (indices []int){
+	pointsX := generator.Linspace(-60.0, 80.0, points)
+	pointsY := generator.Linspace(-170.0, 170.0, points)
+
+
+
+	pointsArray := make([][2]float64, len(pointsX)*len(pointsY))
+	for i, x := range pointsX {
+		for j, y := range pointsY {
+			pointsArray[i*len(pointsY)+j] = [2]float64{x, y}
+		}
 	}
 	
 
-	set_indices := make([]int, len(pointsArray))
-
+	set_indices := make([]int, 4*(points-1))
+	index := 0
 	
-	for i, point := range pointsArray{
+	for _, point := range pointsArray{
 		nearestnode := [2]float64{point[0], point[1]}
 		nearestpointIndex := -1
 		distpoint := math.MaxFloat64
 
+		//Remove points which are not in the borders
+		if math.Abs(nearestnode[0]) < 59 && math.Abs(nearestnode[1]) < 169 {
+			continue
+		}
+
 		for k, node := range nodes {
 			dist := generator.Haversine(node[0], node[1], nearestnode[0], nearestnode[1])
+
+
+
 			if dist < distpoint {
 				nearestpointIndex = k
 				distpoint = dist
 			}
 		}
 
-		set_indices[i] = nearestpointIndex
+		set_indices[index] = nearestpointIndex
+		index++
 	}
+	fmt.Println("Set indices", set_indices)
 
 	return set_indices
 

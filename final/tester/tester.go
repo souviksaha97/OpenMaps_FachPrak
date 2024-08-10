@@ -13,7 +13,7 @@ import (
 	"github.com/adhocore/chin"
 )
 
-func Tester(iterations int) {
+func Tester(iterations int, points int) {
 	// run multiple iterations of alt, with increasing number of landmarks and print the optimal number of landmarks
 
 	// read the files
@@ -40,7 +40,7 @@ func Tester(iterations int) {
 		numLandmarks := i
 		slog.Info("___________________________________________________________________________")
 		slog.Info("Number of landmarks: ", numLandmarks)
-		router.LandmarksDistanceMaximiser()
+		router.LandmarksDistanceMaximiser(points)
 		slog.Info("Landmarks distance maximiser finished")
 		graphNodes, _, _, _, sortedEdges, sortedDistances, startIndices, _, landmarkNodes, landmarkDistances, sortedLandmarks, landmarkPairDistances := router.FileReader()
 		var totalTime time.Duration
