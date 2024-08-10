@@ -27,7 +27,7 @@ func Server() {
 	serv.Use(cors.New(config))
 
 	// Read the files
-	graphNodes, _, _, _, sortedEdges, sortedDistances, startIndices, landmarkCoords, landmarkNodes, landmarkDistances, sortedLandmarks := router.FileReader()
+	graphNodes, _, _, _, sortedEdges, sortedDistances, startIndices, landmarkCoords, landmarkNodes, landmarkDistances, sortedLandmarks,  landmarkPairDistances:= router.FileReader()
 
 	serv.POST("/submit_points", func(c *gin.Context) {
 		var requestData map[string]types.Point
@@ -84,7 +84,7 @@ func Server() {
 		go func() {
 			defer wg.Done()
 			startTime := time.Now()
-			shortestPath, _ := router.AlgoALT(start, end, graphNodes, sortedEdges, sortedDistances, startIndices, landmarkNodes, landmarkDistances, sortedLandmarks)
+			shortestPath, _ := router.AlgoALT(start, end, graphNodes, sortedEdges, sortedDistances, startIndices, landmarkNodes, landmarkDistances, sortedLandmarks,landmarkPairDistances)
 			timeTaken := time.Since(startTime).Milliseconds()
 			results <- types.Result{
 				Algorithm:    "ALT",

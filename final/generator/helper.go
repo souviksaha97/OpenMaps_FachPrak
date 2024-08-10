@@ -811,6 +811,15 @@ func Contains(slice []int, key int) bool {
 	return false
 }
 
+func FindIndex(slice []int, value int) int {
+    for i, v := range slice {
+        if v == value {
+            return i
+        }
+    }
+    return -1
+}
+
 func WriteToJSONFile(filename string, data interface{}) error {
 	// Marshal the data to JSON
 	jsonData, err := json.Marshal(data) // Pretty print the JSON

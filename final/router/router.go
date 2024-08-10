@@ -16,7 +16,7 @@ import (
 func FileReader() (nodes [][2]float64, edges [][4]int, distances [][4]int, grid [][][][3]float64,
 	sorted_edges [][2]int, sorted_distances []int, start_indices []int,
 	landmarkCoords [][2]float64, landmarks []int, landmarkMap map[int][]int,
-	sortedLandmarks map[int][]int) {
+	sortedLandmarks map[int][]int, farthestPair [][]int) {
 
 	slog.Info("Reading the files")
 	graphNodesJSON, err := os.ReadFile("objects/graphNodes.json")
@@ -79,7 +79,7 @@ func FileReader() (nodes [][2]float64, edges [][4]int, distances [][4]int, grid 
 
 	slog.Debug("Landmarks:", len(landmarksCoords))
 
-	landmarkNodes := make([]int, numLandmarksConst)
+	landmarkNodes := make([]int, 8)
 	landmarkNodesJSON, err := os.ReadFile("objects/landmarkNodes.json")
 	if err != nil {
 		slog.Info("Error reading landmarkNodes from file:", err)
@@ -148,7 +148,18 @@ func FileReader() (nodes [][2]float64, edges [][4]int, distances [][4]int, grid 
 		slog.Info("Error unmarshalling sortedLandmarks:", err)
 	}
 
-	return graphNodes, graphEdges, distancesEdges, gridNodes, sEdges, sDistances, startIndices, landmarksCoords, landmarkNodes, landmarkDistances, sLandmarks
+	var landmarkPairDistances [][]int
+	landmarkPairDistancesJSON, err := os.ReadFile("objects/landmarkPairDistances.json")
+	if err != nil {
+		slog.Info("Error reading landmarkPairDistances from file:", err)
+	}
+	err = json.Unmarshal(landmarkPairDistancesJSON, &landmarkPairDistances)
+	if err != nil {
+		slog.Info("Error unmarshalling landmarkPairDistances:", err)
+	}
+
+	return graphNodes, graphEdges, distancesEdges, gridNodes, sEdges, sDistances, 
+	startIndices, landmarksCoords, landmarkNodes, landmarkDistances, sLandmarks, landmarkPairDistances
 }
 
 func MultiRouter(iterations int) {
@@ -158,7 +169,7 @@ func MultiRouter(iterations int) {
 	runtime.GOMAXPROCS(runtime.NumCPU())
 
 	// graphNodes, _, _, _, sortedEdges, sortedDistances, startIndices, _, landmarkNodes, landmarkDistances := FileReader()
-	graphNodes, _, _, _, sortedEdges, sortedDistances, startIndices, _, landmarkNodes, landmarkDistances, sortedLandmarks := FileReader()
+	graphNodes, _, _, _, sortedEdges, sortedDistances, startIndices, _, landmarkNodes, landmarkDistances, sortedLandmarks, landmarkPairDistances := FileReader()
 	slog.Info("Multi Router started")
 	var randomIndices = make([][2]int, iterations)
 	for i := 0; i < iterations; i++ {
@@ -193,7 +204,8 @@ func MultiRouter(iterations int) {
 	runtime.GC()
 	var startALTv1 = time.Now()
 	for i := 0; i < iterations; i++ {
-		path, dist := ALT(graphNodes, sortedEdges, sortedDistances, startIndices, landmarkNodes, landmarkDistances, sortedLandmarks, randomIndices[i][0], randomIndices[i][1])
+		path, dist := ALT(graphNodes, sortedEdges, sortedDistances, startIndices, landmarkNodes, landmarkDistances, sortedLandmarks, landmarkPairDistances,
+			randomIndices[i][0], randomIndices[i][1])
 		if dist <= 0 || len(path) == 0 {
 			panic("ALT failed")
 		}
@@ -224,7 +236,7 @@ func SingleRouter(router string, iterations int) {
 	fidgeter := chin.New()
 	go fidgeter.Start()
 
-	graphNodes, _, _, _, sortedEdges, sortedDistances, startIndices, _, landmarkNodes, landmarkDistances, sortedLandmarks := FileReader()
+	graphNodes, _, _, _, sortedEdges, sortedDistances, startIndices, _, landmarkNodes, landmarkDistances, sortedLandmarks, landmarkPairDistances := FileReader()
 
 	var randomIndices = make([][2]int, iterations)
 	for i := 0; i < iterations; i++ {
@@ -260,7 +272,7 @@ func SingleRouter(router string, iterations int) {
 	case "alt":
 		var startALT = time.Now()
 		for i := 0; i < iterations; i++ {
-			path, dist := ALT(graphNodes, sortedEdges, sortedDistances, startIndices, landmarkNodes, landmarkDistances, sortedLandmarks, randomIndices[i][0], randomIndices[i][1])
+			path, dist := ALT(graphNodes, sortedEdges, sortedDistances, startIndices, landmarkNodes, landmarkDistances, sortedLandmarks, landmarkPairDistances, randomIndices[i][0], randomIndices[i][1])
 			if dist <= 0 || len(path) == 0 {
 				panic("ALT failed")
 			}
@@ -268,16 +280,16 @@ func SingleRouter(router string, iterations int) {
 
 		fmt.Println("Average ALT time: ", time.Since(startALT)/time.Duration(iterations))
 
-	case "alt-v2":
-		var startALTv2 = time.Now()
-		for i := 0; i < iterations; i++ {
-			path, dist := ALTv2(graphNodes, sortedEdges, sortedDistances, startIndices, landmarkNodes, landmarkDistances, sortedLandmarks, randomIndices[i][0], randomIndices[i][1])
-			if dist <= 0 || len(path) == 0 {
-				panic("ALTv2 failed")
-			}
-		}
+	// case "alt-v2":
+	// 	var startALTv2 = time.Now()
+	// 	for i := 0; i < iterations; i++ {
+	// 		path, dist := ALTv2(graphNodes, sortedEdges, sortedDistances, startIndices, landmarkNodes, landmarkDistances, sortedLandmarks, randomIndices[i][0], randomIndices[i][1])
+	// 		if dist <= 0 || len(path) == 0 {
+	// 			panic("ALTv2 failed")
+	// 		}
+	// 	}
 
-		fmt.Println("Average ALTv2 time: ", time.Since(startALTv2)/time.Duration(iterations))
+	// 	fmt.Println("Average ALTv2 time: ", time.Since(startALTv2)/time.Duration(iterations))
 	}
 
 	fidgeter.Stop()
