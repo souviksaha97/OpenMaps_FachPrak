@@ -73,7 +73,16 @@ func AlgoDijkstra(Start types.Point, End types.Point, graphNodes [][2]float64, g
 		}
 	}
 
+	// fmt.Println("--------nearest start and end nodes--------")
+	// fmt.Println(nearestpointStartIndex)
+	// fmt.Println(nearpointEndIndex)
+	// fmt.Println("------------------------------------------")
+
 	path, dist := Djikstra(graphNodes, graphEdges, distancesEdges, startIndices, nearestpointStartIndex, nearpointEndIndex)
+
+	// fmt.Println("--------djikstra path--------")
+	// fmt.Println(path)
+	// fmt.Println("-----------------------------")
 
 	// Convert the path to the required format
 	shortestPath := make([]types.Point, len(path))

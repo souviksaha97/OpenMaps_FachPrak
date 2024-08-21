@@ -2,8 +2,10 @@ package server
 
 import (
 	"fmt"
+	"log/slog"
 	"net/http"
 	"runtime"
+	"strconv"
 	"sync"
 	"time"
 
@@ -27,7 +29,8 @@ func Server() {
 	serv.Use(cors.New(config))
 
 	// Read the files
-	graphNodes, _, _, _, sortedEdges, sortedDistances, startIndices, landmarkCoords, landmarkNodes, landmarkDistances, sortedLandmarks,  landmarkPairDistances:= router.FileReader()
+	// graphNodes, _, _, _, sortedEdges, sortedDistances, startIndices, landmarkCoords, landmarkNodes, landmarkDistances, sortedLandmarks,  landmarkPairDistances:= router.FileReader()
+	graphNodes, _, _, _, sortedEdges, sortedDistances, startIndices, landmarkCoords, _, _, _, _ := router.FileReader()
 
 	serv.POST("/submit_points", func(c *gin.Context) {
 		var requestData map[string]types.Point
@@ -55,7 +58,7 @@ func Server() {
 		go func() {
 			defer wg.Done()
 			startTime := time.Now()
-			shortestPath, _ := router.AlgoDijkstra(start, end, graphNodes, sortedEdges, sortedDistances, startIndices)
+			shortestPath, dist := router.AlgoDijkstra(start, end, graphNodes, sortedEdges, sortedDistances, startIndices)
 			timeTaken := time.Since(startTime).Milliseconds()
 			// results <- types.Result{Algorithm="Dijkstra", shoshortestPath, timeTaken}
 			results <- types.Result{
@@ -63,6 +66,7 @@ func Server() {
 				ShortestPath: shortestPath,
 				TimeTaken:    timeTaken,
 			}
+			slog.Info("Dijkstra distance: " + strconv.Itoa(dist))
 		}()
 
 		// Run A* in a separate goroutine
@@ -70,28 +74,29 @@ func Server() {
 		go func() {
 			defer wg.Done()
 			startTime := time.Now()
-			shortestPath, _ := router.AlgoAStar(start, end, graphNodes, sortedEdges, sortedDistances, startIndices)
+			shortestPath, dist := router.AlgoAStar(start, end, graphNodes, sortedEdges, sortedDistances, startIndices)
 			timeTaken := time.Since(startTime).Milliseconds()
 			results <- types.Result{
 				Algorithm:    "AStar",
 				ShortestPath: shortestPath,
 				TimeTaken:    timeTaken,
 			}
+			slog.Info("A* distance: " + strconv.Itoa(dist))
 		}()
 
 		// Run ALT in a separate goroutine
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
-			startTime := time.Now()
-			shortestPath, _ := router.AlgoALT(start, end, graphNodes, sortedEdges, sortedDistances, startIndices, landmarkNodes, landmarkDistances, sortedLandmarks,landmarkPairDistances)
-			timeTaken := time.Since(startTime).Milliseconds()
-			results <- types.Result{
-				Algorithm:    "ALT",
-				ShortestPath: shortestPath,
-				TimeTaken:    timeTaken,
-			}
-		}()
+		// wg.Add(1)
+		// go func() {
+		// 	defer wg.Done()
+		// 	startTime := time.Now()
+		// 	shortestPath, _ := router.AlgoALT(start, end, graphNodes, sortedEdges, sortedDistances, startIndices, landmarkNodes, landmarkDistances, sortedLandmarks,landmarkPairDistances)
+		// 	timeTaken := time.Since(startTime).Milliseconds()
+		// 	results <- types.Result{
+		// 		Algorithm:    "ALT",
+		// 		ShortestPath: shortestPath,
+		// 		TimeTaken:    timeTaken,
+		// 	}
+		// }()
 
 		// Close the results channel when all goroutines are done
 		go func() {
@@ -102,7 +107,7 @@ func Server() {
 
 		dijkstraResult := types.Result{}
 		astarResult := types.Result{}
-		altResult := types.Result{}
+		// altResult := types.Result{}
 
 		// Collect results
 		for result := range results {
@@ -111,19 +116,19 @@ func Server() {
 				dijkstraResult = result
 			case "AStar":
 				astarResult = result
-			case "ALT":
-				altResult = result
+				// case "ALT":
+				// 	altResult = result
 			}
 		}
 
 		// Respond with the results
 		c.JSON(http.StatusOK, gin.H{
-			"astar_time":          astarResult.TimeTaken,
-			"dijkstra_time":       dijkstraResult.TimeTaken,
-			"alt_time":            altResult.TimeTaken,
+			"astar_time":    astarResult.TimeTaken,
+			"dijkstra_time": dijkstraResult.TimeTaken,
+			// "alt_time":            altResult.TimeTaken,
 			"shortest_path_astar": astarResult.ShortestPath,
 			"shortest_path_djik":  dijkstraResult.ShortestPath,
-			"shortest_path_alt":   altResult.ShortestPath,
+			// "shortest_path_alt":   altResult.ShortestPath,
 		})
 	})
 

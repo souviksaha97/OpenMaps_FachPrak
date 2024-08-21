@@ -2,6 +2,7 @@ package router
 
 import (
 	"encoding/json"
+	"final/generator"
 	"fmt"
 	"math/rand"
 	"os"
@@ -158,8 +159,66 @@ func FileReader() (nodes [][2]float64, edges [][4]int, distances [][4]int, grid 
 		slog.Info("Error unmarshalling landmarkPairDistances:", err)
 	}
 
-	return graphNodes, graphEdges, distancesEdges, gridNodes, sEdges, sDistances, 
-	startIndices, landmarksCoords, landmarkNodes, landmarkDistances, sLandmarks, landmarkPairDistances
+	return graphNodes, graphEdges, distancesEdges, gridNodes, sEdges, sDistances,
+		startIndices, landmarksCoords, landmarkNodes, landmarkDistances, sLandmarks, landmarkPairDistances
+}
+
+func Debugging() {
+	graphNodes, _, _, _, sortedEdges, sortedDistances, startIndices, _, _, _, _, _ := FileReader()
+
+	start := 3223575
+	end := 2410134
+	pathD, distD := Djikstra(graphNodes, sortedEdges, sortedDistances, startIndices, start, end)
+	pathA, distA := AStar(graphNodes, sortedEdges, sortedDistances, startIndices, start, end)
+
+	problemNode := 0
+	fmt.Println("Djikstra Distance: ", distD[2410134])
+	fmt.Println("A* Distance: ", distA[2410134])
+	fmt.Println()
+	for i := 1; i < len(pathD); i++ {
+		if pathD[i] != pathA[i] {
+			problemNode = i - 1
+			slog.Info("Problem node: ", i-1)
+			slog.Info("Djikstra: ", pathD[i-1], " -> ", pathD[i])
+			slog.Info("A*: ", pathA[i-1], " -> ", pathA[i])
+		}
+	}
+
+	slog.Info("Problem node: ", problemNode)
+
+	// for i := 0; i < len(pathD)-1; i++ {
+	// 	slog.Info("------------------------------Point ", i, "------------------------------")
+	// 	slog.Info("Point ", i, ": ", pathD[i])
+	// 	for j := startIndices[pathD[i]]; j < startIndices[pathD[i]+1]; j++ {
+	// 		slog.Info("Neighbours of ", pathD[i], ": ", sortedEdges[j][1], " with distance ", sortedDistances[j])
+	// 	}
+	// 	slog.Info("------------Chosen Node: ", pathD[i+1], " with distance ", distD[pathD[i+1]], "------------")
+	// 	slog.Info()
+	// }
+
+	for i := 0; i < len(pathA)-1; i++ {
+		slog.Info("------------------------------Point ", i, "------------------------------")
+		slog.Info("Point ", i, ": ", pathA[i])
+		for j := startIndices[pathA[i]]; j < startIndices[pathA[i]+1]; j++ {
+			slog.Info("Neighbours of ", pathA[i], ": ", sortedEdges[j][1], " with distance ", sortedDistances[j], " and heuristic ", generator.Haversine(graphNodes[sortedEdges[j][1]][0], graphNodes[sortedEdges[j][1]][1], graphNodes[end][0], graphNodes[end][1]))
+			slog.Info("                                                       Priority: ", float64(sortedDistances[j])+generator.Haversine(graphNodes[sortedEdges[j][1]][0], graphNodes[sortedEdges[j][1]][1], graphNodes[end][0], graphNodes[end][1]))
+		}
+		slog.Info("------------Chosen Node: ", pathA[i+1], " with distance ", distA[pathA[i+1]], "------------")
+		slog.Info()
+	}
+
+	// startindexD := startIndices[pathD[problemNode]]
+	// endindexD := startIndices[pathD[problemNode]+1]
+	// startindexA := startIndices[pathA[problemNode]]
+	// endindexA := startIndices[pathA[problemNode]+1]
+
+	// for i := startindexD; i < endindexD; i++ {
+	// 	slog.Info("Neighbours of ", pathD[problemNode], ": ", sortedEdges[i][1], " with distance ", sortedDistances[i])
+	// }
+	// fmt.Println()
+	// for i := startindexA; i < endindexA; i++ {
+	// 	slog.Info("Neighbours of ", pathA[problemNode], ": ", sortedEdges[i][1], " with distance ", sortedDistances[i])
+	// }
 }
 
 func MultiRouter(iterations int) {
@@ -181,7 +240,7 @@ func MultiRouter(iterations int) {
 	var startDijkstra = time.Now()
 	for i := 0; i < iterations; i++ {
 		path, dist := Djikstra(graphNodes, sortedEdges, sortedDistances, startIndices, randomIndices[i][0], randomIndices[i][1])
-		if (dist[randomIndices[i][1]] <= 0 || len(path) == 0)  && (randomIndices[i][0] != randomIndices[i][1]) {
+		if (dist[randomIndices[i][1]] <= 0 || len(path) == 0) && (randomIndices[i][0] != randomIndices[i][1]) {
 			panic("Djikstra failed")
 		}
 	}
@@ -191,12 +250,12 @@ func MultiRouter(iterations int) {
 
 	runtime.GC()
 	var startAStar = time.Now()
-	for i := 0; i < iterations; i++ {
-		path, dist := AStar(graphNodes, sortedEdges, sortedDistances, startIndices, randomIndices[i][0], randomIndices[i][1])
-		if dist <= 0 || len(path) == 0 {
-			panic("A* failed")
-		}
-	}
+	// for i := 0; i < iterations; i++ {
+	// 	path, dist := AStar(graphNodes, sortedEdges, sortedDistances, startIndices, randomIndices[i][0], randomIndices[i][1])
+	// 	if dist <= 0 || len(path) == 0 {
+	// 		panic("A* failed")
+	// 	}
+	// }
 
 	avgAstar := time.Since(startAStar) / time.Duration(iterations)
 	fmt.Println("Average AStar time: ", avgAstar)
@@ -259,13 +318,13 @@ func SingleRouter(router string, iterations int) {
 
 	case "astar":
 		var startAStar = time.Now()
-		for i := 0; i < iterations; i++ {
-			// midStart := time.Now()
-			path, dist := AStar(graphNodes, sortedEdges, sortedDistances, startIndices, randomIndices[i][0], randomIndices[i][1])
-			if dist <= 0 || len(path) == 0 {
-				panic("A* failed")
-			}
-		}
+		// for i := 0; i < iterations; i++ {
+		// 	// midStart := time.Now()
+		// 	path, dist := AStar(graphNodes, sortedEdges, sortedDistances, startIndices, randomIndices[i][0], randomIndices[i][1])
+		// 	if dist <= 0 || len(path) == 0 {
+		// 		panic("A* failed")
+		// 	}
+		// }
 
 		fmt.Println("Average AStar time: ", time.Since(startAStar)/time.Duration(iterations))
 
@@ -280,16 +339,16 @@ func SingleRouter(router string, iterations int) {
 
 		fmt.Println("Average ALT time: ", time.Since(startALT)/time.Duration(iterations))
 
-	// case "alt-v2":
-	// 	var startALTv2 = time.Now()
-	// 	for i := 0; i < iterations; i++ {
-	// 		path, dist := ALTv2(graphNodes, sortedEdges, sortedDistances, startIndices, landmarkNodes, landmarkDistances, sortedLandmarks, randomIndices[i][0], randomIndices[i][1])
-	// 		if dist <= 0 || len(path) == 0 {
-	// 			panic("ALTv2 failed")
-	// 		}
-	// 	}
+		// case "alt-v2":
+		// 	var startALTv2 = time.Now()
+		// 	for i := 0; i < iterations; i++ {
+		// 		path, dist := ALTv2(graphNodes, sortedEdges, sortedDistances, startIndices, landmarkNodes, landmarkDistances, sortedLandmarks, randomIndices[i][0], randomIndices[i][1])
+		// 		if dist <= 0 || len(path) == 0 {
+		// 			panic("ALTv2 failed")
+		// 		}
+		// 	}
 
-	// 	fmt.Println("Average ALTv2 time: ", time.Since(startALTv2)/time.Duration(iterations))
+		// 	fmt.Println("Average ALTv2 time: ", time.Since(startALTv2)/time.Duration(iterations))
 	}
 
 	fidgeter.Stop()

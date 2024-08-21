@@ -114,6 +114,10 @@ func main() {
 		}
 		tester.Tester(iterations, points)
 
+	case "debug":
+		slog.Info("Running the debug")
+		router.Debugging()
+
 	default:
 		slog.Info("Invalid argument")
 	}

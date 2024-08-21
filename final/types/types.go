@@ -72,14 +72,16 @@ func (pq *PriorityQueue) Pop() interface{} {
 	return item
 }
 
-func (pq *PriorityQueue) update(item *QueueItem, priority int) {
-	item.Priority = priority
-	heap.Fix(pq, item.Index)
-}
+// Comment out the unused method
+// func (pq *PriorityQueue) update(item *QueueItem, priority float32) {
+// 	item.Priority = priority
+// 	heap.Fix(pq, item.Index)
+// }
 
 // GraphData holds the initialization data for the graph
 type GraphData struct {
 	Dist    []int
+	Prio    []int
 	Prev    []int
 	Visited []bool
 	PQ      *PriorityQueue
@@ -106,12 +108,15 @@ type Result struct {
 func NewGraphData(numNodes int, src int) *GraphData {
 	dist := make([]int, numNodes)
 	prev := make([]int, numNodes)
+	prio := make([]int, numNodes)
 	visited := make([]bool, numNodes)
 	for i := range dist {
 		dist[i] = math.MaxInt32
+		prio[i] = math.MaxInt32
 		prev[i] = -1
 	}
 	dist[src] = 0
+	prio[src] = 0
 
 	pq := &PriorityQueue{}
 	heap.Init(pq)
@@ -119,6 +124,7 @@ func NewGraphData(numNodes int, src int) *GraphData {
 
 	return &GraphData{
 		Dist:    dist,
+		Prio:    prio,
 		Prev:    prev,
 		Visited: visited,
 		PQ:      pq,

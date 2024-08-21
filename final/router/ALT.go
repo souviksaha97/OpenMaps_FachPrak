@@ -6,11 +6,12 @@ import (
 	"final/types"
 	"fmt"
 	"math"
+
 	// "math/rand"
 	// "time"
 	"github.com/adhocore/chin"
 	"github.com/gookit/slog"
-	// "runtime"		
+	// "runtime"
 )
 
 // Nodes, Edges, Distances, Landmarks, LandmarkDistances, src, dst
@@ -22,7 +23,7 @@ func ALT(nodes [][2]float64, edges [][2]int, edgeweights []int,
 	// Initialize GraphData
 	data := types.NewGraphData(len(nodes), src)
 	// fmt.Println("Distance array", landmarkDistances[landmarks[0]][src])
-		
+
 	for data.PQ.Len() > 0 {
 		current := heap.Pop(data.PQ).(*types.QueueItem)
 		currentNode := current.Node
@@ -64,7 +65,6 @@ func ALT(nodes [][2]float64, edges [][2]int, edgeweights []int,
 			}
 		}
 	}
-
 
 	path := []int{}
 	if dst != -1 && (data.Prev[dst] != -1 || src == dst) {
@@ -115,11 +115,10 @@ func LandmarksDistanceMaximiser(points int) {
 	// nodes, edges, distances, _, _, _, _ := FileReader()
 	nodes, _, _, _, sorted_edges, sorted_distances, start_indices, _, _, _, _, _ := FileReader()
 
-	
 	landmarks := closestIndices(nodes, points)
 	fmt.Println("Closest indices", landmarks)
 	// landmarks := make([]int, len(res))
-		// res := chooseLandmarksV2(nodes, edges, distances, numLandmarks, int(maxDistance))
+	// res := chooseLandmarksV2(nodes, edges, distances, numLandmarks, int(maxDistance))
 	landmarksNodes := make([][2]float64, len(landmarks))
 
 	landmarkPairDistances := make([][]int, len(landmarks))
@@ -132,7 +131,6 @@ func LandmarksDistanceMaximiser(points int) {
 		landmarksNodes[i][1] = nodes[landmark][1]
 		slog.Info("Landmark", i, ":", landmarksNodes[i])
 	}
-	
 
 	fidgetor := chin.New()
 	go fidgetor.Start()
@@ -167,7 +165,7 @@ func LandmarksDistanceMaximiser(points int) {
 	}
 
 	for i := 0; i < len(landmarks); i++ {
-		for j := i+1; j < len(landmarks); j++ {
+		for j := i + 1; j < len(landmarks); j++ {
 			heuristicIndex := 0
 			// farthestDistance := 0
 			maxHeuristic := 0
@@ -175,8 +173,8 @@ func LandmarksDistanceMaximiser(points int) {
 				if selectedLandmark == landmarks[i] || selectedLandmark == landmarks[j] {
 					continue
 				}
-				
-				heuristic := generator.Abs(completeLandmarksMap[selectedLandmark][landmarks[i]]-completeLandmarksMap[selectedLandmark][landmarks[j]])
+
+				heuristic := generator.Abs(completeLandmarksMap[selectedLandmark][landmarks[i]] - completeLandmarksMap[selectedLandmark][landmarks[j]])
 				if heuristic > maxHeuristic {
 					maxHeuristic = heuristic
 					heuristicIndex = k
@@ -189,7 +187,6 @@ func LandmarksDistanceMaximiser(points int) {
 			landmarkPairDistances[j][i] = heuristicIndex
 		}
 	}
-
 
 	// fmt.Println("Landmark Pair Distances", landmarkPairDistances)
 	fmt.Println(landmarkPairDistances[2][0], landmarkPairDistances[0][2])
@@ -228,11 +225,9 @@ func LandmarksDistanceMaximiser(points int) {
 // 	}
 // }
 
-func closestIndices(nodes [][2]float64, points int) (indices []int){
+func closestIndices(nodes [][2]float64, points int) (indices []int) {
 	pointsX := generator.Linspace(-60.0, 80.0, points)
 	pointsY := generator.Linspace(-170.0, 170.0, points)
-
-
 
 	pointsArray := make([][2]float64, len(pointsX)*len(pointsY))
 	for i, x := range pointsX {
@@ -240,12 +235,11 @@ func closestIndices(nodes [][2]float64, points int) (indices []int){
 			pointsArray[i*len(pointsY)+j] = [2]float64{x, y}
 		}
 	}
-	
 
 	set_indices := make([]int, 4*(points-1))
 	index := 0
-	
-	for _, point := range pointsArray{
+
+	for _, point := range pointsArray {
 		nearestnode := [2]float64{point[0], point[1]}
 		nearestpointIndex := -1
 		distpoint := math.MaxFloat64
@@ -257,8 +251,6 @@ func closestIndices(nodes [][2]float64, points int) (indices []int){
 
 		for k, node := range nodes {
 			dist := generator.Haversine(node[0], node[1], nearestnode[0], nearestnode[1])
-
-
 
 			if dist < distpoint {
 				nearestpointIndex = k

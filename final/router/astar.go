@@ -7,9 +7,7 @@ import (
 	"math"
 )
 
-const k = 0
-
-func AStar(nodes [][2]float64, edges [][2]int, edgeweights []int, startindicesmap []int, src int, dst int) ([]int, int) {
+func AStar(nodes [][2]float64, edges [][2]int, edgeweights []int, startindicesmap []int, src int, dst int) ([]int, []int) {
 	data := types.NewGraphData(len(nodes), src)
 	// heuristic := 0
 	// avgHaversineTime := time.Duration(0)
@@ -39,17 +37,20 @@ func AStar(nodes [][2]float64, edges [][2]int, edgeweights []int, startindicesma
 			// fmt.Println("Current Node: ", nodes[currentNode], "Destination: ", nodes[dst])
 			// fmt.Println("Distance Current Node: ", data.Dist[currentNode])
 			// timeStart := time.Now()
-			heuristic := int(generator.Haversine(nodes[currentNode][0], nodes[currentNode][1], nodes[dst][0], nodes[dst][1]))
+
 			// avgHaversineTime += time.Since(timeStart)
 			// HaverSineCount++
-			newDist := data.Dist[currentNode] + edgeweights[i] + heuristic
+			newDist := data.Dist[currentNode] + edgeweights[i]
+
 			// fmt.Println("Haversine Distance: ", int(math.Round(1000.0*generator.Haversine(nodes[currentNode][0], nodes[currentNode][1], nodes[dst][0], nodes[dst][1]))))
 
 			if newDist < data.Dist[neighbor] {
 				// fmt.Println("Heuristic Distance: ", heuristic, "Current Distance: ", data.Dist[neighbor])
 				data.Dist[neighbor] = newDist
 				data.Prev[neighbor] = currentNode
-				heap.Push(data.PQ, &types.QueueItem{Node: neighbor, Priority: newDist})
+				heuristic := int(generator.Haversine(nodes[neighbor][0], nodes[neighbor][1], nodes[dst][0], nodes[dst][1]))
+				newPriority := 2*newDist + heuristic
+				heap.Push(data.PQ, &types.QueueItem{Node: neighbor, Priority: newPriority})
 			}
 		}
 	}
@@ -65,7 +66,7 @@ func AStar(nodes [][2]float64, edges [][2]int, edgeweights []int, startindicesma
 	// fmt.Println("Haversine Time : ", avgHaversineTime)
 	// fmt.Println("Haversine Count: ", HaverSineCount)
 
-	return path, data.Dist[dst]
+	return path, data.Dist
 }
 
 func AlgoAStar(Start types.Point, End types.Point, graphNodes [][2]float64, graphEdges [][2]int, distancesEdges []int, startIndices []int) ([]types.Point, int) {
@@ -98,5 +99,5 @@ func AlgoAStar(Start types.Point, End types.Point, graphNodes [][2]float64, grap
 	for i, nodeIndex := range path {
 		shortestPath[i] = types.Point{Lat: graphNodes[nodeIndex][0], Lng: graphNodes[nodeIndex][1]}
 	}
-	return shortestPath, dist
+	return shortestPath, dist[nearpointEndIndex]
 }

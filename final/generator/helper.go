@@ -783,6 +783,10 @@ func degreesToRadian(deg float64) float64 {
 	return deg * (math.Pi / 180)
 }
 
+func EuclideanDistance(x1, y1, x2, y2 float64) float64 {
+	return math.Sqrt(math.Pow(x1-x2, 2) + math.Pow(y1-y2, 2))
+}
+
 func Haversine(lat1, lon1, lat2, lon2 float64) float64 {
 	const R = 6371.0 // Earth radius in kilometers
 	lat1Rad := degreesToRadian(lat1)
@@ -812,30 +816,30 @@ func Contains(slice []int, key int) bool {
 }
 
 func FindIndex(slice []int, value int) int {
-    for i, v := range slice {
-        if v == value {
-            return i
-        }
-    }
-    return -1
+	for i, v := range slice {
+		if v == value {
+			return i
+		}
+	}
+	return -1
 }
 
 func Linspace(start, end float64, n int) []float64 {
-    if n <= 0 {
-        return []float64{}
-    }
-    if n == 1 {
-        return []float64{start}
-    }
+	if n <= 0 {
+		return []float64{}
+	}
+	if n == 1 {
+		return []float64{start}
+	}
 
-    step := (end - start) / float64(n-1)
-    result := make([]float64, n)
+	step := (end - start) / float64(n-1)
+	result := make([]float64, n)
 
-    for i := 0; i < n; i++ {
-        result[i] = start + step*float64(i)
-    }
+	for i := 0; i < n; i++ {
+		result[i] = start + step*float64(i)
+	}
 
-    return result
+	return result
 }
 
 func WriteToJSONFile(filename string, data interface{}) error {
