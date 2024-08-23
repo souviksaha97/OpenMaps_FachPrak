@@ -81,7 +81,6 @@ func (pq *PriorityQueue) Pop() interface{} {
 // GraphData holds the initialization data for the graph
 type GraphData struct {
 	Dist    []int
-	Prio    []int
 	Prev    []int
 	Visited []bool
 	PQ      *PriorityQueue
@@ -124,7 +123,6 @@ func NewGraphData(numNodes int, src int) *GraphData {
 
 	return &GraphData{
 		Dist:    dist,
-		Prio:    prio,
 		Prev:    prev,
 		Visited: visited,
 		PQ:      pq,

@@ -10,7 +10,6 @@ import (
 	"sync/atomic"
 
 	"github.com/paulmach/osm"
-
 	"final/types"
 )
 
@@ -787,8 +786,8 @@ func EuclideanDistance(x1, y1, x2, y2 float64) float64 {
 	return math.Sqrt(math.Pow(x1-x2, 2) + math.Pow(y1-y2, 2))
 }
 
-func Haversine(lat1, lon1, lat2, lon2 float64) float64 {
-	const R = 6371.0 // Earth radius in kilometers
+func Haversine(lat1, lon1, lat2, lon2 float64) int {
+	const R = 6371009.0 // Earth radius in meters
 	lat1Rad := degreesToRadian(lat1)
 	lon1Rad := degreesToRadian(lon1)
 	lat2Rad := degreesToRadian(lat2)
@@ -800,10 +799,10 @@ func Haversine(lat1, lon1, lat2, lon2 float64) float64 {
 	a := math.Sin(dlat/2)*math.Sin(dlat/2) + math.Cos(lat1Rad)*math.Cos(lat2Rad)*math.Sin(dlon/2)*math.Sin(dlon/2)
 	c := 2 * math.Atan2(math.Sqrt(a), math.Sqrt(1-a))
 
-	// Distance in kilometers
+	// Distance in meters
 	distance := R * c
 	//fmt.Println(distance)
-	return math.Abs(distance)
+	return int(math.Floor(distance))
 }
 
 func Contains(slice []int, key int) bool {
@@ -902,7 +901,8 @@ func Wraplong(long float64) float64 {
 func FindNearest(comparePoint [3]float64, pointIndexes [][3]float64, fall int, wraparound bool) (bool, [3]float64, int) {
 	const epsilon = 1e-9
 
-	closestDist := 30
+	closestDist := 30000
+	// slog.Info("ClosestDist: ", closestDist)
 
 	smallestIndex := comparePoint
 	searchpointLat := comparePoint[0]
@@ -940,7 +940,7 @@ func FindNearest(comparePoint [3]float64, pointIndexes [][3]float64, fall int, w
 			continue
 		}
 
-		dist := int(Haversine(searchpointLat, searchPointLon, pointLat, pointLon))
+		dist := Haversine(searchpointLat, searchPointLon, pointLat, pointLon)
 		if dist < closestDist {
 			closestDist = dist
 			smallestIndex = point

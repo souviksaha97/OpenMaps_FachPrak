@@ -5,10 +5,12 @@ import (
 	"final/generator"
 	"final/types"
 	"math"
+	// "github.com/gookit/slog"
 )
 
 // Djikstra implements the Dijkstra algorithm
 func Djikstra(nodes [][2]float64, edges [][2]int, edgeweights []int, startindicesmap []int, src int, dst int) ([]int, []int) {
+	
 	data := types.NewGraphData(len(nodes), src)
 	for data.PQ.Len() > 0 {
 		current := heap.Pop(data.PQ).(*types.QueueItem)
@@ -42,8 +44,9 @@ func Djikstra(nodes [][2]float64, edges [][2]int, edgeweights []int, startindice
 
 	path := []int{}
 	if dst != -1 && (data.Prev[dst] != -1 || src == dst) {
+		// Build the path in reverse order
 		for at := dst; at != -1; at = data.Prev[at] {
-			path = append([]int{at}, path...)
+			path = append(path, at)
 		}
 	}
 
@@ -55,8 +58,8 @@ func AlgoDijkstra(Start types.Point, End types.Point, graphNodes [][2]float64, g
 	nearestnodeEnd := [2]float64{End.Lat, End.Lng}
 	nearestpointStartIndex := -1
 	nearpointEndIndex := -1
-	distpointStart := math.MaxFloat64
-	distpointEnd := math.MaxFloat64
+	distpointStart := math.MaxInt64
+	distpointEnd := math.MaxInt64
 
 	// Find the nearest start and end nodes
 	for k, node := range graphNodes {
@@ -73,16 +76,10 @@ func AlgoDijkstra(Start types.Point, End types.Point, graphNodes [][2]float64, g
 		}
 	}
 
-	// fmt.Println("--------nearest start and end nodes--------")
-	// fmt.Println(nearestpointStartIndex)
-	// fmt.Println(nearpointEndIndex)
-	// fmt.Println("------------------------------------------")
+
 
 	path, dist := Djikstra(graphNodes, graphEdges, distancesEdges, startIndices, nearestpointStartIndex, nearpointEndIndex)
 
-	// fmt.Println("--------djikstra path--------")
-	// fmt.Println(path)
-	// fmt.Println("-----------------------------")
 
 	// Convert the path to the required format
 	shortestPath := make([]types.Point, len(path))

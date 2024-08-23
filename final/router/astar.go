@@ -48,8 +48,8 @@ func AStar(nodes [][2]float64, edges [][2]int, edgeweights []int, startindicesma
 				// fmt.Println("Heuristic Distance: ", heuristic, "Current Distance: ", data.Dist[neighbor])
 				data.Dist[neighbor] = newDist
 				data.Prev[neighbor] = currentNode
-				heuristic := int(generator.Haversine(nodes[neighbor][0], nodes[neighbor][1], nodes[dst][0], nodes[dst][1]))
-				newPriority := 2*newDist + heuristic
+				heuristic := generator.Haversine(nodes[neighbor][0], nodes[neighbor][1], nodes[dst][0], nodes[dst][1])
+				newPriority := newDist + heuristic
 				heap.Push(data.PQ, &types.QueueItem{Node: neighbor, Priority: newPriority})
 			}
 		}
@@ -58,8 +58,9 @@ func AStar(nodes [][2]float64, edges [][2]int, edgeweights []int, startindicesma
 	// fmt.Println("Time taken for AStar: ", time.Since(timeStart))
 	path := []int{}
 	if dst != -1 && (data.Prev[dst] != -1 || src == dst) {
+		// Build the path in reverse order
 		for at := dst; at != -1; at = data.Prev[at] {
-			path = append([]int{at}, path...)
+			path = append(path, at)
 		}
 	}
 	// fmt.Println("Average Haversine Time: ", avgHaversineTime/time.Duration(HaverSineCount))
@@ -74,8 +75,8 @@ func AlgoAStar(Start types.Point, End types.Point, graphNodes [][2]float64, grap
 	nearestnodeEnd := [2]float64{End.Lat, End.Lng}
 	nearestpointStartIndex := -1
 	nearpointEndIndex := -1
-	distpointStart := math.MaxFloat64
-	distpointEnd := math.MaxFloat64
+	distpointStart := math.MaxInt64
+	distpointEnd := math.MaxInt64
 
 	// Find the nearest start and end nodes
 	for k, node := range graphNodes {

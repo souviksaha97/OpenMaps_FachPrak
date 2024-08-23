@@ -2,7 +2,7 @@ package server
 
 import (
 	"fmt"
-	"log/slog"
+	"github.com/gookit/slog"
 	"net/http"
 	"runtime"
 	"strconv"
@@ -67,6 +67,7 @@ func Server() {
 				TimeTaken:    timeTaken,
 			}
 			slog.Info("Dijkstra distance: " + strconv.Itoa(dist))
+			slog.Info("Shortest Path Length: " + strconv.Itoa(len(shortestPath)))
 		}()
 
 		// Run A* in a separate goroutine
@@ -82,6 +83,7 @@ func Server() {
 				TimeTaken:    timeTaken,
 			}
 			slog.Info("A* distance: " + strconv.Itoa(dist))
+			slog.Info("Shortest Path Length: " + strconv.Itoa(len(shortestPath)))
 		}()
 
 		// Run ALT in a separate goroutine
@@ -89,13 +91,14 @@ func Server() {
 		// go func() {
 		// 	defer wg.Done()
 		// 	startTime := time.Now()
-		// 	shortestPath, _ := router.AlgoALT(start, end, graphNodes, sortedEdges, sortedDistances, startIndices, landmarkNodes, landmarkDistances, sortedLandmarks,landmarkPairDistances)
+		// 	shortestPath, dist := router.AlgoALT(start, end, graphNodes, sortedEdges, sortedDistances, startIndices, landmarkNodes, landmarkDistances, sortedLandmarks,landmarkPairDistances)
 		// 	timeTaken := time.Since(startTime).Milliseconds()
 		// 	results <- types.Result{
 		// 		Algorithm:    "ALT",
 		// 		ShortestPath: shortestPath,
 		// 		TimeTaken:    timeTaken,
 		// 	}
+		// 	slog.Info("ALT distance: " + strconv.Itoa(dist))
 		// }()
 
 		// Close the results channel when all goroutines are done

@@ -109,14 +109,14 @@ func Generator() {
 
 		}
 	}
-	slog.Info("Ways merged...Julian")
+	slog.Info("Ways merged...")
 	fmt.Println(len(ways_map))
 	for k := range ways_map { //delete duplicated ways
 		if ways_map[k][0] != ways_map[k][len(ways_map[k])-1] {
 			delete(ways_map, k)
 		}
 	}
-	slog.Info("duplicate ways deleted...Julian")
+	slog.Info("duplicate ways deleted...")
 	for k := range ways_map {
 		for l := range ways_map[k] {
 			if l+1 < len(ways_map[k]) {
@@ -154,8 +154,8 @@ func Generator() {
 		if s%10000 == 0 {
 			slog.Info("10k: " + time.Since(start).String())
 		}
-		randLong := rand.Float64()*360.0 - 180.0
-		randLat := float64((math.Asin(rand.Float64()*2.0-1.0) * 180.0 / math.Pi))
+		var randLong float64
+		var randLat float64
 		for {
 			randLong = rand.Float64()*360.0 - 180.0
 			randLat = float64((math.Asin(rand.Float64()*2.0-1.0) * 180.0 / math.Pi))

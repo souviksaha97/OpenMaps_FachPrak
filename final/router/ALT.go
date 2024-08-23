@@ -46,30 +46,34 @@ func ALT(nodes [][2]float64, edges [][2]int, edgeweights []int,
 				continue
 			}
 
-			closestLandmarkSrc := sortedLandmarks[currentNode][0]
-			closestLandmarkDst := sortedLandmarks[dst][0]
-
-			indexSrc := generator.FindIndex(landmarks, closestLandmarkSrc)
-			indexDst := generator.FindIndex(landmarks, closestLandmarkDst)
-
-			farthestLandmarkIndex := landmarks[landmarkPairDistances[indexSrc][indexDst]]
-
-			heuristic := generator.Abs(landmarkDistances[farthestLandmarkIndex][dst] - landmarkDistances[farthestLandmarkIndex][currentNode])
+			
 			// farthestLandmark := landmarkPairDistances[[2]int{closestLandmarkSrc, closestLandmarkDst}]  + landmarkPairDistances[[2]int{closestLandmarkDst, closestLandmarkSrc}]
 
-			newDist := data.Dist[currentNode] + edgeweights[i] + heuristic
+			newDist := data.Dist[currentNode] + edgeweights[i]
 			if newDist < data.Dist[neighbor] {
+
+				closestLandmarkSrc := sortedLandmarks[currentNode][0]
+				closestLandmarkDst := sortedLandmarks[dst][0]
+
+				indexSrc := generator.FindIndex(landmarks, closestLandmarkSrc)
+				indexDst := generator.FindIndex(landmarks, closestLandmarkDst)
+
+				farthestLandmarkIndex := landmarks[landmarkPairDistances[indexSrc][indexDst]]
+
+				heuristic := generator.Abs(landmarkDistances[farthestLandmarkIndex][dst] - landmarkDistances[farthestLandmarkIndex][currentNode])
+				newPriority := 2*newDist + heuristic
 				data.Dist[neighbor] = newDist
 				data.Prev[neighbor] = currentNode
-				heap.Push(data.PQ, &types.QueueItem{Node: neighbor, Priority: newDist})
+				heap.Push(data.PQ, &types.QueueItem{Node: neighbor, Priority: newPriority})
 			}
 		}
 	}
 
 	path := []int{}
 	if dst != -1 && (data.Prev[dst] != -1 || src == dst) {
+		// Build the path in reverse order
 		for at := dst; at != -1; at = data.Prev[at] {
-			path = append([]int{at}, path...)
+			path = append(path, at)
 		}
 	}
 
@@ -82,8 +86,8 @@ func AlgoALT(Start types.Point, End types.Point, graphNodes [][2]float64, graphE
 	nearestnodeEnd := [2]float64{End.Lat, End.Lng}
 	nearestpointStartIndex := -1
 	nearpointEndIndex := -1
-	distpointStart := math.MaxFloat64
-	distpointEnd := math.MaxFloat64
+	distpointStart := math.MaxInt64
+	distpointEnd := math.MaxInt64
 
 	// Find the nearest start and end nodes
 	for k, node := range graphNodes {
@@ -242,7 +246,7 @@ func closestIndices(nodes [][2]float64, points int) (indices []int) {
 	for _, point := range pointsArray {
 		nearestnode := [2]float64{point[0], point[1]}
 		nearestpointIndex := -1
-		distpoint := math.MaxFloat64
+		distpoint := math.MaxInt64
 
 		//Remove points which are not in the borders
 		if math.Abs(nearestnode[0]) < 59 && math.Abs(nearestnode[1]) < 169 {
