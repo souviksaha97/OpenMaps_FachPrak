@@ -1,5 +1,9 @@
 package main
 
+// TODO: use gob format for saving and reading files
+// TODO: use goroutines for reading files
+// TODO: remove uneccessary functions
+
 import (
 	"bufio"
 	"final/generator"

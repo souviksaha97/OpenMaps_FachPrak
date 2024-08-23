@@ -29,8 +29,8 @@ func Server() {
 	serv.Use(cors.New(config))
 
 	// Read the files
-	// graphNodes, _, _, _, sortedEdges, sortedDistances, startIndices, landmarkCoords, landmarkNodes, landmarkDistances, sortedLandmarks,  landmarkPairDistances:= router.FileReader()
-	graphNodes, _, _, _, sortedEdges, sortedDistances, startIndices, landmarkCoords, _, _, _, _ := router.FileReader()
+	graphNodes, _, _, _, sortedEdges, sortedDistances, startIndices, landmarkCoords, landmarkNodes, landmarkDistances, sortedLandmarks,  landmarkPairDistances:= router.FileReader()
+	// graphNodes, _, _, _, sortedEdges, sortedDistances, startIndices, landmarkCoords, _, _, _, _ := router.FileReader()
 
 	serv.POST("/submit_points", func(c *gin.Context) {
 		var requestData map[string]types.Point
@@ -87,19 +87,20 @@ func Server() {
 		}()
 
 		// Run ALT in a separate goroutine
-		// wg.Add(1)
-		// go func() {
-		// 	defer wg.Done()
-		// 	startTime := time.Now()
-		// 	shortestPath, dist := router.AlgoALT(start, end, graphNodes, sortedEdges, sortedDistances, startIndices, landmarkNodes, landmarkDistances, sortedLandmarks,landmarkPairDistances)
-		// 	timeTaken := time.Since(startTime).Milliseconds()
-		// 	results <- types.Result{
-		// 		Algorithm:    "ALT",
-		// 		ShortestPath: shortestPath,
-		// 		TimeTaken:    timeTaken,
-		// 	}
-		// 	slog.Info("ALT distance: " + strconv.Itoa(dist))
-		// }()
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			startTime := time.Now()
+			shortestPath, dist := router.AlgoALT(start, end, graphNodes, sortedEdges, sortedDistances, startIndices, landmarkNodes, landmarkDistances, sortedLandmarks,landmarkPairDistances)
+			timeTaken := time.Since(startTime).Milliseconds()
+			results <- types.Result{
+				Algorithm:    "ALT",
+				ShortestPath: shortestPath,
+				TimeTaken:    timeTaken,
+			}
+			slog.Info("ALT distance: " + strconv.Itoa(dist))
+			slog.Info("Shortest Path Length: " + strconv.Itoa(len(shortestPath)))
+		}()
 
 		// Close the results channel when all goroutines are done
 		go func() {
@@ -110,7 +111,7 @@ func Server() {
 
 		dijkstraResult := types.Result{}
 		astarResult := types.Result{}
-		// altResult := types.Result{}
+		altResult := types.Result{}
 
 		// Collect results
 		for result := range results {
@@ -119,8 +120,8 @@ func Server() {
 				dijkstraResult = result
 			case "AStar":
 				astarResult = result
-				// case "ALT":
-				// 	altResult = result
+			case "ALT":
+				altResult = result
 			}
 		}
 
@@ -128,10 +129,10 @@ func Server() {
 		c.JSON(http.StatusOK, gin.H{
 			"astar_time":    astarResult.TimeTaken,
 			"dijkstra_time": dijkstraResult.TimeTaken,
-			// "alt_time":            altResult.TimeTaken,
+			"alt_time":            altResult.TimeTaken,
 			"shortest_path_astar": astarResult.ShortestPath,
 			"shortest_path_djik":  dijkstraResult.ShortestPath,
-			// "shortest_path_alt":   altResult.ShortestPath,
+			"shortest_path_alt":   altResult.ShortestPath,
 		})
 	})
 

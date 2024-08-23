@@ -54,19 +54,14 @@
         });
 
         // Fetch and plot landmarks once at the beginning
-        
         function plotLandmarks() {
             fetch('http://localhost:5000/landmarks')
                 .then(response => response.json())
                 .then(data => {
-                    // Check if the data contains landmarks
                     if (data && data.landmarks) {
                         data.landmarks.forEach(function(coord) {
-                            // Create a marker for each landmark with the red icon
-                            console.log(coord);
                             var marker = L.marker([coord.lat, coord.lng], { icon: redIcon }).addTo(map);
                         });
-                        // Adjust map view to fit all markers
                         var bounds = L.latLngBounds(markers.map(marker => marker.getLatLng()));
                         map.fitBounds(bounds);
                     } else {
@@ -108,21 +103,36 @@
                     var response = JSON.parse(xhr.responseText);
                     var shortestPath_dijkstra = response.shortest_path_djik;
                     var shortestPath_astar = response.shortest_path_astar;
-                    // var shortestPath_alt = response.shortest_path_alt;
+                    var shortestPath_alt = response.shortest_path_alt;
                     var dijkstraTime = response.dijkstra_time;
                     var astarTime = response.astar_time;
-                    // var altTime = response.alt_time;
+                    var altTime = response.alt_time;
 
-                    var dijkstraColor = plotPath(shortestPath_dijkstra);
-                    var astarColor = plotPath(shortestPath_astar);
-                    // var altColor = plotPath(shortestPath_alt);
+                    // Check if all paths are empty
+                    if (shortestPath_dijkstra.length === 0 && shortestPath_astar.length === 0 && shortestPath_alt.length === 0) {
+                        alert("No path available between the selected points.");
+                        resetPoints();
+                        return;
+                    }
 
-                    document.getElementById('dijkstra-time').value = dijkstraTime.toFixed(2) + " ms";
-                    document.getElementById('dijkstra-time').style.color = dijkstraColor;
-                    document.getElementById('astar-time').value = astarTime.toFixed(2) + " ms";
-                    document.getElementById('astar-time').style.color = astarColor;
-                    // document.getElementById('alt-time').value = altTime.toFixed(2) + " ms";
-                    // document.getElementById('alt-time').style.color = altColor;
+                    // Plot the paths if they exist
+                    if (shortestPath_dijkstra.length > 0) {
+                        var dijkstraColor = plotPath(shortestPath_dijkstra);
+                        document.getElementById('dijkstra-time').value = dijkstraTime.toFixed(2) + " ms";
+                        document.getElementById('dijkstra-time').style.color = dijkstraColor;
+                    }
+
+                    if (shortestPath_astar.length > 0) {
+                        var astarColor = plotPath(shortestPath_astar);
+                        document.getElementById('astar-time').value = astarTime.toFixed(2) + " ms";
+                        document.getElementById('astar-time').style.color = astarColor;
+                    }
+
+                    if (shortestPath_alt.length > 0) {
+                        var altColor = plotPath(shortestPath_alt);
+                        document.getElementById('alt-time').value = altTime.toFixed(2) + " ms";
+                        document.getElementById('alt-time').style.color = altColor;
+                    }
 
                     resetPoints();
                 }

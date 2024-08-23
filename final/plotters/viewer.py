@@ -2,7 +2,7 @@ import json
 import folium
 
 # Read the JSON file
-with open('/home/fsociety/Documents/Uni-Stuttgart/SS2024/OpenMaps_FachPrak/final/objects/landmarks.json', 'r') as file:
+with open('/home/fsociety/Documents/Uni-Stuttgart/SS2024/OpenMaps_FachPrak/final/objects/graphNodes.json', 'r') as file:
     data = json.load(file)
 
 print(len(data))

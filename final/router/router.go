@@ -166,25 +166,24 @@ func FileReader() (nodes [][2]float64, edges [][4]int, distances [][4]int, grid 
 func Debugging() {
 	graphNodes, _, _, _, sortedEdges, sortedDistances, startIndices, _, _, _, _, _ := FileReader()
 
-	start := 3223575
-	end := 2410134
+	start := 763767
+	end := 543231
 	pathD, distD := Djikstra(graphNodes, sortedEdges, sortedDistances, startIndices, start, end)
 	pathA, distA := AStar(graphNodes, sortedEdges, sortedDistances, startIndices, start, end)
 
-	problemNode := 0
-	fmt.Println("Djikstra Distance: ", distD[2410134])
-	fmt.Println("A* Distance: ", distA[2410134])
+	slog.Info("Coordinates: ", graphNodes[start], graphNodes[end])
+
+	fmt.Println("Djikstra Distance: ", distD[end])
+	fmt.Println("A* Distance: ", distA[end])
 	fmt.Println()
-	for i := 1; i < len(pathD); i++ {
-		if pathD[i] != pathA[i] {
-			problemNode = i - 1
-			slog.Info("Problem node: ", i-1)
-			slog.Info("Djikstra: ", pathD[i-1], " -> ", pathD[i])
-			slog.Info("A*: ", pathA[i-1], " -> ", pathA[i])
-		}
+	for i := 0; i < len(pathD); i++ {
+		slog.Info("pathD: ", pathD[i])
 	}
 
-	slog.Info("Problem node: ", problemNode)
+	for i := 0; i < len(pathA); i++ {
+		slog.Info("pathA: ", pathA[i])
+	}
+
 
 	// for i := 0; i < len(pathD)-1; i++ {
 	// 	slog.Info("------------------------------Point ", i, "------------------------------")
@@ -243,7 +242,8 @@ func MultiRouter(iterations int) {
 		path, dist := Djikstra(graphNodes, sortedEdges, sortedDistances, startIndices, randomIndices[i][0], randomIndices[i][1])
 		if (dist[randomIndices[i][1]] <= 0 || len(path) == 0) && (randomIndices[i][0] != randomIndices[i][1]) {
 			// panic("Djikstra failed")
-			slog.Info("Djikstra failed", randomIndices[i][0], randomIndices[i][1])
+			slog.Info("Dijkstra No route found", randomIndices[i][0], randomIndices[i][1])
+			slog.Info("Coordinates: ", graphNodes[randomIndices[i][0]], graphNodes[randomIndices[i][1]])
 			continue
 		}
 	}
@@ -257,7 +257,8 @@ func MultiRouter(iterations int) {
 		path, dist := AStar(graphNodes, sortedEdges, sortedDistances, startIndices, randomIndices[i][0], randomIndices[i][1])
 		if dist[randomIndices[i][1]] <= 0 || len(path) == 0 {
 			// panic("A* failed")
-			slog.Info("A* failed", randomIndices[i][0], randomIndices[i][1])
+			slog.Info("A* No route found", randomIndices[i][0], randomIndices[i][1])
+			slog.Info("Coordinates: ", graphNodes[randomIndices[i][0]], graphNodes[randomIndices[i][1]])
 			continue
 		}
 	}
