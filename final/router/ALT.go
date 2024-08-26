@@ -5,11 +5,10 @@ import (
 	"final/generator"
 	"final/types"
 	"math"
-
 	"math/rand"
-	// "time"
 	"github.com/adhocore/chin"
 	"github.com/gookit/slog"
+	"time"
 	// "runtime"
 )
 
@@ -22,22 +21,23 @@ func ALT(nodes [][2]float64, edges [][2]int, edgeweights []int,
 	// Initialize GraphData
 	data := types.NewGraphData(len(nodes), src)
 
-	// Calculate farthest landmark
-	farthestLandmark := 0
-	maxDistance := 0
-	closestLandmark := 0
-	minDistance := math.MaxInt64
-	for _, landmark := range landmarks {
-		distance := landmarkDistances[landmark][dst]
-		if distance > maxDistance {
-			maxDistance = distance
-			farthestLandmark = landmark
-		}
-		if distance < minDistance {
-			minDistance = distance
-			closestLandmark = landmark
-		}
-	}
+	// // Calculate farthest landmark
+	// farthestLandmarkDst := 0
+	// maxDistance := 0
+	// closestLandmarkDst := 0
+	// minDistance := math.MaxInt64
+	// for _, landmark := range landmarks {
+	// 	distance := landmarkDistances[landmark][dst]
+	// 	if distance > maxDistance {
+	// 		maxDistance = distance
+	// 		farthestLandmarkDst = landmark
+	// 	}
+	// 	if distance < minDistance {
+	// 		minDistance = distance
+	// 		closestLandmarkDst = landmark
+	// 	}
+	// }
+
 
 	// fmt.Println("Distance array", landmarkDistances[landmarks[0]][src])
 
@@ -64,11 +64,40 @@ func ALT(nodes [][2]float64, edges [][2]int, edgeweights []int,
 
 			newDist := data.Dist[currentNode] + edgeweights[i]
 			if newDist < data.Dist[neighbor] {
-				closestHeuristic := generator.Abs(landmarkDistances[closestLandmark][neighbor] - landmarkDistances[closestLandmark][dst])
-				farthestHeuristic := generator.Abs(landmarkDistances[farthestLandmark][neighbor] - landmarkDistances[farthestLandmark][dst])
-				heuristic := generator.Max([]int{closestHeuristic, farthestHeuristic})
+				// closestHeuristicDst := generator.Abs(landmarkDistances[closestLandmarkDst][neighbor] - landmarkDistances[closestLandmarkDst][dst])
+				// farthestHeuristicDst := generator.Abs(landmarkDistances[farthestLandmarkDst][neighbor] - landmarkDistances[farthestLandmarkDst][dst])
+				
 
-				newPriority := newDist + heuristic
+				// // closestLandmarkNeighbor := 0
+				// // farthestLandmarkNeighbor := 0
+				// // maxDistance := 0
+				// // minDistance := math.MaxInt64
+
+				// // for _, landmark := range landmarks {
+				// // 	distance := landmarkDistances[landmark][neighbor]
+				// // 	if distance > maxDistance {
+				// // 		maxDistance = distance
+				// // 		farthestLandmarkNeighbor = landmark
+				// // 	}
+				// // 	if distance < minDistance {
+				// // 		minDistance = distance
+				// // 		closestLandmarkNeighbor = landmark
+				// // 	}
+				// // }
+
+				// // closestHeuristicNeighbor := generator.Abs(landmarkDistances[closestLandmarkNeighbor][neighbor] - landmarkDistances[closestLandmarkNeighbor][dst])
+				// // farthestHeuristicNeighbor := generator.Abs(landmarkDistances[farthestLandmarkNeighbor][neighbor] - landmarkDistances[farthestLandmarkNeighbor][dst])
+				
+				// heuristic := generator.Max([]int{closestHeuristicDst, farthestHeuristicDst}) //closestHeuristicNeighbor, farthestHeuristicNeighbor})
+				maxHeuristic := 0
+				heuristic := 0
+				for _, landmark := range landmarks {
+					heuristic = generator.Abs(landmarkDistances[landmark][neighbor] - landmarkDistances[landmark][dst])
+					if heuristic > maxHeuristic {
+						maxHeuristic = heuristic
+					}
+				}
+				newPriority := newDist + maxHeuristic
 				data.Dist[neighbor] = newDist
 				data.Prev[neighbor] = currentNode
 				heap.Push(data.PQ, &types.QueueItem{Node: neighbor, Priority: newPriority})
@@ -190,6 +219,7 @@ func chooseLandmarks(nodes [][2]float64, numLandmarks int, minDistance int) []in
 	landmarks := make([]int, numLandmarks)
 	landmarkCounter := 0
 	validityCounter := 0
+	rand.Seed(time.Now().UnixNano())
 	for landmarkCounter < numLandmarks && validityCounter < 1000 {
 		randomPoint := rand.Intn(len(nodes))
 		suitablePoint := true
