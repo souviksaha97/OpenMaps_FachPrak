@@ -259,17 +259,9 @@ func MultiRouter(iterations int) {
 	avgALTv1 := time.Since(startALTv1) / time.Duration(iterations)
 	fmt.Println("Average ALT time: ", avgALTv1)
 
-	// var startALTv2 = time.Now()
-	// for i := 0; i < iterations; i++ {
-	// 	ALTv2(graphNodes, graphEdges, distancesEdges, landmarkNodes, LandmarkDistances, randomIndices[i][0], randomIndices[i][1])
-	// }
-
-	// avgALTv2 := time.Since(startALTv2) / time.Duration(iterations)
-	// fmt.Println("Average ALTv2 time: ", avgALTv2)
-
-	fmt.Println("A* speedup percent: ", float64(avgDijkstra-avgAstar)/float64(avgDijkstra)*100)
-	fmt.Println("ALTv1 speedup percent: ", float64(avgDijkstra-avgALTv1)/float64(avgDijkstra)*100)
-	// fmt.Println("ALTv2 speedup percent: ", float64(avgDijkstra-avgALTv2)/float64(avgDijkstra)*100)
+	fmt.Println("A* speedup percent v/s Djikstra: ", float64(avgDijkstra-avgAstar)/float64(avgDijkstra)*100)
+	fmt.Println("ALTv1 speedup percent v/s Djikstra: ", float64(avgDijkstra-avgALTv1)/float64(avgDijkstra)*100)
+	fmt.Println("ALTv1 speedup percent v/s A*: ", float64(avgAstar-avgALTv1)/float64(avgAstar)*100)
 
 	fidgeter.Stop()
 
@@ -323,81 +315,7 @@ func SingleRouter(router string, iterations int) {
 		}
 
 		fmt.Println("Average ALT time: ", time.Since(startALT)/time.Duration(iterations))
-
-		// case "alt-v2":
-		// 	var startALTv2 = time.Now()
-		// 	for i := 0; i < iterations; i++ {
-		// 		path, dist := ALTv2(graphNodes, sortedEdges, sortedDistances, startIndices, landmarkNodes, landmarkDistances, sortedLandmarks, randomIndices[i][0], randomIndices[i][1])
-		// 		if dist <= 0 || len(path) == 0 {
-		// 			panic("ALTv2 failed")
-		// 		}
-		// 	}
-
-		// 	fmt.Println("Average ALTv2 time: ", time.Since(startALTv2)/time.Duration(iterations))
 	}
 
 	fidgeter.Stop()
 }
-
-// results := make(chan types.Result, 3)
-// 	var wg sync.WaitGroup
-
-// 	// Run Dijkstra in a separate goroutine
-// 	wg.Add(1)
-// 	go func() {
-// 		defer wg.Done()
-// 		var totalDijkstraTime time.Duration
-// 		for i := 0; i < iterations; i++ {
-// 			startTime := time.Now()
-// 			_, _ = Djikstra(graphNodes, sortedEdges, sortedDistances, startIndices, randomIndices[i][0], randomIndices[i][1])
-// 			totalDijkstraTime += time.Since(startTime)
-// 		}
-// 		avgDijkstra := totalDijkstraTime.Milliseconds() / int64(iterations)
-// 		results <- types.Result{Algorithm: "Dijkstra", ShortestPath: []types.Point{}, TimeTaken: avgDijkstra}
-// 	}()
-
-// 	wg.Add(1)
-// 	go func() {
-// 		defer wg.Done()
-// 		var totalAStarTime time.Duration
-// 		for i := 0; i < iterations; i++ {
-// 			startTime := time.Now()
-// 			_, _ = AStar(graphNodes, sortedEdges, sortedDistances, startIndices, randomIndices[i][0], randomIndices[i][1])
-// 			totalAStarTime += time.Since(startTime)
-// 		}
-// 		avgAStar := totalAStarTime.Milliseconds() / int64(iterations)
-// 		results <- types.Result{Algorithm: "AStar", ShortestPath: []types.Point{}, TimeTaken: avgAStar}
-// 	}()
-
-// 	wg.Add(1)
-// 	go func() {
-// 		defer wg.Done()
-// 		var totalALTTime time.Duration
-// 		for i := 0; i < iterations; i++ {
-// 			startTime := time.Now()
-// 			_, _ = ALT(graphNodes, sortedEdges, sortedDistances, startIndices, landmarkNodes, landmarkDistances, randomIndices[i][0], randomIndices[i][1])
-// 			totalALTTime += time.Since(startTime)
-// 		}
-// 		avgALT := totalALTTime.Milliseconds() / int64(iterations)
-// 		results <- types.Result{Algorithm: "ALT", ShortestPath: []types.Point{}, TimeTaken: avgALT}
-// 	}()
-
-// 	// Close the results channel when all goroutines are done
-// 	go func() {
-// 		wg.Wait()
-// 		close(results)
-// 	}()
-
-// 	var avgDijkstra, avgAstar, avgALTv1 time.Duration
-
-// 	// Collect results
-// 	for result := range results {
-// 		switch result.Algorithm {
-// 		case "Dijkstra":
-// 			avgDijkstra = time.Duration(result.TimeTaken)
-// 		case "AStar":
-// 			avgAstar = time.Duration(result.TimeTaken)
-// 		case "ALT":
-// 			avgALTv1 = time.Duration(result.TimeTaken)
-// 		}
-// 	}

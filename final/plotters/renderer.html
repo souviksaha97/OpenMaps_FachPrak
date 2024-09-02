@@ -4,33 +4,176 @@
     <meta charset="UTF-8">
     <title>Finding Nemo</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
+            color: #333;
+        }
+
+        .header {
+            background-color: #007bff;
+            color: white;
+            padding: 20px;
+            text-align: center;
+            position: relative;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            margin: 20px;
+        }
+
+        .header h1 {
+            margin: 0;
+            font-size: 24px;
+        }
+
+        .header .info-icon {
+            position: absolute;
+            top: 50%;
+            right: 20px;
+            transform: translateY(-50%);
+            font-size: 18px;
+            color: white;
+            cursor: pointer;
+        }
+
+        .header .tooltiptext {
+            visibility: hidden;
+            width: 200px;
+            background-color: #000;
+            color: #fff;
+            text-align: center;
+            border-radius: 6px;
+            padding: 10px;
+            position: absolute;
+            z-index: 1;
+            top: 110%;
+            right: 20px;
+            opacity: 0;
+            transition: opacity 0.3s;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        .header .info-icon:hover .tooltiptext {
+            visibility: visible;
+            opacity: 1;
+        }
+
         #map {
             height: 600px;
             width: 100%;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
         }
+
         .controls {
-            margin-top: 10px;
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            padding: 20px;
+            background-color: #fff;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+            margin: 0 20px;
         }
-        .controls input,
+
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .controls label {
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+
+        .controls input {
+            width: 100px;
+            padding: 5px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+            text-align: center;
+            font-weight: bold;
+        }
+
         .controls button {
-            display: block;
-            margin: 5px 0;
+            padding: 10px 20px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        .controls button:hover {
+            background-color: #0056b3;
+        }
+
+        .controls button:disabled {
+            background-color: #ddd;
+            cursor: not-allowed;
+        }
+
+        #clear-map {
+            background-color: #ff4d4d;
+        }
+
+        #clear-map:hover {
+            background-color: #cc0000;
+        }
+
+        #loading-spinner {
+            display: none;
+            border: 8px solid #f3f3f3;
+            border-radius: 50%;
+            border-top: 8px solid #007bff;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
         }
     </style>
 </head>
 <body>
-    <h1>Select Start and End Points</h1>
-    <div id="map"></div>
-    <div class="controls">
-        <label for="dijkstra-time">Dijkstra Time (ms):</label>
-        <input type="text" id="dijkstra-time" readonly>
-        <label for="astar-time">A* Time (ms):</label>
-        <input type="text" id="astar-time" readonly>
-        <label for="alt-time">ALT Time (ms):</label>
-        <input type="text" id="alt-time" readonly> 
-        <button id="clear-map">Clear Map</button>
+    <div class="header">
+        <h1>Open Street Maps - Fachpraktikum</h1>
+        <div class="info-icon tooltip">
+            <i class="fas fa-info-circle"></i>
+            <span class="tooltiptext">
+                Click on the map to select a start point, then click again to select an end point. 
+                The system will compute the shortest paths using different algorithms.
+            </span>
+        </div>
     </div>
+    
+    <div id="map"></div>
+    
+    <div class="controls">
+        <div class="control-group">
+            <label for="dijkstra-time">Dijkstra Time (ms):</label>
+            <input type="text" id="dijkstra-time" readonly style="border-color: red;">
+        </div>
+        <div class="control-group">
+            <label for="astar-time">A* Time (ms):</label>
+            <input type="text" id="astar-time" readonly style="border-color: blue;">
+        </div>
+        <div class="control-group">
+            <label for="alt-time">ALT Time (ms):</label>
+            <input type="text" id="alt-time" readonly style="border-color: green;">
+        </div>
+        <button id="clear-map"><i class="fas fa-trash-alt"></i> Clear Map</button>
+        <div id="loading-spinner"></div>
+    </div>
+
     <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
     <script>
         var map = L.map('map').setView([0, 0], 2);
@@ -46,14 +189,12 @@
         var colors = ['red', 'blue', 'green', 'orange', 'purple', 'cyan', 'magenta', 'lime', 'brown', 'black'];
         var colorIndex = 0;
 
-        // Define a red circle icon for landmarks
         var redIcon = L.divIcon({
             className: 'red-icon',
             html: '<div style="background-color: red; border-radius: 50%; width: 10px; height: 10px;"></div>',
             iconSize: [10, 10]
         });
 
-        // Fetch and plot landmarks once at the beginning
         function plotLandmarks() {
             fetch('http://localhost:5000/landmarks')
                 .then(response => response.json())
@@ -71,7 +212,6 @@
                 .catch(error => console.error('Error fetching landmarks:', error));
         }
 
-        // Call the function to plot landmarks
         plotLandmarks();
 
         map.on('click', function(e) {
@@ -90,6 +230,7 @@
         document.getElementById('clear-map').addEventListener('click', clearMap);
 
         function sendPointsToServer(start, end) {
+            document.getElementById('loading-spinner').style.display = 'block';
             var xhr = new XMLHttpRequest();
             xhr.open("POST", "http://localhost:5000/submit_points", true);
             xhr.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
@@ -108,14 +249,13 @@
                     var astarTime = response.astar_time;
                     var altTime = response.alt_time;
 
-                    // Check if all paths are empty
                     if (shortestPath_dijkstra.length === 0 && shortestPath_astar.length === 0 && shortestPath_alt.length === 0) {
                         alert("No path available between the selected points.");
                         resetPoints();
+                        document.getElementById('loading-spinner').style.display = 'none';
                         return;
                     }
 
-                    // Plot the paths if they exist
                     if (shortestPath_dijkstra.length > 0) {
                         var dijkstraColor = plotPath(shortestPath_dijkstra);
                         document.getElementById('dijkstra-time').value = dijkstraTime.toFixed(2) + " ms";
@@ -135,6 +275,7 @@
                     }
 
                     resetPoints();
+                    document.getElementById('loading-spinner').style.display = 'none';
                 }
             };
         }
