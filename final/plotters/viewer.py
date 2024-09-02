@@ -2,7 +2,7 @@ import json
 import folium
 
 # Read the JSON file
-with open('/home/fsociety/Documents/Uni-Stuttgart/SS2024/OpenMaps_FachPrak/final/objects/graphNodes.json', 'r') as file:
+with open('/home/souvik-atmos/Documents/OpenMaps_FachPrak/final/objects/landmarks.json', 'r') as file:
     data = json.load(file)
 
 print(len(data))
@@ -30,4 +30,4 @@ for item in data:
         ).add_to(m)
 
 # Save the map to an HTML file
-m.save('/home/fsociety/Documents/Uni-Stuttgart/SS2024/OpenMaps_FachPrak/final/plotters/map.html')
+m.save('/home/souvik-atmos/Documents/OpenMaps_FachPrak/final/plotters/map.html')

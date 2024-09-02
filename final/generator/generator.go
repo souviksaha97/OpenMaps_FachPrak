@@ -18,7 +18,7 @@ import (
 	"final/types"
 )
 
-const PBF_FILE_PATH = "/home/sahask/osm_data/planet-coastlines.osm.pbf"
+const PBF_FILE_PATH = "/home/souvik-atmos/Documents/planet-coastlines.osm.pbf"
 
 const pointcount = 4000000
 const longBincount = 200000

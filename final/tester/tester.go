@@ -13,13 +13,13 @@ import (
 	"github.com/adhocore/chin"
 )
 
-func Tester(iterations int, points int) {
+func Tester(iterations int) {
 	// run multiple iterations of alt, with increasing number of landmarks and print the optimal number of landmarks
 
 	// read the files
 	fidgeter := chin.New()
 	go fidgeter.Start()
-	graphNodes, _, _, _, _, _, _, _, _, _, _, _ := router.FileReader()
+	graphNodes, _, _, _, _, _, _, _, _, _ := router.FileReader()
 	timingMap := make(map[int]time.Duration)
 
 	// generate iteration random pairs of src and dst
@@ -31,7 +31,7 @@ func Tester(iterations int, points int) {
 	}
 	slog.Info("Generated random pairs of src and dst")
 
-	range_landmarks := []int{2, 4, 8, 16, 32, 64, 128, 256}
+	range_landmarks := []int{10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20}
 
 	optimalLandmarks := 0
 	optimalTime := math.MaxInt64
@@ -40,14 +40,14 @@ func Tester(iterations int, points int) {
 		numLandmarks := i
 		slog.Info("___________________________________________________________________________")
 		slog.Info("Number of landmarks: ", numLandmarks)
-		router.LandmarksDistanceMaximiser(points)
+		router.LandmarksDistanceMaximiser(numLandmarks)
 		slog.Info("Landmarks distance maximiser finished")
-		graphNodes, _, _, _, sortedEdges, sortedDistances, startIndices, _, landmarkNodes, landmarkDistances, sortedLandmarks, landmarkPairDistances := router.FileReader()
+		graphNodes, _, _, _, sortedEdges, sortedDistances, startIndices, _, landmarkNodes, landmarkDistances := router.FileReader()
 		var totalTime time.Duration
 		slog.Info("Running ALT")
 		for _, pair := range srcDstPairs {
 			iterTime := time.Now()
-			router.ALT(graphNodes, sortedEdges, sortedDistances, startIndices, landmarkNodes, landmarkDistances, sortedLandmarks, landmarkPairDistances, pair[0], pair[1])
+			router.ALT(graphNodes, sortedEdges, sortedDistances, startIndices, landmarkNodes, landmarkDistances, pair[0], pair[1])
 			totalTime += time.Since(iterTime)
 		}
 		averageTime := totalTime / time.Duration(len(srcDstPairs))

@@ -6,9 +6,10 @@ import (
 	"final/types"
 	"math"
 	"math/rand"
+	"time"
+
 	"github.com/adhocore/chin"
 	"github.com/gookit/slog"
-	"time"
 	// "runtime"
 )
 
@@ -16,7 +17,7 @@ import (
 // Single landmark heuristic
 func ALT(nodes [][2]float64, edges [][2]int, edgeweights []int,
 	startindicesmap []int, landmarks []int,
-	landmarkDistances map[int][]int, sortedLandmarks map[int][]int, landmarkPairDistances [][]int, src int, dst int) ([]int, int) {
+	landmarkDistances map[int][]int, src int, dst int) ([]int, int) {
 
 	// Initialize GraphData
 	data := types.NewGraphData(len(nodes), src)
@@ -37,7 +38,6 @@ func ALT(nodes [][2]float64, edges [][2]int, edgeweights []int,
 	// 		closestLandmarkDst = landmark
 	// 	}
 	// }
-
 
 	// fmt.Println("Distance array", landmarkDistances[landmarks[0]][src])
 
@@ -66,7 +66,6 @@ func ALT(nodes [][2]float64, edges [][2]int, edgeweights []int,
 			if newDist < data.Dist[neighbor] {
 				// closestHeuristicDst := generator.Abs(landmarkDistances[closestLandmarkDst][neighbor] - landmarkDistances[closestLandmarkDst][dst])
 				// farthestHeuristicDst := generator.Abs(landmarkDistances[farthestLandmarkDst][neighbor] - landmarkDistances[farthestLandmarkDst][dst])
-				
 
 				// // closestLandmarkNeighbor := 0
 				// // farthestLandmarkNeighbor := 0
@@ -87,7 +86,7 @@ func ALT(nodes [][2]float64, edges [][2]int, edgeweights []int,
 
 				// // closestHeuristicNeighbor := generator.Abs(landmarkDistances[closestLandmarkNeighbor][neighbor] - landmarkDistances[closestLandmarkNeighbor][dst])
 				// // farthestHeuristicNeighbor := generator.Abs(landmarkDistances[farthestLandmarkNeighbor][neighbor] - landmarkDistances[farthestLandmarkNeighbor][dst])
-				
+
 				// heuristic := generator.Max([]int{closestHeuristicDst, farthestHeuristicDst}) //closestHeuristicNeighbor, farthestHeuristicNeighbor})
 				maxHeuristic := 0
 				heuristic := 0
@@ -117,7 +116,7 @@ func ALT(nodes [][2]float64, edges [][2]int, edgeweights []int,
 }
 
 func AlgoALT(Start types.Point, End types.Point, graphNodes [][2]float64, graphEdges [][2]int, distancesEdges []int, startIndices []int,
-	landmarks []int, landmarkDistances map[int][]int, sortedLandmarks map[int][]int, landmarkPairDistances [][]int) ([]types.Point, int) {
+	landmarks []int, landmarkDistances map[int][]int) ([]types.Point, int) {
 	nearestnodeStart := [2]float64{Start.Lat, Start.Lng}
 	nearestnodeEnd := [2]float64{End.Lat, End.Lng}
 	nearestpointStartIndex := -1
@@ -140,7 +139,7 @@ func AlgoALT(Start types.Point, End types.Point, graphNodes [][2]float64, graphE
 		}
 	}
 
-	path, dist := ALT(graphNodes, graphEdges, distancesEdges, startIndices, landmarks, landmarkDistances, sortedLandmarks, landmarkPairDistances, nearestpointStartIndex, nearpointEndIndex)
+	path, dist := ALT(graphNodes, graphEdges, distancesEdges, startIndices, landmarks, landmarkDistances, nearestpointStartIndex, nearpointEndIndex)
 	// path, dist := ALTv2(graphNodes, graphEdges, distancesEdges, landmarks, landmarkDistances, nearestpointStartIndex, nearpointEndIndex)
 	// Convert the path to the required format
 	shortestPath := make([]types.Point, len(path))
@@ -153,7 +152,7 @@ func AlgoALT(Start types.Point, End types.Point, graphNodes [][2]float64, graphE
 
 func LandmarksDistanceMaximiser(numLandmarks int) {
 	// nodes, edges, distances, _, _, _, _ := FileReader()
-	nodes, _, _, _, _, _, _, _, _, _, _, _ := FileReader()
+	nodes, _, _, _, _, _, _, _, _, _ := FileReader()
 	longSearch := false
 
 	maxDistance := 0
@@ -188,6 +187,7 @@ func LandmarksDistanceMaximiser(numLandmarks int) {
 			break
 		}
 	}
+	// landmarks = chooseLandmarksV2_knownPoints()
 
 	landmarksNodes := make([][2]float64, len(landmarks))
 
@@ -248,9 +248,30 @@ func chooseLandmarks(nodes [][2]float64, numLandmarks int, minDistance int) []in
 	return landmarks
 }
 
+func chooseLandmarksV2_knownPoints() []int {
+	return []int{
+		3804942,
+		2808130,
+		1055298,
+		2947496,
+		1326119,
+		450081,
+		1605771,
+		968020,
+		1845136,
+		3727989,
+		3234498,
+		2602491,
+		584979,
+		2093229,
+		1870122,
+		3677333,
+	}
+}
+
 func landMarksDistanceFinder() {
 	// graphNodes, graphEdges, distancesEdges, _, _, landmarkNodes, _ := FileReader()
-	graphNodes, _, _, _, sorted_edges, sorted_distances, start_indices, _, landmarkNodes, _ , _, _:= FileReader()
+	graphNodes, _, _, _, sorted_edges, sorted_distances, start_indices, _, landmarkNodes, _ := FileReader()
 	completeLandmarksMap := make(map[int][]int)
 	for i, landmark := range landmarkNodes {
 		slog.Info("Landmark:", i, landmark)
@@ -261,4 +282,3 @@ func landMarksDistanceFinder() {
 	}
 	generator.WriteToJSONFile("landmarkDistances.json", completeLandmarksMap)
 }
-

@@ -106,17 +106,16 @@ func main() {
 
 	case "tester":
 		slog.Info("Running the tester")
-		if len(os.Args) < 4 {
+		if len(os.Args) < 3 {
 			slog.Info("Iterations argument missing")
 			return
 		}
 		iterations, err := strconv.Atoi(os.Args[2])
-		points, err := strconv.Atoi(os.Args[3])
 		if err != nil {
 			slog.Info("Invalid iterations argument")
 			return
 		}
-		tester.Tester(iterations, points)
+		tester.Tester(iterations)
 
 	case "debug":
 		slog.Info("Running the debug")
@@ -154,6 +153,10 @@ func init_main() bool {
 
 func touch(filename string) error {
 	// Open the file in append mode, create if it doesn't exist, for writing
+	if err := os.Mkdir("objects", os.ModePerm); err != nil {
+		slog.Info(err)
+	}
+
 	f, err := os.OpenFile(filename, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 	if err != nil {
 		return err

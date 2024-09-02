@@ -2,12 +2,13 @@ package server
 
 import (
 	"fmt"
-	"github.com/gookit/slog"
 	"net/http"
 	"runtime"
 	"strconv"
 	"sync"
 	"time"
+
+	"github.com/gookit/slog"
 
 	"final/router"
 	"final/types"
@@ -29,7 +30,7 @@ func Server() {
 	serv.Use(cors.New(config))
 
 	// Read the files
-	graphNodes, _, _, _, sortedEdges, sortedDistances, startIndices, landmarkCoords, landmarkNodes, landmarkDistances, sortedLandmarks,  landmarkPairDistances:= router.FileReader()
+	graphNodes, _, _, _, sortedEdges, sortedDistances, startIndices, landmarkCoords, landmarkNodes, landmarkDistances := router.FileReader()
 	// graphNodes, _, _, _, sortedEdges, sortedDistances, startIndices, landmarkCoords, _, _, _, _ := router.FileReader()
 
 	serv.POST("/submit_points", func(c *gin.Context) {
@@ -91,7 +92,7 @@ func Server() {
 		go func() {
 			defer wg.Done()
 			startTime := time.Now()
-			shortestPath, dist := router.AlgoALT(start, end, graphNodes, sortedEdges, sortedDistances, startIndices, landmarkNodes, landmarkDistances, sortedLandmarks,landmarkPairDistances)
+			shortestPath, dist := router.AlgoALT(start, end, graphNodes, sortedEdges, sortedDistances, startIndices, landmarkNodes, landmarkDistances)
 			timeTaken := time.Since(startTime).Milliseconds()
 			results <- types.Result{
 				Algorithm:    "ALT",
@@ -127,8 +128,8 @@ func Server() {
 
 		// Respond with the results
 		c.JSON(http.StatusOK, gin.H{
-			"astar_time":    astarResult.TimeTaken,
-			"dijkstra_time": dijkstraResult.TimeTaken,
+			"astar_time":          astarResult.TimeTaken,
+			"dijkstra_time":       dijkstraResult.TimeTaken,
 			"alt_time":            altResult.TimeTaken,
 			"shortest_path_astar": astarResult.ShortestPath,
 			"shortest_path_djik":  dijkstraResult.ShortestPath,
