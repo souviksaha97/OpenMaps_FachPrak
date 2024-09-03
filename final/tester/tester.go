@@ -31,7 +31,7 @@ func Tester(iterations int) {
 	}
 	slog.Info("Generated random pairs of src and dst")
 
-	range_landmarks := []int{10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20}
+	range_landmarks := []int{16, 16, 16, 16, 16}
 
 	optimalLandmarks := 0
 	optimalTime := math.MaxInt64

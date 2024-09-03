@@ -9,8 +9,9 @@ import (
 	"sync"
 	"sync/atomic"
 
-	"github.com/paulmach/osm"
 	"final/types"
+
+	"github.com/paulmach/osm"
 )
 
 func getAllNeighbourCellss(grid [][][][3]float64, x int, y int, latitude float64, radius int) ([][3]float64, bool) {
@@ -1033,4 +1034,31 @@ func Worker(id int, jobs <-chan types.Job, edges *[][2]int, distances *[]int, id
 		// }
 	}
 	//fmt.Printf("Worker %d finished\n", id)
+}
+
+func GetTopNKeys(m map[int]int, n int) []int {
+	// Create a slice of key-value pairs
+	type kv struct {
+		Key   int
+		Value int
+	}
+	var kvSlice []kv
+
+	// Fill the slice with key-value pairs from the map
+	for k, v := range m {
+		kvSlice = append(kvSlice, kv{Key: k, Value: v})
+	}
+
+	// Sort the slice by value in descending order
+	sort.Slice(kvSlice, func(i, j int) bool {
+		return kvSlice[i].Value > kvSlice[j].Value
+	})
+
+	// Extract the top n keys
+	var topKeys []int
+	for i := 0; i < n && i < len(kvSlice); i++ {
+		topKeys = append(topKeys, kvSlice[i].Key)
+	}
+
+	return topKeys
 }

@@ -121,6 +121,10 @@ func main() {
 		slog.Info("Running the debug")
 		router.Debugging()
 
+	case "prune":
+		slog.Info("Pruning")
+		router.LandmarksPruning(64, 100, 10)
+
 	default:
 		slog.Info("Invalid argument")
 	}

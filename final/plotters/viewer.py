@@ -30,4 +30,4 @@ for item in data:
         ).add_to(m)
 
 # Save the map to an HTML file
-m.save('/home/souvik-atmos/Documents/OpenMaps_FachPrak/final/plotters/map.html')
+m.save('/home/souvik-atmos/Documents/OpenMaps_FachPrak/final/plotters/map2.html')
