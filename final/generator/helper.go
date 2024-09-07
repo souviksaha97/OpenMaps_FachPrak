@@ -17,22 +17,6 @@ import (
 func getAllNeighbourCellss(grid [][][][3]float64, x int, y int, latitude float64, radius int) ([][3]float64, bool) {
 	var neighbors [][3]float64
 
-	/*startlat, startlon := findLatLongInGrid(len(grid), len(grid[0]), x, y)
-	k := 0
-	l := 0
-	if x+1 < len(grid) {
-		k = x + 1
-	} else {
-		k = x - 1
-	}
-	if y+1 < len(grid[0]) {
-		l = y + 1
-	} else {
-		l = y - 1
-	}*/
-	//cellendlat, cellendlong := findLatLongInGrid(len(grid), len(grid[0]), k, l)
-	//cellwidth := haversine(startlat, startlon, cellendlat, cellendlong)
-	//fmt.Println("cellwidth", cellwidth)
 	if latitude >= 89.0 {
 		neighbors = append(neighbors, grid[0][0]...)
 

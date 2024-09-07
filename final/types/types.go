@@ -72,12 +72,6 @@ func (pq *PriorityQueue) Pop() interface{} {
 	return item
 }
 
-// Comment out the unused method
-// func (pq *PriorityQueue) update(item *QueueItem, priority float32) {
-// 	item.Priority = priority
-// 	heap.Fix(pq, item.Index)
-// }
-
 // GraphData holds the initialization data for the graph
 type GraphData struct {
 	Dist    []int

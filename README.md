@@ -8,9 +8,6 @@
   - [Getting Started ](#getting-started-)
     - [Prerequisites](#prerequisites)
       - [Go](#go)
-      - [Osmium](#osmium)
-    - [Installing](#installing)
-  - [Usage ](#usage-)
 
 ## About <a name = "about"></a>
 
@@ -22,39 +19,12 @@ These instructions will get you a copy of the project up and running on your loc
 
 ### Prerequisites
 
-What things you need to install the software and how to install them.
-
 #### Go
+Use the instructions mentioned in the [official Go instructions](https://go.dev/doc/install) to install the latest version of Go for your respective operating system.
+Note - The code has been tested on Go version 1.22.6
 
+Once Go is up and running, please run 
 ```bash
-yay -S go
+go mod tidy
 ```
-
-#### Osmium
-
-```bash
-yay -S osmium-tool
-osmium export planet-coastlines.osm.pbf -o coast.geojson
-```
-
-### Installing
-
-A step by step series of examples that tell you how to get a development env running.
-
-Say what the step will be
-
-```
-Give the example
-```
-
-And repeat
-
-```
-until finished
-```
-
-End with an example of getting some data out of the system or using it for a little demo.
-
-## Usage <a name = "usage"></a>
-
-Add notes about how to use the system.
+to install the required libraries and packages
