@@ -79,7 +79,7 @@ func FileReader() (nodes [][2]float64, edges [][4]int, distances [][4]int, grid 
 
 	slog.Debug("Landmarks:", len(landmarksCoords))
 
-	landmarkNodes := make([]int, 8)
+	var landmarkNodes []int
 	landmarkNodesJSON, err := os.ReadFile("objects/landmarkNodes.json")
 	if err != nil {
 		slog.Info("Error reading landmarkNodes from file:", err)
@@ -163,16 +163,6 @@ func Debugging() {
 		slog.Info("pathA: ", pathA[i])
 	}
 
-	// for i := 0; i < len(pathD)-1; i++ {
-	// 	slog.Info("------------------------------Point ", i, "------------------------------")
-	// 	slog.Info("Point ", i, ": ", pathD[i])
-	// 	for j := startIndices[pathD[i]]; j < startIndices[pathD[i]+1]; j++ {
-	// 		slog.Info("Neighbours of ", pathD[i], ": ", sortedEdges[j][1], " with distance ", sortedDistances[j])
-	// 	}
-	// 	slog.Info("------------Chosen Node: ", pathD[i+1], " with distance ", distD[pathD[i+1]], "------------")
-	// 	slog.Info()
-	// }
-
 	for i := 0; i < len(pathA)-1; i++ {
 		slog.Info("------------------------------Point ", i, "------------------------------")
 		slog.Info("Point ", i, ": ", pathA[i])
@@ -183,19 +173,6 @@ func Debugging() {
 		slog.Info("------------Chosen Node: ", pathA[i+1], " with distance ", distA[pathA[i+1]], "------------")
 		slog.Info()
 	}
-
-	// startindexD := startIndices[pathD[problemNode]]
-	// endindexD := startIndices[pathD[problemNode]+1]
-	// startindexA := startIndices[pathA[problemNode]]
-	// endindexA := startIndices[pathA[problemNode]+1]
-
-	// for i := startindexD; i < endindexD; i++ {
-	// 	slog.Info("Neighbours of ", pathD[problemNode], ": ", sortedEdges[i][1], " with distance ", sortedDistances[i])
-	// }
-	// fmt.Println()
-	// for i := startindexA; i < endindexA; i++ {
-	// 	slog.Info("Neighbours of ", pathA[problemNode], ": ", sortedEdges[i][1], " with distance ", sortedDistances[i])
-	// }
 }
 
 func MultiRouter(iterations int) {
@@ -273,13 +250,13 @@ func MultiRouter(iterations int) {
 	slog.Info("Average ALT time: ", avgALTv1.String())
 	slog.Info("Average ALT pops:", avgALTPops)
 
-	fmt.Println("A* speedup percent v/s Djikstra: ", float64(avgDijkstra-avgAstar)/float64(avgDijkstra)*100)
-	fmt.Println("ALT speedup percent v/s Djikstra: ", float64(avgDijkstra-avgALTv1)/float64(avgDijkstra)*100)
-	fmt.Println("ALT speedup percent v/s A*: ", float64(avgAstar-avgALTv1)/float64(avgAstar)*100)
+	slog.Info("A* speedup percent v/s Djikstra: ", float64(avgDijkstra-avgAstar)/float64(avgDijkstra)*100)
+	slog.Info("ALT speedup percent v/s Djikstra: ", float64(avgDijkstra-avgALTv1)/float64(avgDijkstra)*100)
+	slog.Info("ALT speedup percent v/s A*: ", float64(avgAstar-avgALTv1)/float64(avgAstar)*100)
 
-	fmt.Println("A* Pops v/s Dijkstra", (avgDijkPops-avgAstarPops)/avgDijkPops*100)
-	fmt.Println("ALT Pops v/s Dijkstra", (avgDijkPops-avgALTPops)/avgDijkPops*100)
-	fmt.Println("AlT Pops v/s A*", (avgAstarPops-avgALTPops)/avgAstarPops*100)
+	slog.Info("A* Pops v/s Dijkstra", (avgDijkPops-avgAstarPops)/avgDijkPops*100)
+	slog.Info("ALT Pops v/s Dijkstra", (avgDijkPops-avgALTPops)/avgDijkPops*100)
+	slog.Info("AlT Pops v/s A*", (avgAstarPops-avgALTPops)/avgAstarPops*100)
 
 	fidgeter.Stop()
 

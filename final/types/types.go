@@ -96,6 +96,7 @@ type Result struct {
 	ShortestPath []Point
 	TimeTaken    int64
 	PopCounter   int
+	Distance     int
 }
 
 // NewGraphData initializes and returns GraphData

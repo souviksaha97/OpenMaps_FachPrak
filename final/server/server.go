@@ -67,7 +67,9 @@ func Server() {
 				ShortestPath: shortestPath,
 				TimeTaken:    timeTaken,
 				PopCounter:   popCounter,
+				Distance:     dist,
 			}
+
 			slog.Info("Dijkstra distance: " + strconv.Itoa(dist))
 			slog.Info("Shortest Path Length: " + strconv.Itoa(len(shortestPath)))
 		}()
@@ -84,6 +86,7 @@ func Server() {
 				ShortestPath: shortestPath,
 				TimeTaken:    timeTaken,
 				PopCounter:   popCounter,
+				Distance:     dist,
 			}
 			slog.Info("A* distance: " + strconv.Itoa(dist))
 			slog.Info("Shortest Path Length: " + strconv.Itoa(len(shortestPath)))
@@ -101,6 +104,7 @@ func Server() {
 				ShortestPath: shortestPath,
 				TimeTaken:    timeTaken,
 				PopCounter:   popCounter,
+				Distance:     dist,
 			}
 			slog.Info("ALT distance: " + strconv.Itoa(dist))
 			slog.Info("Shortest Path Length: " + strconv.Itoa(len(shortestPath)))
@@ -141,6 +145,9 @@ func Server() {
 			"dijkstra_pops":       dijkstraResult.PopCounter,
 			"astar_pops":          astarResult.PopCounter,
 			"alt_pops":            altResult.PopCounter,
+			"dijkstra_dist":       dijkstraResult.Distance,
+			"astar_dist":          astarResult.Distance,
+			"alt_dist":            altResult.Distance,
 		})
 	})
 
