@@ -52,7 +52,10 @@ go run . server
 Once the server is running, open `plotters/renderer.html` in your browser. Select any two points on the map. If a path exists between them, the server will return the path. Each algorithm's path is indicated by a different box text color.
 
 ![Server](final/docs/pic3.png)
-![Sample](final/docs/mov1.gif)
+<p align="center">
+  <img src="final/docs/mov1.gif" />
+</p>
+
 
 ### Headless Comparison
 
