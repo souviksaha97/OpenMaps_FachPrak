@@ -9,11 +9,13 @@ import (
 )
 
 // Djikstra implements the Dijkstra algorithm
-func Djikstra(nodes [][2]float64, edges [][2]int, edgeweights []int, startindicesmap []int, src int, dst int) ([]int, []int) {
-	
+func Djikstra(nodes [][2]float64, edges [][2]int, edgeweights []int, startindicesmap []int, src int, dst int) ([]int, []int, int) {
+
 	data := types.NewGraphData(len(nodes), src)
+	popCounter := 0
 	for data.PQ.Len() > 0 {
 		current := heap.Pop(data.PQ).(*types.QueueItem)
+		popCounter += 1
 		currentNode := current.Node
 
 		if data.Visited[currentNode] {
@@ -50,10 +52,10 @@ func Djikstra(nodes [][2]float64, edges [][2]int, edgeweights []int, startindice
 		}
 	}
 
-	return path, data.Dist
+	return path, data.Dist, popCounter
 }
 
-func AlgoDijkstra(Start types.Point, End types.Point, graphNodes [][2]float64, graphEdges [][2]int, distancesEdges []int, startIndices []int) ([]types.Point, int) {
+func AlgoDijkstra(Start types.Point, End types.Point, graphNodes [][2]float64, graphEdges [][2]int, distancesEdges []int, startIndices []int) ([]types.Point, int, int) {
 	nearestnodeStart := [2]float64{Start.Lat, Start.Lng}
 	nearestnodeEnd := [2]float64{End.Lat, End.Lng}
 	nearestpointStartIndex := -1
@@ -76,15 +78,12 @@ func AlgoDijkstra(Start types.Point, End types.Point, graphNodes [][2]float64, g
 		}
 	}
 
-
-
-	path, dist := Djikstra(graphNodes, graphEdges, distancesEdges, startIndices, nearestpointStartIndex, nearpointEndIndex)
-
+	path, dist, popCounter := Djikstra(graphNodes, graphEdges, distancesEdges, startIndices, nearestpointStartIndex, nearpointEndIndex)
 
 	// Convert the path to the required format
 	shortestPath := make([]types.Point, len(path))
 	for i, nodeIndex := range path {
 		shortestPath[i] = types.Point{Lat: graphNodes[nodeIndex][0], Lng: graphNodes[nodeIndex][1]}
 	}
-	return shortestPath, dist[nearpointEndIndex]
+	return shortestPath, dist[nearpointEndIndex], popCounter
 }

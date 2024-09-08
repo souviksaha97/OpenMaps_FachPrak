@@ -147,8 +147,8 @@ func Debugging() {
 
 	start := 763767
 	end := 543231
-	pathD, distD := Djikstra(graphNodes, sortedEdges, sortedDistances, startIndices, start, end)
-	pathA, distA := AStar(graphNodes, sortedEdges, sortedDistances, startIndices, start, end)
+	pathD, distD, _ := Djikstra(graphNodes, sortedEdges, sortedDistances, startIndices, start, end)
+	pathA, distA, _ := AStar(graphNodes, sortedEdges, sortedDistances, startIndices, start, end)
 
 	slog.Info("Coordinates: ", graphNodes[start], graphNodes[end])
 
@@ -217,51 +217,69 @@ func MultiRouter(iterations int) {
 
 	runtime.GC()
 	var startDijkstra = time.Now()
+	avgDijkPops := 0.0
 	for i := 0; i < iterations; i++ {
-		path, dist := Djikstra(graphNodes, sortedEdges, sortedDistances, startIndices, randomIndices[i][0], randomIndices[i][1])
+		path, dist, dijkstra_pops := Djikstra(graphNodes, sortedEdges, sortedDistances, startIndices, randomIndices[i][0], randomIndices[i][1])
 		if (dist[randomIndices[i][1]] <= 0 || len(path) == 0) && (randomIndices[i][0] != randomIndices[i][1]) {
 			// panic("Djikstra failed")
 			slog.Info("Dijkstra No route found", randomIndices[i][0], randomIndices[i][1])
 			slog.Info("Coordinates: ", graphNodes[randomIndices[i][0]], graphNodes[randomIndices[i][1]])
 			continue
 		}
+		avgDijkPops += float64(dijkstra_pops)
 	}
 
+	avgDijkPops /= float64(iterations)
 	avgDijkstra := time.Since(startDijkstra) / time.Duration(iterations)
-	fmt.Println("Average Dijsktra time: ", avgDijkstra)
+
+	slog.Info("Average Dijkstra time: ", avgDijkstra.String())
+	slog.Info("Average Dijkstra Pops:", avgDijkPops)
 
 	runtime.GC()
 	var startAStar = time.Now()
+	avgAstarPops := 0.0
 	for i := 0; i < iterations; i++ {
-		path, dist := AStar(graphNodes, sortedEdges, sortedDistances, startIndices, randomIndices[i][0], randomIndices[i][1])
+		path, dist, astar_pops := AStar(graphNodes, sortedEdges, sortedDistances, startIndices, randomIndices[i][0], randomIndices[i][1])
 		if dist[randomIndices[i][1]] <= 0 || len(path) == 0 {
 			// panic("A* failed")
 			slog.Info("A* No route found", randomIndices[i][0], randomIndices[i][1])
 			slog.Info("Coordinates: ", graphNodes[randomIndices[i][0]], graphNodes[randomIndices[i][1]])
 			continue
 		}
+		avgAstarPops += float64(astar_pops)
 	}
 
+	avgAstarPops /= float64(iterations)
+
 	avgAstar := time.Since(startAStar) / time.Duration(iterations)
-	fmt.Println("Average AStar time: ", avgAstar)
+	slog.Info("Average AStar time: ", avgAstar.String())
+	slog.Info("Average AStar Pops:", avgAstar)
 
 	runtime.GC()
 	var startALTv1 = time.Now()
+	avgALTPops := 0.0
 	for i := 0; i < iterations; i++ {
-		path, dist := ALT(graphNodes, sortedEdges, sortedDistances, startIndices, landmarkNodes, landmarkDistances,
+		path, dist, alt_pops := ALT(graphNodes, sortedEdges, sortedDistances, startIndices, landmarkNodes, landmarkDistances,
 			randomIndices[i][0], randomIndices[i][1])
 		if dist <= 0 || len(path) == 0 {
 			slog.Info("ALT No route found", randomIndices[i][0], randomIndices[i][1])
 			slog.Info("Coordinates: ", graphNodes[randomIndices[i][0]], graphNodes[randomIndices[i][1]])
 		}
+		avgALTPops += float64(alt_pops)
 	}
-
+	avgALTPops /= float64(iterations)
 	avgALTv1 := time.Since(startALTv1) / time.Duration(iterations)
-	fmt.Println("Average ALT time: ", avgALTv1)
+
+	slog.Info("Average ALT time: ", avgALTv1.String())
+	slog.Info("Average ALT pops:", avgALTPops)
 
 	fmt.Println("A* speedup percent v/s Djikstra: ", float64(avgDijkstra-avgAstar)/float64(avgDijkstra)*100)
-	fmt.Println("ALTv1 speedup percent v/s Djikstra: ", float64(avgDijkstra-avgALTv1)/float64(avgDijkstra)*100)
-	fmt.Println("ALTv1 speedup percent v/s A*: ", float64(avgAstar-avgALTv1)/float64(avgAstar)*100)
+	fmt.Println("ALT speedup percent v/s Djikstra: ", float64(avgDijkstra-avgALTv1)/float64(avgDijkstra)*100)
+	fmt.Println("ALT speedup percent v/s A*: ", float64(avgAstar-avgALTv1)/float64(avgAstar)*100)
+
+	fmt.Println("A* Pops v/s Dijkstra", (avgDijkPops-avgAstarPops)/avgDijkPops*100)
+	fmt.Println("ALT Pops v/s Dijkstra", (avgDijkPops-avgALTPops)/avgDijkPops*100)
+	fmt.Println("AlT Pops v/s A*", (avgAstarPops-avgALTPops)/avgAstarPops*100)
 
 	fidgeter.Stop()
 
@@ -286,7 +304,7 @@ func SingleRouter(router string, iterations int) {
 		slog.Info("Running Djikstra")
 		var startDijkstra = time.Now()
 		for i := 0; i < iterations; i++ {
-			path, dist := Djikstra(graphNodes, sortedEdges, sortedDistances, startIndices, randomIndices[i][0], randomIndices[i][1])
+			path, dist, _ := Djikstra(graphNodes, sortedEdges, sortedDistances, startIndices, randomIndices[i][0], randomIndices[i][1])
 			if dist[randomIndices[i][1]] <= 0 || len(path) == 0 {
 				slog.Info("Djikstra failed")
 			}
@@ -297,7 +315,7 @@ func SingleRouter(router string, iterations int) {
 	case "astar":
 		var startAStar = time.Now()
 		for i := 0; i < iterations; i++ {
-			path, dist := AStar(graphNodes, sortedEdges, sortedDistances, startIndices, randomIndices[i][0], randomIndices[i][1])
+			path, dist, _ := AStar(graphNodes, sortedEdges, sortedDistances, startIndices, randomIndices[i][0], randomIndices[i][1])
 			if dist[randomIndices[i][1]] <= 0 || len(path) == 0 {
 				slog.Info("A* failed")
 			}
@@ -308,7 +326,7 @@ func SingleRouter(router string, iterations int) {
 	case "alt":
 		var startALT = time.Now()
 		for i := 0; i < iterations; i++ {
-			path, dist := ALT(graphNodes, sortedEdges, sortedDistances, startIndices, landmarkNodes, landmarkDistances, randomIndices[i][0], randomIndices[i][1])
+			path, dist, _ := ALT(graphNodes, sortedEdges, sortedDistances, startIndices, landmarkNodes, landmarkDistances, randomIndices[i][0], randomIndices[i][1])
 			if dist <= 0 || len(path) == 0 {
 				slog.Info("ALT failed")
 			}

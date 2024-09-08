@@ -18,15 +18,16 @@ import (
 // Single landmark heuristic
 func ALT(nodes [][2]float64, edges [][2]int, edgeweights []int,
 	startindicesmap []int, landmarks []int,
-	landmarkDistances map[int][]int, src int, dst int) ([]int, int) {
+	landmarkDistances map[int][]int, src int, dst int) ([]int, int, int) {
 
 	// Initialize GraphData
 	data := types.NewGraphData(len(nodes), src)
 
-	// fmt.Println("Distance array", landmarkDistances[landmarks[0]][src])
+	popCounter := 0
 
 	for data.PQ.Len() > 0 {
 		current := heap.Pop(data.PQ).(*types.QueueItem)
+		popCounter += 1
 		currentNode := current.Node
 
 		if data.Visited[currentNode] {
@@ -72,11 +73,11 @@ func ALT(nodes [][2]float64, edges [][2]int, edgeweights []int,
 		}
 	}
 
-	return path, data.Dist[dst]
+	return path, data.Dist[dst], popCounter
 }
 
 func AlgoALT(Start types.Point, End types.Point, graphNodes [][2]float64, graphEdges [][2]int, distancesEdges []int, startIndices []int,
-	landmarks []int, landmarkDistances map[int][]int) ([]types.Point, int) {
+	landmarks []int, landmarkDistances map[int][]int) ([]types.Point, int, int) {
 	nearestnodeStart := [2]float64{Start.Lat, Start.Lng}
 	nearestnodeEnd := [2]float64{End.Lat, End.Lng}
 	nearestpointStartIndex := -1
@@ -99,7 +100,7 @@ func AlgoALT(Start types.Point, End types.Point, graphNodes [][2]float64, graphE
 		}
 	}
 
-	path, dist := ALT(graphNodes, graphEdges, distancesEdges, startIndices, landmarks, landmarkDistances, nearestpointStartIndex, nearpointEndIndex)
+	path, dist, popCounter := ALT(graphNodes, graphEdges, distancesEdges, startIndices, landmarks, landmarkDistances, nearestpointStartIndex, nearpointEndIndex)
 	// path, dist := ALTv2(graphNodes, graphEdges, distancesEdges, landmarks, landmarkDistances, nearestpointStartIndex, nearpointEndIndex)
 	// Convert the path to the required format
 	shortestPath := make([]types.Point, len(path))
@@ -107,7 +108,7 @@ func AlgoALT(Start types.Point, End types.Point, graphNodes [][2]float64, graphE
 		shortestPath[i] = types.Point{Lat: graphNodes[nodeIndex][0], Lng: graphNodes[nodeIndex][1]}
 	}
 
-	return shortestPath, dist
+	return shortestPath, dist, popCounter
 }
 
 func LandmarksDistanceMaximiser(numLandmarks int) {
@@ -322,7 +323,7 @@ func landMarksDistanceFinder() {
 	for i, landmark := range landmarkNodes {
 		slog.Info("Landmark:", i, landmark)
 		// _, dist := Djikstra(graphNodes, graphEdges, distancesEdges, landmark, -1)
-		_, dist := Djikstra(graphNodes, sorted_edges, sorted_distances, start_indices, landmark, -1)
+		_, dist, _ := Djikstra(graphNodes, sorted_edges, sorted_distances, start_indices, landmark, -1)
 		completeLandmarksMap[landmark] = dist
 		// fmt.Println("Distance from landmark", landmark, ":", dist)
 	}

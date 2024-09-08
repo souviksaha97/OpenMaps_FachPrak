@@ -59,13 +59,14 @@ func Server() {
 		go func() {
 			defer wg.Done()
 			startTime := time.Now()
-			shortestPath, dist := router.AlgoDijkstra(start, end, graphNodes, sortedEdges, sortedDistances, startIndices)
+			shortestPath, dist, popCounter := router.AlgoDijkstra(start, end, graphNodes, sortedEdges, sortedDistances, startIndices)
 			timeTaken := time.Since(startTime).Milliseconds()
 			// results <- types.Result{Algorithm="Dijkstra", shoshortestPath, timeTaken}
 			results <- types.Result{
 				Algorithm:    "Dijkstra",
 				ShortestPath: shortestPath,
 				TimeTaken:    timeTaken,
+				PopCounter:   popCounter,
 			}
 			slog.Info("Dijkstra distance: " + strconv.Itoa(dist))
 			slog.Info("Shortest Path Length: " + strconv.Itoa(len(shortestPath)))
@@ -76,12 +77,13 @@ func Server() {
 		go func() {
 			defer wg.Done()
 			startTime := time.Now()
-			shortestPath, dist := router.AlgoAStar(start, end, graphNodes, sortedEdges, sortedDistances, startIndices)
+			shortestPath, dist, popCounter := router.AlgoAStar(start, end, graphNodes, sortedEdges, sortedDistances, startIndices)
 			timeTaken := time.Since(startTime).Milliseconds()
 			results <- types.Result{
 				Algorithm:    "AStar",
 				ShortestPath: shortestPath,
 				TimeTaken:    timeTaken,
+				PopCounter:   popCounter,
 			}
 			slog.Info("A* distance: " + strconv.Itoa(dist))
 			slog.Info("Shortest Path Length: " + strconv.Itoa(len(shortestPath)))
@@ -92,15 +94,17 @@ func Server() {
 		go func() {
 			defer wg.Done()
 			startTime := time.Now()
-			shortestPath, dist := router.AlgoALT(start, end, graphNodes, sortedEdges, sortedDistances, startIndices, landmarkNodes, landmarkDistances)
+			shortestPath, dist, popCounter := router.AlgoALT(start, end, graphNodes, sortedEdges, sortedDistances, startIndices, landmarkNodes, landmarkDistances)
 			timeTaken := time.Since(startTime).Milliseconds()
 			results <- types.Result{
 				Algorithm:    "ALT",
 				ShortestPath: shortestPath,
 				TimeTaken:    timeTaken,
+				PopCounter:   popCounter,
 			}
 			slog.Info("ALT distance: " + strconv.Itoa(dist))
 			slog.Info("Shortest Path Length: " + strconv.Itoa(len(shortestPath)))
+			slog.Info("Pop Counter:", popCounter)
 		}()
 
 		// Close the results channel when all goroutines are done
@@ -134,6 +138,9 @@ func Server() {
 			"shortest_path_astar": astarResult.ShortestPath,
 			"shortest_path_djik":  dijkstraResult.ShortestPath,
 			"shortest_path_alt":   altResult.ShortestPath,
+			"dijkstra_pops":       dijkstraResult.PopCounter,
+			"astar_pops":          astarResult.PopCounter,
+			"alt_pops":            altResult.PopCounter,
 		})
 	})
 

@@ -30,34 +30,51 @@
             font-size: 24px;
         }
 
-        .header .info-icon {
+        .info-button {
             position: absolute;
             top: 50%;
             right: 20px;
             transform: translateY(-50%);
-            font-size: 18px;
+            background-color: #007bff;
             color: white;
+            border: none;
+            border-radius: 5px;
+            padding: 10px 15px;
             cursor: pointer;
+            font-size: 16px;
+            display: flex;
+            align-items: center;
         }
 
-        .header .tooltiptext {
+        .info-button:hover {
+            background-color: #0056b3;
+        }
+
+        .info-button .info-icon {
+            margin-right: 8px;
+        }
+
+        .tooltiptext {
             visibility: hidden;
-            width: 200px;
+            width: 1000px; /* Increased width for longer text */
             background-color: #000;
             color: #fff;
-            text-align: center;
+            text-align: left; /* Align text to the left */
             border-radius: 6px;
-            padding: 10px;
+            padding: 15px; /* Increased padding for better readability */
             position: absolute;
             z-index: 1;
-            top: 110%;
-            right: 20px;
+            bottom: -50%; /* Position further above the button */
+            right: 0; /* Keep the tooltip aligned to the right of the button */
             opacity: 0;
             transition: opacity 0.3s;
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            white-space: normal; /* Allow text to wrap */
+            overflow: visible; /* Ensure content is not clipped */
         }
 
-        .header .info-icon:hover .tooltiptext {
+
+        .info-button:hover .tooltiptext {
             visibility: visible;
             opacity: 1;
         }
@@ -71,6 +88,7 @@
 
         .controls {
             display: flex;
+            flex-wrap: wrap;
             justify-content: space-around;
             align-items: center;
             padding: 20px;
@@ -84,6 +102,7 @@
             display: flex;
             flex-direction: column;
             align-items: center;
+            margin: 0 10px;
         }
 
         .controls label {
@@ -95,9 +114,12 @@
             width: 100px;
             padding: 5px;
             border-radius: 5px;
-            border: 1px solid #ccc;
+            border: 1px solid #000; /* Black border */
+            background-color: #fff; /* White background */
+            color: #000; /* Black text color */
             text-align: center;
             font-weight: bold;
+            margin-bottom: 5px; /* Space between fields */
         }
 
         .controls button {
@@ -146,13 +168,15 @@
 <body>
     <div class="header">
         <h1>Open Street Maps - Fachpraktikum</h1>
-        <div class="info-icon tooltip">
-            <i class="fas fa-info-circle"></i>
+        <button class="info-button">
+            <i class="fas fa-info-circle info-icon"></i>
             <span class="tooltiptext">
                 Click on the map to select a start point, then click again to select an end point. 
-                The system will compute the shortest paths using different algorithms.
+                The system will compute the shortest paths using different algorithms and return the total computation time, and the number of nodes popped.
+                The box colour corresponds to the path colours on the map.
             </span>
-        </div>
+            Info
+        </button>
     </div>
     
     <div id="map"></div>
@@ -160,20 +184,26 @@
     <div class="controls">
         <div class="control-group">
             <label for="dijkstra-time">Dijkstra Time (ms):</label>
-            <input type="text" id="dijkstra-time" readonly style="border-color: red;">
+            <input type="text" id="dijkstra-time" readonly style="border-color: black;">
+            <label for="dijkstra-pops">Nodes Popped:</label>
+            <input type="text" id="dijkstra-pops" readonly style="border-color: black;">
         </div>
         <div class="control-group">
             <label for="astar-time">A* Time (ms):</label>
-            <input type="text" id="astar-time" readonly style="border-color: blue;">
+            <input type="text" id="astar-time" readonly style="border-color: black;">
+            <label for="astar-pops">Nodes Popped:</label>
+            <input type="text" id="astar-pops" readonly style="border-color: black;">
         </div>
         <div class="control-group">
             <label for="alt-time">ALT Time (ms):</label>
-            <input type="text" id="alt-time" readonly style="border-color: green;">
+            <input type="text" id="alt-time" readonly style="border-color: black;">
+            <label for="alt-pops">Nodes Popped:</label>
+            <input type="text" id="alt-pops" readonly style="border-color: black;">
         </div>
         <button id="clear-map"><i class="fas fa-trash-alt"></i> Clear Map</button>
         <div id="loading-spinner"></div>
     </div>
-
+    
     <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
     <script>
         var map = L.map('map').setView([0, 0], 2);
@@ -248,6 +278,9 @@
                     var dijkstraTime = response.dijkstra_time;
                     var astarTime = response.astar_time;
                     var altTime = response.alt_time;
+                    var dijkstraPops = response.dijkstra_pops; // New data
+                    var astarPops = response.astar_pops;       // New data
+                    var altPops = response.alt_pops;           // New data
 
                     if (shortestPath_dijkstra.length === 0 && shortestPath_astar.length === 0 && shortestPath_alt.length === 0) {
                         alert("No path available between the selected points.");
@@ -260,18 +293,30 @@
                         var dijkstraColor = plotPath(shortestPath_dijkstra);
                         document.getElementById('dijkstra-time').value = dijkstraTime.toFixed(2) + " ms";
                         document.getElementById('dijkstra-time').style.color = dijkstraColor;
+                        document.getElementById('dijkstra-time').style.borderColor = dijkstraColor;
+                        document.getElementById('dijkstra-pops').value = dijkstraPops; // Update nodes popped
+                        document.getElementById('dijkstra-pops').style.borderColor = dijkstraColor;
+                        document.getElementById('dijkstra-pops').style.color = dijkstraColor;
                     }
 
                     if (shortestPath_astar.length > 0) {
                         var astarColor = plotPath(shortestPath_astar);
                         document.getElementById('astar-time').value = astarTime.toFixed(2) + " ms";
                         document.getElementById('astar-time').style.color = astarColor;
+                        document.getElementById('astar-time').style.borderColor = astarColor;
+                        document.getElementById('astar-pops').value = astarPops; // Update nodes popped
+                        document.getElementById('astar-pops').style.borderColor = astarColor;
+                        document.getElementById('astar-pops').style.color = astarColor;
                     }
 
                     if (shortestPath_alt.length > 0) {
                         var altColor = plotPath(shortestPath_alt);
                         document.getElementById('alt-time').value = altTime.toFixed(2) + " ms";
                         document.getElementById('alt-time').style.color = altColor;
+                        document.getElementById('alt-time').style.borderColor = altColor;
+                        document.getElementById('alt-pops').value = altPops; // Update nodes popped
+                        document.getElementById('alt-pops').style.borderColor = altColor;
+                        document.getElementById('alt-pops').style.color = altColor;
                     }
 
                     resetPoints();
