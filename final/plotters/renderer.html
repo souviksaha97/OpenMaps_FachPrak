@@ -233,6 +233,7 @@
 <body>
     <div class="header">
         <h1>Open Street Maps - Fachpraktikum</h1>
+        <link rel="icon" type="image/png" href="map.png">
         <button class="info-button">
             <i class="fas fa-info-circle info-icon"></i>
             <span class="tooltiptext">
@@ -307,10 +308,11 @@
         var landmarksVisible = true; // Track if landmarks are visible
     
         var redIcon = L.divIcon({
-            className: 'red-icon',
-            html: '<div style="background-color: red; border-radius: 50%; width: 10px; height: 10px;"></div>',
-            iconSize: [10, 10]
+            className: 'custom-icon',
+            html: '<svg width="10" height="10" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="red" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="5" fill="red"/></svg>',
+            iconSize: [20, 20]
         });
+
     
         function fetchLandmarks() {
             fetch('http://localhost:5000/landmarks')
