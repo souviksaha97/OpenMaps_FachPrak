@@ -8,76 +8,87 @@
   - [Getting Started](#getting-started)
     - [Go](#go)
   - [Instructions](#instructions)
+    - [Graph Generation](#graph-generation)
+    - [Server](#server)
+    - [Headless Comparison](#headless-comparison)
+    - [Headless Single](#headless-single)
 
-## About<a name = "about"></a>
+## About
 
-Submission for OSM Fachpraktikum submission for SS2024.
+This project is a submission for the OSM Fachpraktikum SS2024. It involves creating and comparing different pathfinding algorithms using OpenStreetMap data.
 
-## Getting Started<a name = "getting_started"></a>
+## Getting Started
 
-If you do not have a working system of Go up already, please follow the section below.
+To set up and run the project, follow these instructions:
 
 ### Go
-Use the instructions mentioned in the [official Go instructions](https://go.dev/doc/install) to install the latest version of Go for your respective operating system.
-Note - The code has been tested on Go version 1.22.6
 
-Once Go is up and running, please run 
+1. Install Go using the [official Go instructions](https://go.dev/doc/install). The code has been tested with Go version 1.22.6.
+
+2. Once Go is installed, run the following command to install the required libraries and packages:
+
+   ```bash
+   go mod tidy
+   ```
+
+## Instructions
+
+### Graph Generation
+
+The code will prompt you to generate graphs on the first run or if the files are missing from the `objects` folder. To generate the graphs manually, use:
+
 ```bash
-go mod tidy
+go run . graph
 ```
-to install the required libraries and packages
 
-## Instructions<a name = "instructions"></a>
+### Server
 
-1. Graph generation
-   The code will prompt you to generate graphs on first run, or if the files are missing from the objects folder.
-   To generate manually, use
+To start the server, use:
 
-   ```bash
-   go run . graph
-   ```
+```bash
+go run . server
+```
 
-2. Server
-    To run the server, use
+Once the server is running, open `plotters/renderer.html` in your browser. Select any two points on the map. If a path exists between them, the server will return the path. Each algorithm's path is indicated by a different box text color.
 
-    ```bash
-    go run . server
-    ```
+![Server](final/docs/pic3.png)
+![Sample](final/docs/mov1.gif)
 
-    ![Server](final/docs/pic3.png)
+### Headless Comparison
 
-    Once the server runs, open the  plotters/renderer.html. Select any two points on the map. If a path between them exists then the server will return the path. Each algorithm will have a different path, indicated by the box text colour.
+To run all algorithms with the same set of points one after the other, use:
 
-3. Headless comparison
-   To run all the different algorithms with the same set of points, one after the other, use
+```bash
+go run . multi <number of point pairs>
+```
 
-   ```bash
-   go run . multi <number of point pairs>
-   ```
+For example:
 
-   For example,
-   ```bash
-   go run . multi 100
-   ```
+```bash
+go run . multi 100
+```
 
-   Runs the Djikstra, A* and ALT algorithms one after the other, and prints a comparison of the algorithms.
+This command runs Dijkstra, A*, and ALT algorithms sequentially and prints a comparison of the results.
 
-   ![Comparative result](final/docs/pic1.png)
+![Comparative result](final/docs/pic1.png)
 
-4. Headless single
-   To run one of the algorithms, use
+### Headless Single
 
-   ```bash
-    go run . single <algo> <number of point pairs>
-    ```
+To run a single algorithm, use:
 
-    Djikstra - djikstra
-    A* - astar
-    ALT - alt
+```bash
+go run . single <algo> <number of point pairs>
+```
 
-    For example,
-    ```bash
-    go run . single alt 100
-    ```
+Replace `<algo>` with one of the following:
+- `dijkstra` for Dijkstra's algorithm
+- `astar` for A* algorithm
+- `alt` for ALT algorithm
 
-    ![Single run](final/docs/pic2.png)
+For example:
+
+```bash
+go run . single alt 100
+```
+
+![Single run](final/docs/pic2.png)
