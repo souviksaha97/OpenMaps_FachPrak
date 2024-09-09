@@ -14,6 +14,8 @@ import (
 	// "runtime"
 )
 
+// TODO: Generate a lot of landmarks. At the beginning order the landmarks as per their heuristic value. Iterate over a smaller batch everytime
+
 // Nodes, Edges, Distances, Landmarks, LandmarkDistances, src, dst
 // Single landmark heuristic
 func ALT(nodes [][2]float64, edges [][2]int, edgeweights []int,
@@ -22,6 +24,14 @@ func ALT(nodes [][2]float64, edges [][2]int, edgeweights []int,
 
 	// Initialize GraphData
 	data := types.NewGraphData(len(nodes), src)
+
+	landmarkRank := make(map[int]int, len(landmarks))
+
+	for _, landmark := range landmarks {
+		landmarkRank[landmark] = generator.Abs(landmarkDistances[landmark][src] - landmarkDistances[landmark][dst])
+	}
+
+	bestLandmarks := generator.GetTopNKeys(landmarkRank, 5)
 
 	popCounter := 0
 
@@ -51,7 +61,7 @@ func ALT(nodes [][2]float64, edges [][2]int, edgeweights []int,
 			if newDist < data.Dist[neighbor] {
 				maxHeuristic := 0
 				heuristic := 0
-				for _, landmark := range landmarks {
+				for _, landmark := range bestLandmarks {
 					heuristic = generator.Abs(landmarkDistances[landmark][neighbor] - landmarkDistances[landmark][dst])
 					if heuristic > maxHeuristic {
 						maxHeuristic = heuristic
