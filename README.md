@@ -12,10 +12,12 @@
     - [Server](#server)
     - [Headless Comparison](#headless-comparison)
     - [Headless Single](#headless-single)
+  - [Results](#results)
 
 ## About
 
 This project is a submission for the OSM Fachpraktikum SS2024. It involves creating and comparing different pathfinding algorithms using OpenStreetMap data.
+In my submission, I have aimed to compare the performances of Djikstra, A* and an ALT Algorithm.
 
 ## Getting Started
 
@@ -28,6 +30,7 @@ To set up and run the project, follow these instructions:
 2. Once Go is installed, run the following command to install the required libraries and packages:
 
    ```bash
+   go get -u
    go mod tidy
    ```
 
@@ -95,3 +98,14 @@ go run . single alt 100
 ```
 
 ![Single run](final/docs/pic2.png)
+
+## Results
+Using an ALT heuristic, I have obtained demonstratable significant speedup, in comparison to an AStar and a Dijkstra algorithm.
+The benchmarks were done on the FMI-Algiers setup. The setup has the following configuration - 
+
+> RAM:  64 GB  
+> Swap: 64 GB  
+> CPU:  Intel(R) Core(TM) i5-9500 CPU @ 3.00GHz  
+>       Core Count: 6  
+> OS:   Ubuntu 22.04.4 LTS  
+

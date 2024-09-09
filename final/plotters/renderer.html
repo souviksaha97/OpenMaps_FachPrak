@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <meta charset="UTF-8">
     <title>Finding Nemo</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
@@ -191,6 +192,61 @@
             background-color: #117a8b; /* Darker teal on hover */
         }
 
+        #charts-map {
+            background-color: #ad0c5c;
+        }
+
+        #charts-map {
+            background-color: #ad0c5c;
+        }
+
+        /* Chart Modal Styles */
+        .chart-container {
+            display: flex;
+            justify-content: space-around;
+            padding: 20px;
+        }
+
+        #timeChart,
+        #popsChart {
+            max-width: 45%;
+            max-height: 400px;
+            flex: 1;
+            margin: 10px;
+        }
+
+        #chartModal {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: #fff;
+            padding: 20px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+            z-index: 1000;
+            border-radius: 8px;
+        }
+
+        #close-chart-modal {
+            background-color: #ff4d4d;
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            padding: 10px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-top: 20px;
+        }
+
+        #close-chart-modal:hover {
+            background-color: #cc0000;
+        }
+
+        #performancechart {
+            width: 100% !important;
+            height: 100% !important;
+        }
+
         #loading-spinner {
             display: none;
             border: 8px solid #f3f3f3;
@@ -284,7 +340,23 @@
             <i class="fas fa-trash-alt"></i> Unzoom Map
             <div class="tooltip">Click to return map to default zoom position.</div>
         </button>
+        <button id="charts-map" class="help-button">
+            <i class="fa-solid fa-square-poll-vertical"></i> Show Chart
+            <div class="tooltip">Click to show statistics about the current run.</div>
+        </button>
         <div id="loading-spinner"></div>
+    </div>
+    <!-- Chart Modal -->
+    <div id="chartModal" style="display: none;">
+        <div class="chart-container">
+            <canvas id="timeChart" width="400" height="400"></canvas>
+            <canvas id="popsChart" width="400" height="400"></canvas>
+        </div>
+        <button id="close-chart-modal">Close</button>
+    </div>
+
+    <div class="credits">
+        <p>Souvik Saha</p>
     </div>
     
     <!-- <div id="server-string" class="server-string"></div> -->
@@ -386,7 +458,7 @@
                     var altDist = response.alt_dist
                     var astarDist = response.astar_dist
     
-                    var serverString = response.server_string;
+                    // var serverString = response.server_string;
     
                     if (shortestPath_dijkstra.length === 0 && shortestPath_astar.length === 0 && shortestPath_alt.length === 0) {
                         alert("No path available between the selected points.");
@@ -438,12 +510,12 @@
                     document.getElementById('loading-spinner').style.display = 'none';
                     resetPoints()
     
-                    var serverStringDiv = document.getElementById('server-string');
-                    if (serverString) {
-                        serverStringDiv.textContent = serverString;
-                    } else {
-                        serverStringDiv.textContent = "No additional info available.";
-                    }
+                    // var serverStringDiv = document.getElementById('server-string');
+                    // if (serverString) {
+                    //     serverStringDiv.textContent = serverString;
+                    // } else {
+                    //     serverStringDiv.textContent = "No additional info available.";
+                    // }
     
                     
                 }
@@ -502,6 +574,69 @@
                 landmarksVisible = true;
             }
         }
+
+        function viewChart() {
+            document.getElementById('chartModal').style.display = 'block';
+            
+            const dijkstraTime = parseFloat(document.getElementById('dijkstra-time').value.replace(' ms', ''));
+            const astarTime = parseFloat(document.getElementById('astar-time').value.replace(' ms', ''));
+            const altTime = parseFloat(document.getElementById('alt-time').value.replace(' ms', ''));
+            const dijkstraPops = parseInt(document.getElementById('dijkstra-pops').value);
+            const astarPops = parseInt(document.getElementById('astar-pops').value);
+            const altPops = parseInt(document.getElementById('alt-pops').value);
+
+            // Chart for Time
+            const timeCtx = document.getElementById('timeChart').getContext('2d');
+            new Chart(timeCtx, {
+                type: 'bar',
+                data: {
+                    labels: ['Dijkstra', 'A*', 'ALT'],
+                    datasets: [{
+                        label: 'Time (ms)',
+                        data: [dijkstraTime, astarTime, altTime],
+                        backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                        borderColor: 'rgba(75, 192, 192, 1)',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+
+            // Chart for Nodes Popped
+            const popsCtx = document.getElementById('popsChart').getContext('2d');
+            new Chart(popsCtx, {
+                type: 'bar',
+                data: {
+                    labels: ['Dijkstra', 'A*', 'ALT'],
+                    datasets: [{
+                        label: 'Nodes Popped',
+                        data: [dijkstraPops, astarPops, altPops],
+                        backgroundColor: 'rgba(153, 102, 255, 0.2)',
+                        borderColor: 'rgba(153, 102, 255, 1)',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+        }
+
+        // Close modal functionality
+        document.getElementById('close-chart-modal').addEventListener('click', function() {
+            document.getElementById('chartModal').style.display = 'none';
+        });
+
     
         document.getElementById('unzoom-map').addEventListener('click', function() {
             map.setView([0, 0], 2);
@@ -510,11 +645,9 @@
         document.getElementById('clear-map').addEventListener('click', clearMap)
     
         document.getElementById('toggle-landmarks').addEventListener('click', toggleLandmarks);
+
+        document.getElementById('charts-map').addEventListener('click', viewChart);
+
     </script>
-    <div class="credits">
-        <p>Souvik Saha</p>
-    </div>
-    
-    
 </body>
 </html>    
