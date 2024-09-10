@@ -209,9 +209,6 @@ func MultiRouter(iterations int) {
 	avgDijkPops /= float64(iterations)
 	avgDijkstra := time.Since(startDijkstra) / time.Duration(iterations)
 
-	slog.Info("Average Dijkstra time: ", avgDijkstra.String())
-	slog.Info("Average Dijkstra Pops:", avgDijkPops)
-
 	runtime.GC()
 	var startAStar = time.Now()
 	avgAstarPops := 0.0
@@ -227,10 +224,7 @@ func MultiRouter(iterations int) {
 	}
 
 	avgAstarPops /= float64(iterations)
-
 	avgAstar := time.Since(startAStar) / time.Duration(iterations)
-	slog.Info("Average AStar time: ", avgAstar.String())
-	slog.Info("Average AStar Pops:", avgAstar)
 
 	runtime.GC()
 	var startALTv1 = time.Now()
@@ -247,16 +241,23 @@ func MultiRouter(iterations int) {
 	avgALTPops /= float64(iterations)
 	avgALTv1 := time.Since(startALTv1) / time.Duration(iterations)
 
-	slog.Info("Average ALT time: ", avgALTv1.String())
-	slog.Info("Average ALT pops:", avgALTPops)
+	slog.Info("==================================== Results ====================================")
+	slog.Info(fmt.Sprintf("Average Dijkstra time:       %s", avgDijkstra.String()))
+	slog.Info(fmt.Sprintf("Average Dijkstra Pops:       %d", int(avgDijkPops)))
+	slog.Info(fmt.Sprintf("Average AStar time:          %s", avgAstar.String()))
+	slog.Info(fmt.Sprintf("Average AStar Pops:          %d", int(avgAstarPops)))
+	slog.Info(fmt.Sprintf("Average ALT time:            %s", avgALTv1.String()))
+	slog.Info(fmt.Sprintf("Average ALT Pops:            %d", int(avgALTPops)))
+	slog.Info("------------------------------------------------------------------------------")
+	slog.Info(fmt.Sprintf("A* speedup vs Dijkstra:      %.2f%%", (float64(avgDijkstra-avgAstar)/float64(avgDijkstra))*100))
+	slog.Info(fmt.Sprintf("ALT speedup vs Dijkstra:     %.2f%%", (float64(avgDijkstra-avgALTv1)/float64(avgDijkstra))*100))
+	slog.Info(fmt.Sprintf("ALT speedup vs A*:           %.2f%%", (float64(avgAstar-avgALTv1)/float64(avgAstar))*100))
+	slog.Info("------------------------------------------------------------------------------")
+	slog.Info(fmt.Sprintf("A* Pops vs Dijkstra:         %.2f%%", (float64(avgDijkPops-avgAstarPops)/float64(avgDijkPops))*100))
+	slog.Info(fmt.Sprintf("ALT Pops vs Dijkstra:        %.2f%%", (float64(avgDijkPops-avgALTPops)/float64(avgDijkPops))*100))
+	slog.Info(fmt.Sprintf("ALT Pops vs A*:              %.2f%%", (float64(avgAstarPops-avgALTPops)/float64(avgAstarPops))*100))
+	slog.Info("==================================== End ======================================")
 
-	slog.Info("A* speedup percent v/s Djikstra: ", float64(avgDijkstra-avgAstar)/float64(avgDijkstra)*100)
-	slog.Info("ALT speedup percent v/s Djikstra: ", float64(avgDijkstra-avgALTv1)/float64(avgDijkstra)*100)
-	slog.Info("ALT speedup percent v/s A*: ", float64(avgAstar-avgALTv1)/float64(avgAstar)*100)
-
-	slog.Info("A* Pops v/s Dijkstra", (avgDijkPops-avgAstarPops)/avgDijkPops*100)
-	slog.Info("ALT Pops v/s Dijkstra", (avgDijkPops-avgALTPops)/avgDijkPops*100)
-	slog.Info("AlT Pops v/s A*", (avgAstarPops-avgALTPops)/avgAstarPops*100)
 
 	fidgeter.Stop()
 
