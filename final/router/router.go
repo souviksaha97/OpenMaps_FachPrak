@@ -230,7 +230,7 @@ func MultiRouter(iterations int) {
 	var startALTv1 = time.Now()
 	avgALTPops := 0.0
 	for i := 0; i < iterations; i++ {
-		path, dist, alt_pops := ALT(graphNodes, sortedEdges, sortedDistances, startIndices, landmarkNodes, landmarkDistances,
+		path, dist, alt_pops, _ := ALT(graphNodes, sortedEdges, sortedDistances, startIndices, landmarkNodes, landmarkDistances,
 			randomIndices[i][0], randomIndices[i][1])
 		if dist <= 0 || len(path) == 0 {
 			slog.Info("ALT No route found", randomIndices[i][0], randomIndices[i][1])
@@ -304,7 +304,7 @@ func SingleRouter(router string, iterations int) {
 	case "alt":
 		var startALT = time.Now()
 		for i := 0; i < iterations; i++ {
-			path, dist, _ := ALT(graphNodes, sortedEdges, sortedDistances, startIndices, landmarkNodes, landmarkDistances, randomIndices[i][0], randomIndices[i][1])
+			path, dist, _, _ := ALT(graphNodes, sortedEdges, sortedDistances, startIndices, landmarkNodes, landmarkDistances, randomIndices[i][0], randomIndices[i][1])
 			if dist <= 0 || len(path) == 0 {
 				slog.Info("ALT failed")
 			}

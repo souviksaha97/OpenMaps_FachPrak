@@ -90,6 +90,9 @@ func AlgoAStar(Start types.Point, End types.Point, graphNodes [][2]float64, grap
 			nearpointEndIndex = k
 			distpointEnd = distEnd
 		}
+		if distpointStart < 30000 && distpointEnd < 30000 {
+			break
+		}
 	}
 
 	path, dist, popCounter := AStar(graphNodes, graphEdges, distancesEdges, startIndices, nearestpointStartIndex, nearpointEndIndex)

@@ -30,9 +30,9 @@ func Server() {
 	serv.Use(cors.New(config))
 
 	// Read the files
-	graphNodes, _, _, _, sortedEdges, sortedDistances, startIndices, landmarkCoords, landmarkNodes, landmarkDistances := router.FileReader()
+	graphNodes, _, _, _, sortedEdges, sortedDistances, startIndices, _, landmarkNodes, landmarkDistances := router.FileReader()
 	// graphNodes, _, _, _, sortedEdges, sortedDistances, startIndices, landmarkCoords, _, _, _, _ := router.FileReader()
-
+	usedLandmarks := make([]int, 5)
 	serv.POST("/submit_points", func(c *gin.Context) {
 		var requestData map[string]types.Point
 		if err := c.BindJSON(&requestData); err != nil {
@@ -97,7 +97,7 @@ func Server() {
 		go func() {
 			defer wg.Done()
 			startTime := time.Now()
-			shortestPath, dist, popCounter := router.AlgoALT(start, end, graphNodes, sortedEdges, sortedDistances, startIndices, landmarkNodes, landmarkDistances)
+			shortestPath, dist, popCounter, usedLandmarksTemp := router.AlgoALT(start, end, graphNodes, sortedEdges, sortedDistances, startIndices, landmarkNodes, landmarkDistances)
 			timeTaken := time.Since(startTime).Milliseconds()
 			results <- types.Result{
 				Algorithm:    "ALT",
@@ -106,9 +106,11 @@ func Server() {
 				PopCounter:   popCounter,
 				Distance:     dist,
 			}
+			usedLandmarks = usedLandmarksTemp
 			slog.Info("ALT distance: " + strconv.Itoa(dist))
 			slog.Info("Shortest Path Length: " + strconv.Itoa(len(shortestPath)))
 			slog.Info("Pop Counter:", popCounter)
+			slog.Info("Used Landmarks:", usedLandmarks)
 		}()
 
 		// Close the results channel when all goroutines are done
@@ -153,9 +155,9 @@ func Server() {
 
 	serv.GET("/landmarks", func(c *gin.Context) {
 		// convert landmarks to json
-		landmark_json := make([]types.Point, len(landmarkCoords))
-		for i := range landmarkCoords {
-			landmark_json[i] = types.Point{Lat: landmarkCoords[i][0], Lng: landmarkCoords[i][1]}
+		landmark_json := make([]types.Point, len(usedLandmarks))
+		for i, landmark := range usedLandmarks {
+			landmark_json[i] = types.Point{Lat: graphNodes[landmark][0], Lng: graphNodes[landmark][1]}
 		}
 		c.JSON(http.StatusOK, gin.H{"landmarks": landmark_json})
 	})

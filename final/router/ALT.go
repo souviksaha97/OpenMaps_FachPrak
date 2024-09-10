@@ -20,7 +20,7 @@ import (
 // Single landmark heuristic
 func ALT(nodes [][2]float64, edges [][2]int, edgeweights []int,
 	startindicesmap []int, landmarks []int,
-	landmarkDistances map[int][]int, src int, dst int) ([]int, int, int) {
+	landmarkDistances map[int][]int, src int, dst int) ([]int, int, int, []int) {
 
 	// Initialize GraphData
 	data := types.NewGraphData(len(nodes), src)
@@ -83,11 +83,11 @@ func ALT(nodes [][2]float64, edges [][2]int, edgeweights []int,
 		}
 	}
 
-	return path, data.Dist[dst], popCounter
+	return path, data.Dist[dst], popCounter, bestLandmarks
 }
 
 func AlgoALT(Start types.Point, End types.Point, graphNodes [][2]float64, graphEdges [][2]int, distancesEdges []int, startIndices []int,
-	landmarks []int, landmarkDistances map[int][]int) ([]types.Point, int, int) {
+	landmarks []int, landmarkDistances map[int][]int) ([]types.Point, int, int, []int) {
 	nearestnodeStart := [2]float64{Start.Lat, Start.Lng}
 	nearestnodeEnd := [2]float64{End.Lat, End.Lng}
 	nearestpointStartIndex := -1
@@ -108,9 +108,12 @@ func AlgoALT(Start types.Point, End types.Point, graphNodes [][2]float64, graphE
 			nearpointEndIndex = k
 			distpointEnd = distEnd
 		}
+		if distpointStart < 30000 && distpointEnd < 30000 {
+			break
+		}
 	}
 
-	path, dist, popCounter := ALT(graphNodes, graphEdges, distancesEdges, startIndices, landmarks, landmarkDistances, nearestpointStartIndex, nearpointEndIndex)
+	path, dist, popCounter, usedLandmarks := ALT(graphNodes, graphEdges, distancesEdges, startIndices, landmarks, landmarkDistances, nearestpointStartIndex, nearpointEndIndex)
 	// path, dist := ALTv2(graphNodes, graphEdges, distancesEdges, landmarks, landmarkDistances, nearestpointStartIndex, nearpointEndIndex)
 	// Convert the path to the required format
 	shortestPath := make([]types.Point, len(path))
@@ -118,7 +121,7 @@ func AlgoALT(Start types.Point, End types.Point, graphNodes [][2]float64, graphE
 		shortestPath[i] = types.Point{Lat: graphNodes[nodeIndex][0], Lng: graphNodes[nodeIndex][1]}
 	}
 
-	return shortestPath, dist, popCounter
+	return shortestPath, dist, popCounter, usedLandmarks
 }
 
 func LandmarksDistanceMaximiser(numLandmarks int) {
@@ -186,52 +189,6 @@ func LandmarksDistanceMaximiser(numLandmarks int) {
 	// 	// slog.Info("Landmark", i, ":", landmarksNodes[i])
 	// }
 	fidgetor.Stop()
-}
-
-func LandmarksPruning(landmarks int, iterations int, epochs int) {
-	// initLandmarks := 256
-	landmarkCounter := make(map[int]int, landmarks)
-	LandmarksDistanceMaximiser(landmarks)
-
-	graphNodes, _, _, _, sortedEdges, sortedDistances, startIndices, _, landmarkNodes, landmarkDistances := FileReader()
-
-	slog.Info("generated landmarks")
-	for _, landmark := range landmarkNodes {
-		landmarkCounter[landmark] = 0
-	}
-	for i := 0; i < epochs; i++ {
-		slog.Info("============Epoch", i+1, "=================")
-		srcDstPairs := [][2]int{}
-		for j := 0; j < iterations; j++ {
-			src := rand.Intn(len(graphNodes))
-			dst := rand.Intn(len(graphNodes))
-			srcDstPairs = append(srcDstPairs, [2]int{src, dst})
-		}
-		slog.Info("Pairs generated")
-		for _, pair := range srcDstPairs {
-			tempMap := PruneALT(graphNodes, sortedEdges, sortedDistances, startIndices, landmarkNodes, landmarkDistances, pair[0], pair[1])
-			// fmt.Println(tempMap)
-			for landmark := range landmarkCounter {
-				landmarkCounter[landmark] += tempMap[landmark]
-				// fmt.Println(tempMap[landmark])
-			}
-		}
-		slog.Info("ALT completed on ", iterations, " pairs")
-		slog.Info("=========================================")
-	}
-
-	pruned := generator.GetTopNKeys(landmarkCounter, 16)
-	fmt.Println("Pruned :", pruned)
-	generator.WriteToJSONFile("landmarkNodes.json", pruned)
-	slog.Info("pruned nodes writted")
-	landmarksNodes := make([][2]float64, len(pruned))
-	for i, landmark := range pruned {
-		landmarksNodes[i][0] = graphNodes[landmark][0]
-		landmarksNodes[i][1] = graphNodes[landmark][1]
-	}
-	generator.WriteToJSONFile("landmarks.json", landmarksNodes)
-
-	landMarksDistanceFinder()
 }
 
 func chooseLandmarks(nodes [][2]float64, numLandmarks int, minDistance int) []int {
@@ -338,84 +295,4 @@ func landMarksDistanceFinder() {
 		// fmt.Println("Distance from landmark", landmark, ":", dist)
 	}
 	generator.WriteToJSONFile("landmarkDistances.json", completeLandmarksMap)
-}
-
-func PruneALT(nodes [][2]float64, edges [][2]int, edgeweights []int,
-	startindicesmap []int, landmarks []int,
-	landmarkDistances map[int][]int, src int, dst int) map[int]int {
-
-	// Initialize GraphData
-	data := types.NewGraphData(len(nodes), src)
-	landmarkCounter := make(map[int]int, len(landmarks))
-
-	// // Calculate farthest landmark
-	// farthestLandmarkDst := 0
-	// maxDistance := 0
-	// closestLandmarkDst := 0
-	// minDistance := math.MaxInt64
-	// for _, landmark := range landmarks {
-	// 	distance := landmarkDistances[landmark][dst]
-	// 	if distance > maxDistance {
-	// 		maxDistance = distance
-	// 		farthestLandmarkDst = landmark
-	// 	}
-	// 	if distance < minDistance {
-	// 		minDistance = distance
-	// 		closestLandmarkDst = landmark
-	// 	}
-	// }
-
-	// fmt.Println("Distance array", landmarkDistances[landmarks[0]][src])
-
-	for data.PQ.Len() > 0 {
-		current := heap.Pop(data.PQ).(*types.QueueItem)
-		currentNode := current.Node
-
-		if data.Visited[currentNode] {
-			continue
-		}
-		data.Visited[currentNode] = true
-
-		if currentNode == dst {
-			break
-		}
-
-		startindex := startindicesmap[currentNode]
-		endindex := startindicesmap[currentNode+1]
-		for i := startindex; i < endindex; i++ {
-			neighbor := edges[i][1]
-			if neighbor < 0 {
-				continue
-			}
-
-			newDist := data.Dist[currentNode] + edgeweights[i]
-			if newDist < data.Dist[neighbor] {
-				maxHeuristic := 0
-				heuristic := 0
-				chosenLandmark := 0
-				for _, landmark := range landmarks {
-					heuristic = generator.Abs(landmarkDistances[landmark][neighbor] - landmarkDistances[landmark][dst])
-					if heuristic > maxHeuristic {
-						maxHeuristic = heuristic
-						chosenLandmark = landmark
-					}
-				}
-				landmarkCounter[chosenLandmark] += 1
-				newPriority := newDist + maxHeuristic
-				data.Dist[neighbor] = newDist
-				data.Prev[neighbor] = currentNode
-				heap.Push(data.PQ, &types.QueueItem{Node: neighbor, Priority: newPriority})
-			}
-		}
-	}
-
-	path := []int{}
-	if dst != -1 && (data.Prev[dst] != -1 || src == dst) {
-		// Build the path in reverse order
-		for at := dst; at != -1; at = data.Prev[at] {
-			path = append(path, at)
-		}
-	}
-
-	return landmarkCounter
 }

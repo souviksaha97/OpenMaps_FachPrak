@@ -309,7 +309,7 @@
             <input type="text" id="dijkstra-time" readonly style="border-color: black;">
             <label for="dijkstra-pops">Nodes Popped:</label>
             <input type="text" id="dijkstra-pops" readonly style="border-color: black;">
-            <label for="dijkstra-pops">Distance Travelled (m):</label>
+            <label for="dijkstra-pops">Path Distance (m):</label>
             <input type="text" id="dijkstra-dist" readonly style="border-color: black;">
         </div>
         <div class="control-group">
@@ -317,7 +317,7 @@
             <input type="text" id="astar-time" readonly style="border-color: black;">
             <label for="astar-pops">Nodes Popped:</label>
             <input type="text" id="astar-pops" readonly style="border-color: black;">
-            <label for="astar-pops">Distance Travelled (m):</label>
+            <label for="astar-pops">Path Distance (m):</label>
             <input type="text" id="astar-dist" readonly style="border-color: black;">
         </div>
         <div class="control-group">
@@ -325,7 +325,7 @@
             <input type="text" id="alt-time" readonly style="border-color: black;">
             <label for="alt-pops">Nodes Popped:</label>
             <input type="text" id="alt-pops" readonly style="border-color: black;">
-            <label for="alt-pops">Distance Travelled (m):</label>
+            <label for="alt-pops">Path Distance (m):</label>
             <input type="text" id="alt-dist" readonly style="border-color: black;">
         </div>
         <button id="clear-map" class="help-button">
@@ -368,7 +368,9 @@
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
             maxZoom: 19,
         }).addTo(map);
-    
+        
+        let timeChart = null;
+        let popsChart = null;
         var startPoint = null;
         var endPoint = null;
         var markers = [];
@@ -387,6 +389,7 @@
 
     
         function fetchLandmarks() {
+            console.log('Fetching landmarks...');
             fetch('http://localhost:5000/landmarks')
                 .then(response => response.json())
                 .then(data => {
@@ -403,6 +406,7 @@
         }
     
         function plotLandmarks() {
+            console.log('Plotting landmarks...');
             landmarkMarkers.forEach(function(marker) {
                 map.removeLayer(marker);
             });
@@ -411,11 +415,9 @@
                 var marker = L.marker([coord.lat, coord.lng], { icon: redIcon }).addTo(map);
                 landmarkMarkers.push(marker);
             });
-            var bounds = L.latLngBounds(landmarkMarkers.map(marker => marker.getLatLng()));
-            map.fitBounds(bounds);
+            // var bounds = L.latLngBounds(landmarkMarkers.map(marker => marker.getLatLng()));
+            // map.fitBounds(bounds);
         }
-    
-        fetchLandmarks();
     
         map.on('click', function(e) {
             if (startPoint === null) {
@@ -466,9 +468,11 @@
                         document.getElementById('loading-spinner').style.display = 'none';
                         return;
                     }
+
     
                     if (shortestPath_dijkstra.length > 0) {
                         var dijkstraColor = plotPath(shortestPath_dijkstra);
+                        fetchLandmarks();
                         document.getElementById('dijkstra-time').value = dijkstraTime.toFixed(2) + " ms";
                         document.getElementById('dijkstra-time').style.color = dijkstraColor;
                         document.getElementById('dijkstra-time').style.borderColor = dijkstraColor;
@@ -509,7 +513,8 @@
                     
                     document.getElementById('loading-spinner').style.display = 'none';
                     resetPoints()
-    
+                    fetchLandmarks();
+
                     // var serverStringDiv = document.getElementById('server-string');
                     // if (serverString) {
                     //     serverStringDiv.textContent = serverString;
@@ -527,12 +532,12 @@
             path.forEach(function(coord) {
                 latlngs.push(L.latLng(coord.lat, coord.lng));
             });
-    
+            
             var color = colors[colorIndex % colors.length];
             var rgbaColor = colorToRgba(color, 0.8); // 0.5 is the alpha value for 50% transparency
             var polyline = L.polyline(latlngs, { color: rgbaColor }).addTo(map);
             polylines.push(polyline);
-            map.fitBounds(polyline.getBounds());
+            // map.fitBounds(polyline.getBounds());
             colorIndex++;
             
             return rgbaColor;
@@ -584,62 +589,77 @@
             const dijkstraPops = parseInt(document.getElementById('dijkstra-pops').value);
             const astarPops = parseInt(document.getElementById('astar-pops').value);
             const altPops = parseInt(document.getElementById('alt-pops').value);
-
-            // Chart for Time
+        
+            // Update or create Time Chart
             const timeCtx = document.getElementById('timeChart').getContext('2d');
-            new Chart(timeCtx, {
-                type: 'bar',
-                data: {
-                    labels: ['Dijkstra', 'A*', 'ALT'],
-                    datasets: [{
-                        label: 'Time (ms)',
-                        data: [dijkstraTime, astarTime, altTime],
-                        backgroundColor: 'rgba(75, 192, 192, 0.2)',
-                        borderColor: 'rgba(75, 192, 192, 1)',
-                        borderWidth: 1
-                    }]
-                },
-                options: {
-                    scales: {
-                        y: {
-                            beginAtZero: true
+            if (timeChart) {
+                // Update existing chart data
+                timeChart.data.datasets[0].data = [dijkstraTime, astarTime, altTime];
+                timeChart.update();
+            } else {
+                // Create new chart if it doesn't exist
+                timeChart = new Chart(timeCtx, {
+                    type: 'bar',
+                    data: {
+                        labels: ['Dijkstra', 'A*', 'ALT'],
+                        datasets: [{
+                            label: 'Time (ms)',
+                            data: [dijkstraTime, astarTime, altTime],
+                            backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                            borderColor: 'rgba(75, 192, 192, 1)',
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        scales: {
+                            y: {
+                                beginAtZero: true
+                            }
                         }
                     }
-                }
-            });
-
-            // Chart for Nodes Popped
+                });
+            }
+        
+            // Update or create Pops Chart
             const popsCtx = document.getElementById('popsChart').getContext('2d');
-            new Chart(popsCtx, {
-                type: 'bar',
-                data: {
-                    labels: ['Dijkstra', 'A*', 'ALT'],
-                    datasets: [{
-                        label: 'Nodes Popped',
-                        data: [dijkstraPops, astarPops, altPops],
-                        backgroundColor: 'rgba(153, 102, 255, 0.2)',
-                        borderColor: 'rgba(153, 102, 255, 1)',
-                        borderWidth: 1
-                    }]
-                },
-                options: {
-                    scales: {
-                        y: {
-                            beginAtZero: true
+            if (popsChart) {
+                // Update existing chart data
+                popsChart.data.datasets[0].data = [dijkstraPops, astarPops, altPops];
+                popsChart.update();
+            } else {
+                // Create new chart if it doesn't exist
+                popsChart = new Chart(popsCtx, {
+                    type: 'bar',
+                    data: {
+                        labels: ['Dijkstra', 'A*', 'ALT'],
+                        datasets: [{
+                            label: 'Nodes Popped',
+                            data: [dijkstraPops, astarPops, altPops],
+                            backgroundColor: 'rgba(153, 102, 255, 0.2)',
+                            borderColor: 'rgba(153, 102, 255, 1)',
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        scales: {
+                            y: {
+                                beginAtZero: true
+                            }
                         }
                     }
-                }
-            });
+                });
+            }
         }
-
+        
         // Close modal functionality
         document.getElementById('close-chart-modal').addEventListener('click', function() {
             document.getElementById('chartModal').style.display = 'none';
         });
+        
 
     
         document.getElementById('unzoom-map').addEventListener('click', function() {
-            map.setView([0, 0], 2);
+            map.setView([0, 0], 0.5);
         });
 
         document.getElementById('clear-map').addEventListener('click', clearMap)

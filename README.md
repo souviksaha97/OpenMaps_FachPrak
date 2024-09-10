@@ -52,7 +52,7 @@ To start the server, use:
 go run . server
 ```
 
-Once the server is running, open `plotters/renderer.html` in your browser. Select any two points on the map. If a path exists between them, the server will return the path. Each algorithm's path is indicated by a different box text color.
+Once the server is running, open `plotters/renderer.html` in your browser. Select any two points on the map. If a path exists between them, the server will return the path. Each algorithm's path is indicated by a different box text color. You can see the number of points popped, distance travelled and time taken in text boxes. Additionally, you can click 'Show Chart' to visualise the data.
 
 ![Server](final/docs/pic3.png)
 <p align="center">
@@ -109,3 +109,4 @@ The benchmarks were done on the FMI-Algiers setup. The setup has the following c
 >       Core Count: 6  
 > OS:   Ubuntu 22.04.4 LTS  
 
+![Results](final/docs/pic5.png)
