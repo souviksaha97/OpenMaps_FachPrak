@@ -5,7 +5,6 @@ import (
 	"final/generator"
 	"final/router"
 	"final/server" // Add this line to import the tester package
-	"final/tester"
 	"fmt"
 	"os"
 	"runtime"
@@ -30,17 +29,14 @@ func main() {
 
 		if strings.EqualFold(input, "y") {
 			slog.Info("Running the generator")
-			slog.Info("Good night! 💤")
 			generator.Generator()
 			router.LandmarksDistanceMaximiser(landmarksCount)
-			// router.LandmarksDistanceMaximiser(0)
 		} else {
 			fmt.Println("Exiting program.")
 			os.Exit(0)
 		}
 		slog.Info("Generator finished")
 		slog.Info("Time taken: ", time.Since(generateTime))
-		slog.Info("Good morning! ☀️")
 		os.Exit(0)
 	} else {
 		slog.Debug("All files exist")
@@ -93,25 +89,8 @@ func main() {
 		slog.Info("Running the alt-pre")
 		router.LandmarksDistanceMaximiser(landmarksCount)
 
-	case "tester":
-		slog.Info("Running the tester")
-		if len(os.Args) < 3 {
-			slog.Info("Iterations argument missing")
-			return
-		}
-		iterations, err := strconv.Atoi(os.Args[2])
-		if err != nil {
-			slog.Info("Invalid iterations argument")
-			return
-		}
-		tester.Tester(iterations)
-
-	case "debug":
-		slog.Info("Running the debug")
-		router.Debugging()
-
 	default:
-		slog.Info("Invalid argument")
+		printHelp()
 	}
 
 }
@@ -159,4 +138,43 @@ func touch(filename string) error {
 	}
 
 	return nil
+}
+
+func printHelp() {
+	fmt.Println("Help Section:")
+	fmt.Println("-------------")
+	fmt.Println("Usage: <program_name> <command> [options]")
+	fmt.Println()
+	fmt.Println("Available Commands:")
+	fmt.Println()
+	fmt.Println("1. graph")
+	fmt.Println("   Description: Generates a graph using the generator.")
+	fmt.Println("   Usage: <program_name> graph")
+	fmt.Println()
+	fmt.Println("2. server")
+	fmt.Println("   Description: Starts the server to handle requests.")
+	fmt.Println("   Usage: <program_name> server")
+	fmt.Println()
+	fmt.Println("3. multi")
+	fmt.Println("   Description: Runs the multi-router with the specified number of iterations.")
+	fmt.Println("   Usage: <program_name> multi <iterations>")
+	fmt.Println("   Example: <program_name> multi 10")
+	fmt.Println()
+	fmt.Println("4. single")
+	fmt.Println("   Description: Runs the single-router for a specific run and iteration count.")
+	fmt.Println("   Usage: <program_name> single <run_name> <iterations>")
+	fmt.Println("   Example: <program_name> single testRun 5")
+	fmt.Println()
+	fmt.Println("5. alt-pre")
+	fmt.Println("   Description: Pre-processes landmarks for the ALT algorithm.")
+	fmt.Println("   Usage: <program_name> alt-pre")
+	fmt.Println()
+	fmt.Println("6. tester")
+	fmt.Println("   Description: Runs the tester with a specified number of iterations.")
+	fmt.Println("   Usage: <program_name> tester <iterations>")
+	fmt.Println("   Example: <program_name> tester 20")
+	fmt.Println()
+	fmt.Println("7. debug")
+	fmt.Println("   Description: Runs the router in debug mode to assist in troubleshooting.")
+	fmt.Println("   Usage: <program_name> debug")
 }
