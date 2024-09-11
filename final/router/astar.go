@@ -69,7 +69,7 @@ func AStar(nodes [][2]float64, edges [][2]int, edgeweights []int, startindicesma
 	return path, data.Dist, popCounter
 }
 
-func AlgoAStar(Start types.Point, End types.Point, graphNodes [][2]float64, graphEdges [][2]int, distancesEdges []int, startIndices []int) ([]types.Point, int, int) {
+func AlgoAStar(Start types.Point, End types.Point, graphNodes [][2]float64, gridNodes [][][][3]float64, graphEdges [][2]int, distancesEdges []int, startIndices []int) ([]types.Point, int, int) {
 	nearestnodeStart := [2]float64{Start.Lat, Start.Lng}
 	nearestnodeEnd := [2]float64{End.Lat, End.Lng}
 	nearestpointStartIndex := -1
@@ -78,20 +78,22 @@ func AlgoAStar(Start types.Point, End types.Point, graphNodes [][2]float64, grap
 	distpointEnd := math.MaxInt64
 
 	// Find the nearest start and end nodes
-	for k, node := range graphNodes {
+	a, b := generator.FindRowAndColumnInGrid(180, 360, Start.Lat, Start.Lng)
+	possiblestartandendpoints := gridNodes[a][b]
+	c, d := generator.FindRowAndColumnInGrid(180, 360, End.Lat, End.Lng)
+	possiblestartandendpoints = append(possiblestartandendpoints, gridNodes[c][d]...)
+
+	for _, node := range possiblestartandendpoints {
 		distStart := generator.Haversine(node[0], node[1], nearestnodeStart[0], nearestnodeStart[1])
 		distEnd := generator.Haversine(node[0], node[1], nearestnodeEnd[0], nearestnodeEnd[1])
 
 		if distStart < distpointStart {
-			nearestpointStartIndex = k
+			nearestpointStartIndex = int(node[2])
 			distpointStart = distStart
 		}
 		if distEnd < distpointEnd {
-			nearpointEndIndex = k
+			nearpointEndIndex = int(node[2])
 			distpointEnd = distEnd
-		}
-		if distpointStart < 30000 && distpointEnd < 30000 {
-			break
 		}
 	}
 

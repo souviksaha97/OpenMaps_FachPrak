@@ -172,7 +172,7 @@ func Generator() {
 			grid[0][0] = append(grid[0][0], [3]float64{randLat, randLong, float64(s)})
 		} else {
 
-			a, b := findRowAndColumnInGrid(rows, colums, float64(randLat), randLong)
+			a, b := FindRowAndColumnInGrid(rows, colums, float64(randLat), randLong)
 			//fmt.Println(a, b, randLat, randLong)
 			grid[a][b] = append(grid[a][b], [3]float64{randLat, randLong, float64(s)})
 		}

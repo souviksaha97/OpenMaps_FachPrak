@@ -4,7 +4,6 @@ import (
 	"container/heap"
 	"final/generator"
 	"final/types"
-	"fmt"
 	"math"
 	"math/rand"
 	"time"
@@ -14,8 +13,6 @@ import (
 	// "runtime"
 )
 
-// TODO: Generate a lot of landmarks. At the beginning order the landmarks as per their heuristic value. Iterate over a smaller batch everytime
-
 // Nodes, Edges, Distances, Landmarks, LandmarkDistances, src, dst
 // Single landmark heuristic
 func ALT(nodes [][2]float64, edges [][2]int, edgeweights []int,
@@ -24,14 +21,14 @@ func ALT(nodes [][2]float64, edges [][2]int, edgeweights []int,
 
 	// Initialize GraphData
 	data := types.NewGraphData(len(nodes), src)
-
+	const numberTopLandmarks = 5
 	landmarkRank := make(map[int]int, len(landmarks))
 
 	for _, landmark := range landmarks {
 		landmarkRank[landmark] = generator.Abs(landmarkDistances[landmark][src] - landmarkDistances[landmark][dst])
 	}
 
-	bestLandmarks := generator.GetTopNKeys(landmarkRank, 5)
+	bestLandmarks := generator.GetTopNKeys(landmarkRank, numberTopLandmarks)
 
 	popCounter := 0
 
@@ -86,7 +83,7 @@ func ALT(nodes [][2]float64, edges [][2]int, edgeweights []int,
 	return path, data.Dist[dst], popCounter, bestLandmarks
 }
 
-func AlgoALT(Start types.Point, End types.Point, graphNodes [][2]float64, graphEdges [][2]int, distancesEdges []int, startIndices []int,
+func AlgoALT(Start types.Point, End types.Point, graphNodes [][2]float64, gridNodes [][][][3]float64, graphEdges [][2]int, distancesEdges []int, startIndices []int,
 	landmarks []int, landmarkDistances map[int][]int) ([]types.Point, int, int, []int) {
 	nearestnodeStart := [2]float64{Start.Lat, Start.Lng}
 	nearestnodeEnd := [2]float64{End.Lat, End.Lng}
@@ -96,20 +93,22 @@ func AlgoALT(Start types.Point, End types.Point, graphNodes [][2]float64, graphE
 	distpointEnd := math.MaxInt64
 
 	// Find the nearest start and end nodes
-	for k, node := range graphNodes {
+	a, b := generator.FindRowAndColumnInGrid(180, 360, Start.Lat, Start.Lng)
+	possiblestartandendpoints := gridNodes[a][b]
+	c, d := generator.FindRowAndColumnInGrid(180, 360, End.Lat, End.Lng)
+	possiblestartandendpoints = append(possiblestartandendpoints, gridNodes[c][d]...)
+
+	for _, node := range possiblestartandendpoints {
 		distStart := generator.Haversine(node[0], node[1], nearestnodeStart[0], nearestnodeStart[1])
 		distEnd := generator.Haversine(node[0], node[1], nearestnodeEnd[0], nearestnodeEnd[1])
 
 		if distStart < distpointStart {
-			nearestpointStartIndex = k
+			nearestpointStartIndex = int(node[2])
 			distpointStart = distStart
 		}
 		if distEnd < distpointEnd {
-			nearpointEndIndex = k
+			nearpointEndIndex = int(node[2])
 			distpointEnd = distEnd
-		}
-		if distpointStart < 30000 && distpointEnd < 30000 {
-			break
 		}
 	}
 

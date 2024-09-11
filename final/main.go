@@ -1,9 +1,5 @@
 package main
 
-// TODO: use gob format for saving and reading files
-// TODO: use goroutines for reading files
-// TODO: remove uneccessary functions
-
 import (
 	"bufio"
 	"final/generator"
@@ -24,6 +20,7 @@ import (
 func main() {
 	slog.Info("Starting the program")
 	runtime.GOMAXPROCS(runtime.NumCPU())
+	const landmarksCount = 200
 	if !init_main() {
 		generateTime := time.Now()
 		reader := bufio.NewReader(os.Stdin)
@@ -35,6 +32,7 @@ func main() {
 			slog.Info("Running the generator")
 			slog.Info("Good night! 💤")
 			generator.Generator()
+			router.LandmarksDistanceMaximiser(landmarksCount)
 			// router.LandmarksDistanceMaximiser(0)
 		} else {
 			fmt.Println("Exiting program.")
@@ -93,16 +91,7 @@ func main() {
 
 	case "alt-pre":
 		slog.Info("Running the alt-pre")
-		if len(os.Args) < 3 {
-			slog.Info("Iterations argument missing")
-			return
-		}
-		iterations, err := strconv.Atoi(os.Args[2])
-		if err != nil {
-			slog.Info("Invalid iterations argument")
-			return
-		}
-		router.LandmarksDistanceMaximiser(iterations)
+		router.LandmarksDistanceMaximiser(landmarksCount)
 
 	case "tester":
 		slog.Info("Running the tester")
@@ -120,10 +109,6 @@ func main() {
 	case "debug":
 		slog.Info("Running the debug")
 		router.Debugging()
-
-	case "prune":
-		slog.Info("Pruning")
-		router.LandmarksPruning(64, 100, 10)
 
 	default:
 		slog.Info("Invalid argument")

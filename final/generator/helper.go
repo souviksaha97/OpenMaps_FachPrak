@@ -748,7 +748,7 @@ func TestAllPolygonesIfMidpointsisIn(ways_map map[osm.NodeID][]osm.NodeID, nodes
 	return inAnyPolygon
 }
 
-func findRowAndColumnInGrid(rows int, colums int, lat float64, long float64) (int, int) {
+func FindRowAndColumnInGrid(rows int, colums int, lat float64, long float64) (int, int) {
 	if lat <= -89.0 || lat >= 89.0 {
 		return 0, 0
 	}

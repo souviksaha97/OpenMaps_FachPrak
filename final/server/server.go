@@ -30,7 +30,7 @@ func Server() {
 	serv.Use(cors.New(config))
 
 	// Read the files
-	graphNodes, _, _, _, sortedEdges, sortedDistances, startIndices, _, landmarkNodes, landmarkDistances := router.FileReader()
+	graphNodes, _, _, gridNodes, sortedEdges, sortedDistances, startIndices, _, landmarkNodes, landmarkDistances := router.FileReader()
 	// graphNodes, _, _, _, sortedEdges, sortedDistances, startIndices, landmarkCoords, _, _, _, _ := router.FileReader()
 	usedLandmarks := make([]int, 5)
 	serv.POST("/submit_points", func(c *gin.Context) {
@@ -59,7 +59,7 @@ func Server() {
 		go func() {
 			defer wg.Done()
 			startTime := time.Now()
-			shortestPath, dist, popCounter := router.AlgoDijkstra(start, end, graphNodes, sortedEdges, sortedDistances, startIndices)
+			shortestPath, dist, popCounter := router.AlgoDijkstra(start, end, graphNodes, gridNodes, sortedEdges, sortedDistances, startIndices)
 			timeTaken := time.Since(startTime).Milliseconds()
 			// results <- types.Result{Algorithm="Dijkstra", shoshortestPath, timeTaken}
 			results <- types.Result{
@@ -79,7 +79,7 @@ func Server() {
 		go func() {
 			defer wg.Done()
 			startTime := time.Now()
-			shortestPath, dist, popCounter := router.AlgoAStar(start, end, graphNodes, sortedEdges, sortedDistances, startIndices)
+			shortestPath, dist, popCounter := router.AlgoAStar(start, end, graphNodes, gridNodes, sortedEdges, sortedDistances, startIndices)
 			timeTaken := time.Since(startTime).Milliseconds()
 			results <- types.Result{
 				Algorithm:    "AStar",
@@ -97,7 +97,7 @@ func Server() {
 		go func() {
 			defer wg.Done()
 			startTime := time.Now()
-			shortestPath, dist, popCounter, usedLandmarksTemp := router.AlgoALT(start, end, graphNodes, sortedEdges, sortedDistances, startIndices, landmarkNodes, landmarkDistances)
+			shortestPath, dist, popCounter, usedLandmarksTemp := router.AlgoALT(start, end, graphNodes, gridNodes, sortedEdges, sortedDistances, startIndices, landmarkNodes, landmarkDistances)
 			timeTaken := time.Since(startTime).Milliseconds()
 			results <- types.Result{
 				Algorithm:    "ALT",
