@@ -192,50 +192,37 @@ func MultiRouter(iterations int) {
 		randomIndices[i][1] = rand.Intn(len(graphNodes))
 	}
 
+	slog.Info("Djikstra started")
 	runtime.GC()
 	var startDijkstra = time.Now()
 	avgDijkPops := 0.0
 	for i := 0; i < iterations; i++ {
-		path, dist, dijkstra_pops := Djikstra(graphNodes, sortedEdges, sortedDistances, startIndices, randomIndices[i][0], randomIndices[i][1])
-		if (dist[randomIndices[i][1]] <= 0 || len(path) == 0) && (randomIndices[i][0] != randomIndices[i][1]) {
-			// panic("Djikstra failed")
-			slog.Info("Dijkstra No route found", randomIndices[i][0], randomIndices[i][1])
-			slog.Info("Coordinates: ", graphNodes[randomIndices[i][0]], graphNodes[randomIndices[i][1]])
-			continue
-		}
+		_, _, dijkstra_pops := Djikstra(graphNodes, sortedEdges, sortedDistances, startIndices, randomIndices[i][0], randomIndices[i][1])
 		avgDijkPops += float64(dijkstra_pops)
 	}
 
 	avgDijkPops /= float64(iterations)
 	avgDijkstra := time.Since(startDijkstra) / time.Duration(iterations)
 
+	slog.Info("A* started")
 	runtime.GC()
 	var startAStar = time.Now()
 	avgAstarPops := 0.0
 	for i := 0; i < iterations; i++ {
-		path, dist, astar_pops := AStar(graphNodes, sortedEdges, sortedDistances, startIndices, randomIndices[i][0], randomIndices[i][1])
-		if dist[randomIndices[i][1]] <= 0 || len(path) == 0 {
-			// panic("A* failed")
-			slog.Info("A* No route found", randomIndices[i][0], randomIndices[i][1])
-			slog.Info("Coordinates: ", graphNodes[randomIndices[i][0]], graphNodes[randomIndices[i][1]])
-			continue
-		}
+		_, _, astar_pops := AStar(graphNodes, sortedEdges, sortedDistances, startIndices, randomIndices[i][0], randomIndices[i][1])
 		avgAstarPops += float64(astar_pops)
 	}
 
 	avgAstarPops /= float64(iterations)
 	avgAstar := time.Since(startAStar) / time.Duration(iterations)
 
+	slog.Info("ALT started")
 	runtime.GC()
 	var startALTv1 = time.Now()
 	avgALTPops := 0.0
 	for i := 0; i < iterations; i++ {
-		path, dist, alt_pops, _ := ALT(graphNodes, sortedEdges, sortedDistances, startIndices, landmarkNodes, landmarkDistances,
+		_, _, alt_pops, _ := ALT(graphNodes, sortedEdges, sortedDistances, startIndices, landmarkNodes, landmarkDistances,
 			randomIndices[i][0], randomIndices[i][1])
-		if dist <= 0 || len(path) == 0 {
-			slog.Info("ALT No route found", randomIndices[i][0], randomIndices[i][1])
-			slog.Info("Coordinates: ", graphNodes[randomIndices[i][0]], graphNodes[randomIndices[i][1]])
-		}
 		avgALTPops += float64(alt_pops)
 	}
 	avgALTPops /= float64(iterations)
