@@ -43,6 +43,12 @@ The code will prompt you to generate graphs on the first run or if the files are
 ```bash
 go run . graph
 ```
+After the graph is generated, the code will automatically generate 200 landmarks. If you want to change the number of landmarks generated, you can edit line 22 in <main.go>
+
+```go
+const landmarksCount = 200
+```
+
 
 ### Server
 
