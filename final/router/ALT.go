@@ -1,3 +1,5 @@
+// Implements the ALT algorithm for finding the shortest path between two points
+
 package router
 
 import (
@@ -83,6 +85,7 @@ func ALT(nodes [][2]float64, edges [][2]int, edgeweights []int,
 	return path, data.Dist[dst], popCounter, bestLandmarks
 }
 
+// Searches for the closest node, and then uses the ALT algorithm to find the shortest path
 func AlgoALT(Start types.Point, End types.Point, graphNodes [][2]float64, gridNodes [][][][3]float64, graphEdges [][2]int, distancesEdges []int, startIndices []int,
 	landmarks []int, landmarkDistances map[int][]int) ([]types.Point, int, int, []int) {
 	nearestnodeStart := [2]float64{Start.Lat, Start.Lng}
@@ -113,7 +116,7 @@ func AlgoALT(Start types.Point, End types.Point, graphNodes [][2]float64, gridNo
 	}
 
 	path, dist, popCounter, usedLandmarks := ALT(graphNodes, graphEdges, distancesEdges, startIndices, landmarks, landmarkDistances, nearestpointStartIndex, nearpointEndIndex)
-	// path, dist := ALTv2(graphNodes, graphEdges, distancesEdges, landmarks, landmarkDistances, nearestpointStartIndex, nearpointEndIndex)
+	
 	// Convert the path to the required format
 	shortestPath := make([]types.Point, len(path))
 	for i, nodeIndex := range path {
@@ -123,32 +126,13 @@ func AlgoALT(Start types.Point, End types.Point, graphNodes [][2]float64, gridNo
 	return shortestPath, dist, popCounter, usedLandmarks
 }
 
+// Finds maximum distance for numLandmarks landmarks
 func LandmarksDistanceMaximiser(numLandmarks int) {
-	// nodes, edges, distances, _, _, _, _ := FileReader()
 	nodes, _, _, _, _, _, _, _, _, _ := FileReader()
-	// longSearch := false
 
-	maxDistance := 0
-	// if longSearch {
-	// 	for i := 0; i < len(nodes); i++ {
-	// 		for j := i + 1; j < len(nodes); j++ {
-	// 			distance := generator.Haversine(nodes[i][0], nodes[i][1], nodes[j][0], nodes[j][1])
-	// 			if distance > maxDistance {
-	// 				maxDistance = distance
-	// 			}
-	// 		}
-	// 	}
-	// } else {
-	// 	// circumference of earth in km
-	maxDistance = 6371000.0
-	// }
-
-	// slog.Debug("Max distance: ", maxDistance)
-	// if numLandmarks == 0 {
-	// 	numLandmarks = 10
-	// }
-
+	maxDistance := 63710000
 	landmarks := make([]int, numLandmarks)
+
 	for {
 		res := chooseLandmarks(nodes, numLandmarks, int(maxDistance))
 		// res := chooseLandmarksV2(nodes, edges, distances, numLandmarks, int(maxDistance))
@@ -160,9 +144,7 @@ func LandmarksDistanceMaximiser(numLandmarks int) {
 			break
 		}
 	}
-	// landmarks = chooseLandmarksV2_knownPoints()
-	// landmarks = chooseLandmarksV3_knownCoords(nodes)
-	// landmarks = LandmarksPruning(numLandmarks, 10, 1)
+
 
 	landmarksNodes := make([][2]float64, len(landmarks))
 
@@ -177,19 +159,11 @@ func LandmarksDistanceMaximiser(numLandmarks int) {
 	fidgetor := chin.New()
 	go fidgetor.Start()
 	landMarksDistanceFinder()
-	// landmarkPairDistances := make([][]int, len(landmarks))
-	// for i := range landmarkPairDistances {
-	// 	landmarkPairDistances[i] = make([]int, len(landmarks))
-	// }
 
-	// for i, landmark := range landmarks {
-	// 	landmarksNodes[i][0] = nodes[landmark][0]
-	// 	landmarksNodes[i][1] = nodes[landmark][1]
-	// 	// slog.Info("Landmark", i, ":", landmarksNodes[i])
-	// }
 	fidgetor.Stop()
 }
 
+// Choose landmarks based on the distance between them
 func chooseLandmarks(nodes [][2]float64, numLandmarks int, minDistance int) []int {
 	landmarks := make([]int, numLandmarks)
 	landmarkCounter := 0
@@ -282,16 +256,14 @@ func chooseLandmarksV3_knownCoords(nodes [][2]float64) []int {
 	return landmarks
 }
 
+// Calculates Dijkstra tree
 func landMarksDistanceFinder() {
-	// graphNodes, graphEdges, distancesEdges, _, _, landmarkNodes, _ := FileReader()
 	graphNodes, _, _, _, sorted_edges, sorted_distances, start_indices, _, landmarkNodes, _ := FileReader()
 	completeLandmarksMap := make(map[int][]int)
 	for i, landmark := range landmarkNodes {
 		slog.Info("Landmark:", i, landmark)
-		// _, dist := Djikstra(graphNodes, graphEdges, distancesEdges, landmark, -1)
 		_, dist, _ := Djikstra(graphNodes, sorted_edges, sorted_distances, start_indices, landmark, -1)
 		completeLandmarksMap[landmark] = dist
-		// fmt.Println("Distance from landmark", landmark, ":", dist)
 	}
 	generator.WriteToJSONFile("landmarkDistances.json", completeLandmarksMap)
 }

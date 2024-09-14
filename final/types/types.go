@@ -1,3 +1,5 @@
+// Different types used in the project
+
 package types
 
 import (

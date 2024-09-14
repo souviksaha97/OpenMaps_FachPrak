@@ -1,3 +1,5 @@
+// Starting point for single and multi routers
+
 package router
 
 import (
@@ -142,6 +144,7 @@ func FileReader() (nodes [][2]float64, edges [][4]int, distances [][4]int, grid 
 		startIndices, landmarksCoords, landmarkNodes, landmarkDistances
 }
 
+// Debugging function to test the router
 func Debugging() {
 	graphNodes, _, _, _, sortedEdges, sortedDistances, startIndices, _, _, _ := FileReader()
 
@@ -175,15 +178,15 @@ func Debugging() {
 	}
 }
 
+// MultiRouter runs the router with all three algorithms over multiple iterations
 func MultiRouter(iterations int) {
 
 	fidgeter := chin.New()
 	go fidgeter.Start()
 	runtime.GOMAXPROCS(runtime.NumCPU())
 
-	// graphNodes, _, _, _, sortedEdges, sortedDistances, startIndices, _, landmarkNodes, landmarkDistances := FileReader()
 	graphNodes, _, _, _, sortedEdges, sortedDistances, startIndices, _, landmarkNodes, landmarkDistances := FileReader()
-	// graphNodes, _, _, _, sortedEdges, sortedDistances, startIndices, _, _, _, _, _ := FileReader()
+
 	slog.Info("Multi Router started")
 	rand.Seed(time.Now().UnixNano())
 	var randomIndices = make([][2]int, iterations)
@@ -245,11 +248,10 @@ func MultiRouter(iterations int) {
 	slog.Info(fmt.Sprintf("ALT Pops vs A*:              %.2f%%", (float64(avgAstarPops-avgALTPops)/float64(avgAstarPops))*100))
 	slog.Info("==================================== End ======================================")
 
-
 	fidgeter.Stop()
-
 }
 
+// SingleRouter runs the router with a single algorithm over multiple iterations
 func SingleRouter(router string, iterations int) {
 	slog.Info("Single Router started")
 	runtime.GOMAXPROCS(runtime.NumCPU())

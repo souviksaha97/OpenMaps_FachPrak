@@ -1,3 +1,5 @@
+// Helper functions for the package generator
+
 package generator
 
 import (
@@ -749,9 +751,20 @@ func TestAllPolygonesIfMidpointsisIn(ways_map map[osm.NodeID][]osm.NodeID, nodes
 }
 
 func FindRowAndColumnInGrid(rows int, colums int, lat float64, long float64) (int, int) {
-	if lat <= -89.0 || lat >= 89.0 {
-		return 0, 0
+	if lat > 90 {
+		lat = 90 - (lat - 90)
+	} else if lat < -90 {
+		lat = -90 - (lat + 90)
 	}
+
+	// Normalize longitude between -180 and 180 degrees
+	for long > 180 {
+		long -= 360
+	}
+	for long < -180 {
+		long += 360
+	}
+	
 	newLat := int((lat + 90.0) / (180.0 / float64(rows)))
 	if newLat == rows {
 		newLat = rows - 1

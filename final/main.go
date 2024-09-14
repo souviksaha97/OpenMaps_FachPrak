@@ -1,3 +1,6 @@
+// Starter file for the project. Based on the command line arguments, 
+// the program will run the generator, server, multi-router, single-router, or the tester.
+
 package main
 
 import (
@@ -19,7 +22,7 @@ import (
 func main() {
 	slog.Info("Starting the program")
 	runtime.GOMAXPROCS(runtime.NumCPU())
-	const landmarksCount = 200
+	const landmarksCount = 50
 	if !init_main() {
 		generateTime := time.Now()
 		reader := bufio.NewReader(os.Stdin)
@@ -51,6 +54,7 @@ func main() {
 	case "graph":
 		slog.Info("Running the generator")
 		generator.Generator()
+		router.LandmarksDistanceMaximiser(landmarksCount)
 
 	case "server":
 		slog.Info("Running the server")
@@ -163,18 +167,10 @@ func printHelp() {
 	fmt.Println("4. single")
 	fmt.Println("   Description: Runs the single-router for a specific run and iteration count.")
 	fmt.Println("   Usage: <program_name> single <run_name> <iterations>")
-	fmt.Println("   Example: <program_name> single testRun 5")
+	fmt.Println("   Example: <program_name> single alt 5")
 	fmt.Println()
 	fmt.Println("5. alt-pre")
 	fmt.Println("   Description: Pre-processes landmarks for the ALT algorithm.")
 	fmt.Println("   Usage: <program_name> alt-pre")
 	fmt.Println()
-	fmt.Println("6. tester")
-	fmt.Println("   Description: Runs the tester with a specified number of iterations.")
-	fmt.Println("   Usage: <program_name> tester <iterations>")
-	fmt.Println("   Example: <program_name> tester 20")
-	fmt.Println()
-	fmt.Println("7. debug")
-	fmt.Println("   Description: Runs the router in debug mode to assist in troubleshooting.")
-	fmt.Println("   Usage: <program_name> debug")
 }

@@ -1,3 +1,5 @@
+// Implements the A* algorithm for finding the shortest path between two points
+
 package router
 
 import (
@@ -7,6 +9,7 @@ import (
 	"math"
 )
 
+// AStar is the A* algorithm for finding the shortest path between two points
 func AStar(nodes [][2]float64, edges [][2]int, edgeweights []int, startindicesmap []int, src int, dst int) ([]int, []int, int) {
 	data := types.NewGraphData(len(nodes), src)
 	popCounter := 0
@@ -32,19 +35,10 @@ func AStar(nodes [][2]float64, edges [][2]int, edgeweights []int, startindicesma
 			if neighbor < 0 {
 				continue
 			}
-			// fmt.Println("Current Node: ", currentNode, "Destination: ", dst)
-			// fmt.Println("Current Node: ", nodes[currentNode], "Destination: ", nodes[dst])
-			// fmt.Println("Distance Current Node: ", data.Dist[currentNode])
-			// timeStart := time.Now()
 
-			// avgHaversineTime += time.Since(timeStart)
-			// HaverSineCount++
 			newDist := data.Dist[currentNode] + edgeweights[i]
 
-			// fmt.Println("Haversine Distance: ", int(math.Round(1000.0*generator.Haversine(nodes[currentNode][0], nodes[currentNode][1], nodes[dst][0], nodes[dst][1]))))
-
 			if newDist < data.Dist[neighbor] {
-				// fmt.Println("Heuristic Distance: ", heuristic, "Current Distance: ", data.Dist[neighbor])
 				data.Dist[neighbor] = newDist
 				data.Prev[neighbor] = currentNode
 				heuristic := generator.Haversine(nodes[neighbor][0], nodes[neighbor][1], nodes[dst][0], nodes[dst][1])
@@ -54,7 +48,6 @@ func AStar(nodes [][2]float64, edges [][2]int, edgeweights []int, startindicesma
 		}
 	}
 
-	// fmt.Println("Time taken for AStar: ", time.Since(timeStart))
 	path := []int{}
 	if dst != -1 && (data.Prev[dst] != -1 || src == dst) {
 		// Build the path in reverse order
@@ -62,13 +55,12 @@ func AStar(nodes [][2]float64, edges [][2]int, edgeweights []int, startindicesma
 			path = append(path, at)
 		}
 	}
-	// fmt.Println("Average Haversine Time: ", avgHaversineTime/time.Duration(HaverSineCount))
-	// fmt.Println("Haversine Time : ", avgHaversineTime)
-	// fmt.Println("Haversine Count: ", HaverSineCount)
+
 
 	return path, data.Dist, popCounter
 }
 
+// Searches for the nearest node to the start and end points and then runs the A* algorithm
 func AlgoAStar(Start types.Point, End types.Point, graphNodes [][2]float64, gridNodes [][][][3]float64, graphEdges [][2]int, distancesEdges []int, startIndices []int) ([]types.Point, int, int) {
 	nearestnodeStart := [2]float64{Start.Lat, Start.Lng}
 	nearestnodeEnd := [2]float64{End.Lat, End.Lng}
@@ -90,7 +82,7 @@ func AlgoAStar(Start types.Point, End types.Point, graphNodes [][2]float64, grid
 		if distStart < distpointStart {
 			nearestpointStartIndex = int(node[2])
 			distpointStart = distStart
-		}
+		}	
 		if distEnd < distpointEnd {
 			nearpointEndIndex = int(node[2])
 			distpointEnd = distEnd

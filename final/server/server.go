@@ -1,3 +1,5 @@
+// Runs server to execute queries from the webpage
+
 package server
 
 import (
@@ -31,7 +33,8 @@ func Server() {
 
 	// Read the files
 	graphNodes, _, _, gridNodes, sortedEdges, sortedDistances, startIndices, _, landmarkNodes, landmarkDistances := router.FileReader()
-	// graphNodes, _, _, _, sortedEdges, sortedDistances, startIndices, landmarkCoords, _, _, _, _ := router.FileReader()
+
+	// Update this if you want to use a different number of landmarks
 	usedLandmarks := make([]int, 5)
 	serv.POST("/submit_points", func(c *gin.Context) {
 		var requestData map[string]types.Point
@@ -153,6 +156,7 @@ func Server() {
 		})
 	})
 
+	// Get landmarks
 	serv.GET("/landmarks", func(c *gin.Context) {
 		// convert landmarks to json
 		landmark_json := make([]types.Point, len(usedLandmarks))

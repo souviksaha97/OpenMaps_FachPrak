@@ -1,3 +1,6 @@
+// Graph generator, the OSM data is read from the planet-coastlines.osm.pbf file
+// and the graph is generated.
+
 package generator
 
 import (
@@ -18,7 +21,8 @@ import (
 	"final/types"
 )
 
-const PBF_FILE_PATH = "/home/souvik-atmos/Documents/planet-coastlines.osm.pbf"
+// PBF_FILE_PATH is the path to the planet-coastlines.osm.pbf file. Update this as needed.
+const PBF_FILE_PATH = "/home/sahask/osm_data/planet-coastlines.osm.pbf"
 
 const pointcount = 4000000
 const longBincount = 200000
@@ -42,9 +46,7 @@ func Generator() {
 
 	ways_map := make(map[osm.NodeID][]osm.NodeID)
 	nodeRelations := make(map[osm.NodeID]types.WayComplete)
-	//wayMapIdForNodeId := make(map[osm.NodeID]osm.NodeID)
-	//wayBoundingBox := make(map[osm.NodeID][4]float64)
-	//waysMidPoint := make(map[osm.NodeID][2]float64)
+
 	rows := 180
 	colums := 360
 	randomPointCount := pointcount
@@ -64,17 +66,13 @@ func Generator() {
 		}
 	}
 
-	//a, b := findRowAndColumnInGrid(rows, colums, -90.0, -180.0)
-	//fmt.Println("row colum", a, b)
-
 	scanner.SkipRelations = true
 
 	slog.Info("Starting scan...")
 
 	for scanner.Scan() {
 		o := scanner.Object()
-		// bar.Set(int(scanner.FullyScannedBytes()))
-		// fmt.Println(scanner.FullyScannedBytes() / (1024 * 1024))
+
 		switch v := o.(type) {
 		case *osm.Node:
 			nodes_map[v.ID] = types.Node{ID: int64(v.ID), Lat: float64(v.Lat), Lon: float64(v.Lon), IsCoastline: false}
@@ -249,8 +247,6 @@ func Generator() {
 	fmt.Println("finished neighbours")
 
 	// write graphNodes graphEdges distancesEdges grid to different json files
-	//
-
 	WriteToJSONFile("graphNodes.json", graphNodes)
 	WriteToJSONFile("graphEdges.json", graphEdges)
 	WriteToJSONFile("distancesEdges.json", distancesEdges)

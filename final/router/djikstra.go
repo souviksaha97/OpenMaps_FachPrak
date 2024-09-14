@@ -1,3 +1,5 @@
+// Implement the Djikstra algorithm to find the shortest path between two points
+
 package router
 
 import (
@@ -42,7 +44,6 @@ func Djikstra(nodes [][2]float64, edges [][2]int, edgeweights []int, startindice
 			}
 		}
 	}
-	// fmt.Println("Time taken for Djikstra: ", time.Since(timeStart))
 
 	path := []int{}
 	if dst != -1 && (data.Prev[dst] != -1 || src == dst) {
@@ -55,6 +56,7 @@ func Djikstra(nodes [][2]float64, edges [][2]int, edgeweights []int, startindice
 	return path, data.Dist, popCounter
 }
 
+// Finds nearest node to the start and end points and then runs Dijkstra algorithm
 func AlgoDijkstra(Start types.Point, End types.Point, graphNodes [][2]float64, gridNodes [][][][3]float64, graphEdges [][2]int, distancesEdges []int, startIndices []int) ([]types.Point, int, int) {
 	nearestnodeStart := [2]float64{Start.Lat, Start.Lng}
 	nearestnodeEnd := [2]float64{End.Lat, End.Lng}
@@ -64,22 +66,7 @@ func AlgoDijkstra(Start types.Point, End types.Point, graphNodes [][2]float64, g
 	distpointEnd := math.MaxInt64
 
 	// Find the nearest start and end nodes
-	// for k, node := range graphNodes {
-	// 	distStart := generator.Haversine(node[0], node[1], nearestnodeStart[0], nearestnodeStart[1])
-	// 	distEnd := generator.Haversine(node[0], node[1], nearestnodeEnd[0], nearestnodeEnd[1])
 
-	// 	if distStart < distpointStart {
-	// 		nearestpointStartIndex = k
-	// 		distpointStart = distStart
-	// 	}
-	// 	if distEnd < distpointEnd {
-	// 		nearpointEndIndex = k
-	// 		distpointEnd = distEnd
-	// 	}
-	// 	if distpointStart < 30000 && distpointEnd < 30000 {
-	// 		break
-	// 	}
-	// }
 
 	a, b := generator.FindRowAndColumnInGrid(180, 360, Start.Lat, Start.Lng)
 	possiblestartandendpoints := gridNodes[a][b]
