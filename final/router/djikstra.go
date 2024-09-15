@@ -7,8 +7,6 @@ import (
 	"final/generator"
 	"final/types"
 	"math"
-
-	"github.com/gookit/slog"
 	// "github.com/gookit/slog"
 )
 
@@ -87,8 +85,6 @@ func AlgoDijkstra(Start types.Point, End types.Point, graphNodes [][2]float64, g
 			distpointEnd = distEnd
 		}
 	}
-
-	slog.Info("Nearest start node: %v, Nearest end node: %v", nearestpointStartIndex, nearpointEndIndex)
 
 	if nearestpointStartIndex == -1 || nearpointEndIndex == -1 {
 		return []types.Point{}, 0, 0
