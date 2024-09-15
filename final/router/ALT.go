@@ -114,9 +114,12 @@ func AlgoALT(Start types.Point, End types.Point, graphNodes [][2]float64, gridNo
 			distpointEnd = distEnd
 		}
 	}
+	if nearestpointStartIndex == -1 || nearpointEndIndex == -1 {
+		return []types.Point{}, 0, 0, []int{}
+	}
 
 	path, dist, popCounter, usedLandmarks := ALT(graphNodes, graphEdges, distancesEdges, startIndices, landmarks, landmarkDistances, nearestpointStartIndex, nearpointEndIndex)
-	
+
 	// Convert the path to the required format
 	shortestPath := make([]types.Point, len(path))
 	for i, nodeIndex := range path {
@@ -144,7 +147,6 @@ func LandmarksDistanceMaximiser(numLandmarks int) {
 			break
 		}
 	}
-
 
 	landmarksNodes := make([][2]float64, len(landmarks))
 

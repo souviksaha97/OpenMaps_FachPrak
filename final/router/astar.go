@@ -56,7 +56,6 @@ func AStar(nodes [][2]float64, edges [][2]int, edgeweights []int, startindicesma
 		}
 	}
 
-
 	return path, data.Dist, popCounter
 }
 
@@ -82,11 +81,14 @@ func AlgoAStar(Start types.Point, End types.Point, graphNodes [][2]float64, grid
 		if distStart < distpointStart {
 			nearestpointStartIndex = int(node[2])
 			distpointStart = distStart
-		}	
+		}
 		if distEnd < distpointEnd {
 			nearpointEndIndex = int(node[2])
 			distpointEnd = distEnd
 		}
+	}
+	if nearestpointStartIndex == -1 || nearpointEndIndex == -1 {
+		return []types.Point{}, 0, 0
 	}
 
 	path, dist, popCounter := AStar(graphNodes, graphEdges, distancesEdges, startIndices, nearestpointStartIndex, nearpointEndIndex)

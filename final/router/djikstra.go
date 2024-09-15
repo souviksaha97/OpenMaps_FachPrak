@@ -7,6 +7,8 @@ import (
 	"final/generator"
 	"final/types"
 	"math"
+
+	"github.com/gookit/slog"
 	// "github.com/gookit/slog"
 )
 
@@ -67,7 +69,6 @@ func AlgoDijkstra(Start types.Point, End types.Point, graphNodes [][2]float64, g
 
 	// Find the nearest start and end nodes
 
-
 	a, b := generator.FindRowAndColumnInGrid(180, 360, Start.Lat, Start.Lng)
 	possiblestartandendpoints := gridNodes[a][b]
 	c, d := generator.FindRowAndColumnInGrid(180, 360, End.Lat, End.Lng)
@@ -85,6 +86,12 @@ func AlgoDijkstra(Start types.Point, End types.Point, graphNodes [][2]float64, g
 			nearpointEndIndex = int(node[2])
 			distpointEnd = distEnd
 		}
+	}
+
+	slog.Info("Nearest start node: %v, Nearest end node: %v", nearestpointStartIndex, nearpointEndIndex)
+
+	if nearestpointStartIndex == -1 || nearpointEndIndex == -1 {
+		return []types.Point{}, 0, 0
 	}
 
 	path, dist, popCounter := Djikstra(graphNodes, graphEdges, distancesEdges, startIndices, nearestpointStartIndex, nearpointEndIndex)
