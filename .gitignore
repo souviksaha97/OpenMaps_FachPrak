@@ -26,3 +26,5 @@ osm_data/*
 *.osm.pbf
 *.gob
 *.json
+go.mod
+go.sum

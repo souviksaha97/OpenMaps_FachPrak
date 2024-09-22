@@ -4,57 +4,115 @@
 
 - [Open Street Maps Fachpraktikum](#open-street-maps-fachpraktikum)
   - [Table of Contents](#table-of-contents)
-  - [About ](#about-)
-  - [Getting Started ](#getting-started-)
-    - [Prerequisites](#prerequisites)
-      - [Go](#go)
-      - [Osmium](#osmium)
-    - [Installing](#installing)
-  - [Usage ](#usage-)
+  - [About](#about)
+  - [Getting Started](#getting-started)
+    - [Go](#go)
+  - [Instructions](#instructions)
+    - [Graph Generation](#graph-generation)
+    - [Server](#server)
+    - [Headless Comparison](#headless-comparison)
+    - [Headless Single](#headless-single)
+  - [Results](#results)
 
-## About <a name = "about"></a>
+## About
 
-Submission for OSM Fachpraktikum submission for SS2024.
+This project is a submission for the OSM Fachpraktikum SS2024. It involves creating and comparing different pathfinding algorithms using OpenStreetMap data.
+In my submission, I have aimed to compare the performances of Djikstra, A* and an ALT Algorithm.
 
-## Getting Started <a name = "getting_started"></a>
+## Getting Started
 
-These instructions will get you a copy of the project up and running on your local machine for development and testing purposes. See [deployment](#deployment) for notes on how to deploy the project on a live system.
+To set up and run the project, follow these instructions:
 
-### Prerequisites
+### Go
 
-What things you need to install the software and how to install them.
+1. Install Go using the [official Go instructions](https://go.dev/doc/install). The code has been tested with Go version 1.22.6.
 
-#### Go
+2. Once Go is installed, run the following command to install the required libraries and packages:
+
+   ```bash
+   go get -u
+   go mod tidy
+   ```
+
+## Instructions
+
+### Graph Generation
+
+The code will prompt you to generate graphs on the first run or if the files are missing from the `objects` folder. To generate the graphs manually, use:
 
 ```bash
-yay -S go
+go run . graph
+```
+After the graph is generated, the code will automatically generate 200 landmarks. If you want to change the number of landmarks generated, you can edit line 22 in <main.go>
+
+```go
+const landmarksCount = 200
 ```
 
-#### Osmium
+
+### Server
+
+To start the server, use:
 
 ```bash
-yay -S osmium-tool
-osmium export planet-coastlines.osm.pbf -o coast.geojson
+go run . server
 ```
 
-### Installing
+Once the server is running, open `plotters/renderer.html` in your browser. Select any two points on the map. If a path exists between them, the server will return the path. Each algorithm's path is indicated by a different box text color. You can see the number of points popped, distance travelled and time taken in text boxes. Additionally, you can click 'Show Chart' to visualise the data.
 
-A step by step series of examples that tell you how to get a development env running.
+![Server](final/docs/pic3.png)
+<p align="center">
+  <img src="final/docs/mov1.gif" />
+</p>
 
-Say what the step will be
 
+### Headless Comparison
+
+To run all algorithms with the same set of points one after the other, use:
+
+```bash
+go run . multi <number of point pairs>
 ```
-Give the example
+
+For example:
+
+```bash
+go run . multi 100
 ```
 
-And repeat
+This command runs Dijkstra, A*, and ALT algorithms sequentially and prints a comparison of the results.
 
+![Comparative result](final/docs/pic1.png)
+
+### Headless Single
+
+To run a single algorithm, use:
+
+```bash
+go run . single <algo> <number of point pairs>
 ```
-until finished
+
+Replace `<algo>` with one of the following:
+- `dijkstra` for Dijkstra's algorithm
+- `astar` for A* algorithm
+- `alt` for ALT algorithm
+
+For example:
+
+```bash
+go run . single alt 100
 ```
 
-End with an example of getting some data out of the system or using it for a little demo.
+![Single run](final/docs/pic2.png)
 
-## Usage <a name = "usage"></a>
+## Results
+Using an ALT heuristic, I have obtained demonstratable significant speedup, in comparison to an AStar and a Dijkstra algorithm.
+The benchmarks were done on the FMI-Algiers setup. The setup has the following configuration - 
 
-Add notes about how to use the system.
+> RAM:  64 GB  
+> Swap: 64 GB  
+> CPU:  Intel(R) Core(TM) i5-9500 CPU @ 3.00GHz  
+>       Core Count: 6  
+> OS:   Ubuntu 22.04.4 LTS  
+
+![Results](final/docs/pic5.png)
